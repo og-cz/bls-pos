@@ -60,10 +60,10 @@ Please do not open a public issue. Email the maintainer (see the GitHub profile 
 
 ### 7.8 File uploads
 
-- [ ] JPEG/PNG/WebP only, no SVG; magic-byte check; ≤ 2 MB
-- [ ] Server-generated keys `shops/{shopId}/{kind}/{id}.webp`
-- [ ] Served with stored type, nosniff, `inline`; avatars private; storefront assets gated
-- [ ] Per-shop `maxImagesMB` enforced
+- [x] JPEG/PNG/WebP only, no SVG; magic-byte check; ≤ 2 MB
+- [x] Server-generated keys `shops/{shopId}/{kind}/{id}.{ext}` (ext from the real type; the client sends WebP once client-side compression lands)
+- [ ] Served with stored type, nosniff, `inline` ✅; all images private to the shop for now ✅; storefront assets made public with the storefront ⏳ (Phase 6)
+- [x] Per-shop `maxImagesMB` enforced
 
 ### 7.9 CSV export
 

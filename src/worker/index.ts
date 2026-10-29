@@ -6,24 +6,29 @@ import { API_BASE, APP_NAME } from '@shared/app';
 import type { AppEnv } from './env';
 import { ApiError } from './lib/errors';
 import { session } from './middleware/session';
+import { MAX_UPLOAD_BYTES } from './security/images';
 import { auditRoutes } from './routes/audit';
 import { authRoutes } from './routes/auth';
 import { categoryRoutes } from './routes/categories';
 import { meRoutes } from './routes/me';
 import { productRoutes } from './routes/products';
+import { mediaRoutes, uploadRoutes } from './routes/uploads';
 import { staffRoutes } from './routes/staff';
 
 export type { AppEnv };
 
 const app = new Hono<AppEnv>().basePath(API_BASE);
 
-// JSON bodies are capped at 64 KB (Section 5.1). Uploads get their own limit later.
-app.use(
+// JSON bodies are capped at 64 KB (Section 5.1); image uploads at 2 MB (Section 7.8).
+const limit = (maxSize: number, message: string) =>
   bodyLimit({
-    maxSize: 64 * 1024,
-    onError: (c) =>
-      c.json({ error: { code: 'BODY_TOO_LARGE', message: 'Request body is too large.' } }, 413),
-  }),
+    maxSize,
+    onError: (c) => c.json({ error: { code: 'BODY_TOO_LARGE', message } }, 413),
+  });
+const jsonLimit = limit(64 * 1024, 'Request body is too large.');
+const uploadLimit = limit(MAX_UPLOAD_BYTES, 'Images must be 2 MB or smaller.');
+app.use((c, next) =>
+  c.req.path.startsWith(`${API_BASE}/uploads/`) ? uploadLimit(c, next) : jsonLimit(c, next),
 );
 
 app.use(session);
@@ -35,6 +40,8 @@ app.route('/staff', staffRoutes);
 app.route('/audit', auditRoutes);
 app.route('/products', productRoutes);
 app.route('/categories', categoryRoutes);
+app.route('/uploads', uploadRoutes);
+app.route('/media', mediaRoutes);
 
 app.notFound((c) => c.json({ error: { code: 'NOT_FOUND', message: 'Not found' } }, 404));
 

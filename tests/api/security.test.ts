@@ -28,6 +28,9 @@ const ROUTES: Record<string, Access> = {
   'POST /api/v1/categories': 'admin',
   'PATCH /api/v1/categories/:id': 'admin',
   'DELETE /api/v1/categories/:id': 'admin',
+  // Avatars are for everyone; the service limits the other kinds to admins (uploads.test.ts).
+  'POST /api/v1/uploads/:kind': 'staff',
+  'GET /api/v1/media/*': 'staff',
 };
 
 type Shop = Awaited<ReturnType<typeof signUp>>;

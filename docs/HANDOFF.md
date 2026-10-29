@@ -20,8 +20,8 @@ For any AI assistant (or person) picking up **BLS POS** (formerly POS Fast / Bil
   `BrandLogo` in `--brand-mark` blue. The owner will send `bls-logo.svg` (a B with a
   lightning bolt): when it arrives, replace `public/logo.svg` and `public/favicon.svg`.
   The GitHub repo is still `og-cz/bilis-pos` until the owner renames it.
-- **Unfinished work in `git stash`:** "wip: product CRUD prep" (moves `Actor` to
-  `src/worker/lib/actor.ts`, adds product/category audit actions). `git stash pop` to resume.
+- **Before the first deploy:** create the R2 bucket (`wrangler r2 bucket create bls-pos-media`)
+  and the D1 database, and paste the D1 id into `wrangler.jsonc`.
 
 ## Rules the owner set (follow them)
 

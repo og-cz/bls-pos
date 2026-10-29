@@ -20,7 +20,9 @@
       "migrations_dir": "migrations",
     },
   ],
+  // Images (logos, covers, products, avatars). Create with `wrangler r2 bucket create bls-pos-media`.
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "bls-pos-media" }],
   // Set with `wrangler secret put <NAME>` in production, `.dev.vars` locally.
   "secrets": { "required": ["PEPPER", "TURNSTILE_SECRET"] },
-  // R2 and cron bindings are added in later phases (see docs/ROADMAP.md).
+  // Cron triggers are added in later phases (see docs/ROADMAP.md).
 }
