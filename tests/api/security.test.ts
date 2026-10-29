@@ -79,13 +79,14 @@ describe('role permissions', () => {
   for (const role of ['staff', 'admin', 'owner'] as const) {
     it(`${role}: allowed exactly where the role permits`, async () => {
       const shop = await signUp();
-      const member = role === 'owner' ? null : await addMember(shop, role);
+      const memberRole = role === 'owner' ? null : role;
+      const member = memberRole ? await addMember(shop, memberRole) : null;
       for (const [route, minimum] of protectedRoutes) {
         // Logging out ends the session, so it gets a session of its own.
         const cookie =
           route === 'POST /api/v1/auth/logout'
-            ? member
-              ? (await addMember(shop, role)).cookie
+            ? memberRole
+              ? (await addMember(shop, memberRole)).cookie
               : (await signUp()).cookie
             : (member?.cookie ?? shop.cookie);
         const res = await requestFor(route, shop, cookie);
