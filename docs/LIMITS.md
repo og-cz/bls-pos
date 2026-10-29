@@ -59,25 +59,32 @@ storage. If the instance grows past ~40 shops, lower the per-shop quota.
 The docs list "small to medium businesses" and "most production applications" as a fit
 for the Free plan. They neither grant nor forbid commercial use outright.
 
-## ⚠️ Open risk: password hashing vs. 10 ms CPU
+## Password hashing vs. 10 ms CPU (measured)
 
 Section 7.1 asks for PBKDF2-SHA256 at the highest iteration count Workers allows.
 
-Measured 2026-10-29:
+**Measured 2026-10-29** on a real Free-plan account (probe Worker in the MNL colo, CPU
+time read from `wrangler tail`; the probe was deleted afterwards):
 
-| Environment               | Result                                                                           |
-| ------------------------- | -------------------------------------------------------------------------------- |
-| Local workerd (Miniflare) | 600,000 iterations accepted. No local cap.                                       |
-| Node 24, desktop CPU      | 10k ≈ 2 ms · 50k ≈ 8 ms · **100k ≈ 17 ms**                                       |
-| Production Workers        | Community reports a 100,000-iteration cap. **Not in official docs. Unverified.** |
+| Iterations  | Requests | CPU time (median / max) | Result                                              |
+| ----------- | -------- | ----------------------- | --------------------------------------------------- |
+| 25,000      | 8        | 9 ms / 14 ms            | all OK                                              |
+| 50,000      | 8        | 18 ms / 24 ms           | all OK                                              |
+| 75,000      | 8        | 18 ms / 25 ms           | all OK                                              |
+| **100,000** | **118**  | **22 ms / 42 ms**       | **all OK**, including 50 concurrent                 |
+| 100,001+    | 17       | —                       | `NotSupportedError`: hard cap is **100,000** (prod) |
 
-So 100k iterations likely uses **more than the 10 ms free CPU budget** on every login
-and signup. Cloudflare may let occasional overruns through, or it may fail the request.
+Local workerd has no cap (600,000 accepted), so the cap only shows up in production.
 
-**To decide in Phase 1, before writing `feat(auth): add PBKDF2 password hashing`:**
-deploy a probe Worker and measure real CPU time and the iteration cap, then choose an
-iteration count. The hash string stores the count, so it can be raised later on
-re-login. This affects the security model, so it needs the owner's sign-off.
+**Decision:** use **100,000** iterations, the maximum Workers allows. It exceeds the
+nominal 10 ms per request, but Cloudflare did not terminate a single request in 118
+tries. Hashing only runs on signup, login, password change and recovery, never on
+normal requests, and login is rate-limited.
+
+**If Cloudflare starts enforcing the limit** (logins fail with Error 1102):
+lower `PBKDF2_ITERATIONS` in `src/worker/security/password.ts`. Every hash stores
+its own iteration count, so existing passwords keep working, and each user is
+re-hashed at the new count the next time they log in.
 
 ## Free-tier capacity summary
 

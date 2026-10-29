@@ -24,7 +24,7 @@
 
 ## Decisions needed
 
-- **Phase 1:** PBKDF2 iteration count vs. the 10 ms free CPU limit (see `LIMITS.md`).
+- ~~**Phase 1:** PBKDF2 iteration count vs. the 10 ms free CPU limit~~ — decided 2026-10-29: 100,000, measured on a real Free account (see `LIMITS.md`).
 - **License:** MIT was chosen as a placeholder. With a Paid edition planned, consider
   whether a more protective license (e.g. AGPL-3.0 or source-available) fits better
   _before_ the repo is public.

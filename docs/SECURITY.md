@@ -14,7 +14,7 @@ Please do not open a public issue. Email the maintainer (see the GitHub profile 
 ### 7.1 Passwords
 
 - [ ] PBKDF2-HMAC-SHA256 via WebCrypto, 16-byte salt, server-side pepper
-- [ ] Iteration count stored in hash string (`pbkdf2$sha256$iter$salt$hash`) — see the CPU-time risk in `LIMITS.md`
+- [ ] Iteration count stored in hash string (`pbkdf2$sha256$iter$salt$hash`) — 100,000 (Workers max, measured in `LIMITS.md`)
 - [ ] Min length 10 (owner/admin) / 8 (staff) + common-password list
 - [ ] Constant-time comparison
 
