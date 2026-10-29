@@ -4,15 +4,16 @@ import { Hono } from 'hono';
 import { getDb } from '../db/client';
 import { shops } from '../db/schema';
 import type { AuthedEnv } from '../env';
-import { requireAuth } from '../middleware/session';
+import { authed } from '../middleware/tenant';
 
 export const meRoutes = new Hono<AuthedEnv>();
 
-meRoutes.use(requireAuth);
+meRoutes.use(...authed);
 
 // Entitlements are added with the plans work (Section 2.4).
 meRoutes.get('/', async (c) => {
-  const { userId, shopId, role, username, displayName } = c.var.auth;
+  const { shopId } = c.var;
+  const { userId, role, username, displayName } = c.var.auth;
   const shop = await getDb(c.env.DB)
     .select({
       id: shops.id,

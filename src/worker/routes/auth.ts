@@ -6,7 +6,7 @@ import { getDb } from '../db/client';
 import type { AppEnv, AuthedEnv } from '../env';
 import { clearSessionCookie, writeSessionCookie } from '../lib/cookies';
 import { parseJson } from '../lib/validate';
-import { requireAuth } from '../middleware/session';
+import { authed } from '../middleware/tenant';
 import { hashIp } from '../security/tokens';
 import { requireHuman } from '../security/turnstile';
 import { login, TooManyAttemptsError } from '../services/login';
@@ -72,9 +72,8 @@ authRoutes.post('/recover', async (c) => {
   return c.json({ ok: true, remainingCodes: result.remainingCodes });
 });
 
-authRoutes.post('/logout', requireAuth, async (c: Context<AuthedEnv>) => {
-  const { shopId, sessionId } = c.var.auth;
-  await revokeSession(getDb(c.env.DB), shopId, sessionId);
+authRoutes.post('/logout', ...authed, async (c: Context<AuthedEnv>) => {
+  await revokeSession(getDb(c.env.DB), c.var.shopId, c.var.auth.sessionId);
   clearSessionCookie(c);
   return c.json({ ok: true });
 });

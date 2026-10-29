@@ -35,8 +35,8 @@ Please do not open a public issue. Email the maintainer (see the GitHub profile 
 
 ### 7.4 Authorization and tenant isolation
 
-- [ ] `shopId` only from session
-- [ ] Every query scoped by `shop_id`; services take `shopId` first (lint/test rule)
+- [x] `shopId` only from session (`tenant` middleware)
+- [ ] Every query scoped by `shop_id` ⏳; services take `shopId` first ✅ (enforced by `tests/api/tenant.test.ts`)
 - [ ] Server-side role check on every route
 - [ ] Staff never receive cost, profit, others' sales, audit logs
 - [ ] Admins cannot create or modify the owner
