@@ -1,4 +1,6 @@
-# POS Fast — Master Build Prompt
+# BLS — Master Build Prompt
+
+> **BLS** (pronounced "bilis", Tagalog for "fast"). Tagline: **"BLS. Benta agad."**
 
 > **How to use this file:** Paste this whole document into your AI coding assistant (or keep it in the repo as `docs/MASTER_PROMPT.md`) and work through it one phase at a time. Every phase lists its goal, what to build, what "done" means, and the dated commit plan.
 
@@ -6,11 +8,11 @@
 
 ## 0. Role and ground rules for the AI assistant
 
-You are the lead engineer building **POS Fast**, a fast, secure, beautifully branded point-of-sale web app for small businesses. Follow these rules for the entire project:
+You are the lead engineer building **BLS**, a fast, secure, beautifully branded point-of-sale web app for small businesses. Follow these rules for the entire project:
 
 1. **Focus.** Build the **Free edition** only. The Paid edition is *prepared for* (adapters, plan field, feature flags) but **never built** until Phase 11+. If a task drifts into paid features, stop and note it in `docs/ROADMAP.md` instead.
 2. **Security first.** Every API route checks: (a) is the user logged in, (b) which shop they belong to, (c) whether their role allows this action. No exceptions. Never trust anything the browser sends about price, role, or shop.
-3. **Simple over clever.** POS Fast, not POS Confusion. Every screen must be usable by a new cashier within one minute. If a feature needs a manual to understand, simplify it.
+3. **Simple over clever.** BLS: fast to set up, fast to sell, fast to grow. Every screen must be usable by a new cashier within one minute. If a feature needs a manual to understand, simplify it.
 4. **$0 to run.** Only use services with a free tier that allows commercial use and does not sleep.
 5. **Small commits.** One logical change per commit, using Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`, `perf:`, `ci:`).
 6. **Honest history.** The commit schedule in Section 12 is a *plan*. Make each commit when the work is actually done. Never backdate or fake commit timestamps.
@@ -21,7 +23,19 @@ You are the lead engineer building **POS Fast**, a fast, secure, beautifully bra
 
 ## 1. Product overview
 
-**POS Fast** is a multi-store web POS. Any business can sign up, brand their store, add products, add staff, and start selling from a phone or PC, with a live dashboard available 24/7.
+**BLS** is a multi-store web POS. Any business can sign up, brand their store, add products, add staff, and start selling from a phone or PC, with a live dashboard available 24/7.
+
+### 1.0 Names and identity
+
+| Thing | Name |
+|---|---|
+| Product (titles, UI, docs, page titles, manifest, default sender names) | **BLS**. The first mention in the README and on the login screen reads **"BLS (bilis)"** |
+| Tagline | **"BLS. Benta agad."** |
+| Repo / package / Worker | `bls-pos` |
+| D1 database / R2 bucket | `bls-pos` / `bls-pos-media` |
+| Session cookie | `__Host-bls_session` |
+| PWA | name "BLS", short name "BLS" |
+| Logo | `bls-logo.svg` (a B with a lightning bolt), provided by the owner. Used for the app icon, favicon, login screen and PWA icons; PNG icon sizes are generated from it in Phase 8 |
 
 ### 1.1 Who uses it
 
@@ -86,7 +100,7 @@ Online payments (GCash, Maya, cards), email/SMS receipts, password reset by emai
                 │            HTTPS only (HSTS)          │
                 ▼                                       ▼
  ┌────────────────────────────────────────────────────────────────────┐
- │                 Cloudflare Worker: pos-fast                        │
+ │                 Cloudflare Worker: bls-pos                         │
  │  ┌──────────────────────┐   ┌───────────────────────────────────┐  │
  │  │ Static assets (SPA)  │   │ /api/* — Hono                     │  │
  │  │ React build output   │   │  security headers → origin check  │  │
@@ -171,7 +185,7 @@ export const ENTITLEMENTS = {
 ## 3. Project structure
 
 ```
-pos-fast/
+bls-pos/
 ├─ src/
 │  ├─ client/                      # React app
 │  │  ├─ app/                      # routes, layouts, providers
@@ -352,6 +366,7 @@ CREATE TABLE sale_items (
 
 CREATE TABLE audit_log (
   id TEXT PRIMARY KEY,
+  -- prev_hash / hash: tamper-evident hash chain per shop (Section 7.16, added in Phase 9)
   shop_id TEXT NOT NULL,
   user_id TEXT,
   action TEXT NOT NULL,                   -- 'product.update', 'sale.void', 'staff.create', 'login.failed', ...
@@ -359,6 +374,21 @@ CREATE TABLE audit_log (
   details_json TEXT,                      -- never include passwords, tokens or secrets
   ip_hash TEXT,
   created_at INTEGER NOT NULL
+);
+
+CREATE TABLE daily_closings (            -- Z-reading style daily close (Section 7.16); never edited after closing
+  id TEXT PRIMARY KEY,
+  shop_id TEXT NOT NULL REFERENCES shops(id),
+  day TEXT NOT NULL,                      -- 'YYYY-MM-DD' in shop timezone
+  first_sale_number INTEGER, last_sale_number INTEGER,
+  sales_count INTEGER NOT NULL,
+  gross_cents INTEGER NOT NULL,
+  voided_count INTEGER NOT NULL,
+  voided_cents INTEGER NOT NULL,
+  payments_json TEXT NOT NULL,            -- totals per payment method
+  closed_by TEXT NOT NULL REFERENCES users(id),
+  closed_at INTEGER NOT NULL,
+  UNIQUE (shop_id, day)
 );
 
 CREATE TABLE daily_summaries (            -- filled by cron for fast dashboards
@@ -387,7 +417,7 @@ CREATE TABLE daily_summaries (            -- filled by cron for fast dashboards
 1. **Security headers** (Section 7.6).
 2. **Origin check** on POST/PUT/PATCH/DELETE: `Origin` must equal the app's own origin, otherwise 403 (CSRF protection).
 3. **Body size limit** (JSON 64 KB; uploads handled separately).
-4. **Session**: read the `__Host-pf_session` cookie → hash → look up an active, unexpired, unrevoked session → load user (must be `active`).
+4. **Session**: read the `__Host-bls_session` cookie → hash → look up an active, unexpired, unrevoked session → load user (must be `active`).
 5. **Tenant**: set `c.var.shopId = session.shop_id`. **Never** read `shop_id` from URL, body or query.
 6. **Role guard** per route: `requireRole('admin')` etc.
 7. **Zod validation**.
@@ -429,6 +459,11 @@ CREATE TABLE daily_summaries (            -- filled by cron for fast dashboards
 | POST | `/uploads/:kind` | admin (avatar: self) | kind: `logo` / `cover` / `product` / `avatar` |
 | GET | `/media/:key` | see 7.8 | Served from R2 via Worker |
 | GET | `/audit` | owner/admin | Paginated audit log |
+| POST | `/products/import` | admin | Chunk of 200–500 rows, upsert by SKU, enforces `maxProducts` (Phase 3.5) |
+| GET | `/export/:kind.(csv\|xlsx)` | admin | kind: `products` / `stock` / `movements` / `sales`; streamed (Phase 3.5) |
+| GET | `/backup` | owner/admin | Full shop backup download (Phase 3.5) |
+| POST | `/backup/restore` | owner/admin | Restore through the import flow; confirmation + audit log (Phase 3.5) |
+| GET/POST | `/reports/daily-close` | admin | View / close a day; closed days are read-only (Section 7.16) |
 | GET | `/public/s/:slug` | public, cached | Storefront data only (see 9) |
 
 ### 5.3 Creating a sale (the most important endpoint)
@@ -451,6 +486,19 @@ Server steps:
 ---
 
 ## 6. Design system and customization
+
+### 6.0 Brand direction
+
+- **Personality: simple and clean.** Minimal, calm, no clutter. No gradients or decorative effects in the core app.
+- **One brand accent color for BLS itself** (the app's own screens: login, signup, app chrome, logo). Shops still customize their own theme as described in 6.2–6.4; the BLS accent never changes with a shop's theme. Options, all checked as white text on the color (WCAG 2.2: 4.5:1 needed for normal text). **Chosen by the owner (2026-10-29): A. Bilis Blue `#1E6FD9`.**
+
+  | Option | Hex | White text contrast | Feel |
+  |---|---|---|---|
+  | **A. Bilis Blue (chosen)** | `#1E6FD9` | 4.85 : 1 (AA) | bright, friendly, trustworthy |
+  | B. Deep Blue | `#1D4ED8` | 6.70 : 1 (AA, near AAA) | calmer, more "bank-like" |
+  | C. Emerald | `#047857` | 5.48 : 1 (AA) | fresh, money/growth, stands apart from blue apps |
+
+- **Speed is the brand promise:** every core action should feel instant. Keep the performance budgets in Section 11 and add: **product search results in under 100 ms on a mid-range phone for 5,000 products.**
 
 ### 6.1 Design principles
 
@@ -504,7 +552,7 @@ export const ThemeSchema = z.object({
 
 ### 6.5 Key screens
 
-1. **Sign up / Log in:** branded with POS Fast; login asks shop code (slug), username, password.
+1. **Sign up / Log in:** branded with BLS (shown as **"BLS (bilis)"** the first time it appears, with the BLS logo); login asks shop code (slug), username, password.
 2. **Setup wizard** (Section 8).
 3. **Sell (Staff home):** search bar, category chips, product tiles (photo, name, price, stock badge), cart drawer/panel, big **Charge ₱X** button, cash keypad with quick amounts (exact, ₱100, ₱500, ₱1000), change display, receipt screen with "New sale".
 4. **Inventory:** list with stock badges (green / amber low / red out), quick "Deduct" with reason picker; admins see "Restock".
@@ -526,7 +574,7 @@ export const ThemeSchema = z.object({
 - Compare hashes in constant time.
 
 ### 7.2 Sessions
-- 32 random bytes from `crypto.getRandomValues`, sent as cookie `__Host-pf_session` with `HttpOnly; Secure; SameSite=Lax; Path=/`.
+- 32 random bytes from `crypto.getRandomValues`, sent as cookie `__Host-bls_session` with `HttpOnly; Secure; SameSite=Lax; Path=/`.
 - Store only the **SHA-256 hash** of the token in D1.
 - Idle timeout 12 hours for staff devices, absolute expiry 30 days; refresh `last_seen_at` at most every 5 minutes.
 - Revoke all sessions on: password change, staff deactivation, role change, owner request ("log out all devices").
@@ -600,6 +648,13 @@ Log: logins (success/fail), password/2FA changes, staff create/deactivate/role c
 ### 7.15 Testing security
 - Automated tests that prove: Shop A cannot read or change Shop B's data through any endpoint; staff cannot call any admin endpoint; client-sent prices are ignored; concurrent sales of the last item never produce negative stock; duplicate idempotency keys never create two sales.
 
+### 7.16 BIR-ready design
+- BLS is **not BIR-accredited** yet. Never claim accreditation. Until accreditation is granted, every receipt is clearly labeled as **not an official invoice**. *TODO: exact wording to be confirmed by a tax professional.*
+- Sale numbers are **sequential per shop, never reused or edited**. Voided sales keep their number.
+- **Daily close report** (Z-reading style): totals, voids, payment breakdown, first and last sale number, stored in `daily_closings`. A closed day cannot be edited.
+- The audit log is **tamper-evident**: each entry stores the hash of the previous entry for that shop (hash chain), so a changed or deleted entry is detectable.
+- Add a note in `docs/ROADMAP.md`: "Before selling BLS to other businesses, consult a tax professional about BIR accreditation (CRM/POS/sales software) and the e-invoicing rules, including RMC No. 110-2026."
+
 ---
 
 ## 8. Onboarding and tutorials
@@ -640,7 +695,7 @@ Log: logins (success/fail), password/2FA changes, staff create/deactivate/role c
 
 ## 10. PWA and offline selling
 
-- Installable PWA with manifest using the shop's name, brand color and icon (default POS Fast icon if no logo).
+- Installable PWA with manifest using the shop's name, brand color and icon (default BLS icon if no logo; PWA name "BLS", short name "BLS").
 - Offline app shell and cached product list (refreshed on each online load).
 - **Offline sales:** saved to IndexedDB with an idempotency key and `clientCreatedAt`. Shown with an "Unsynced" badge.
 - Sync on reconnect, oldest first. If the server rejects a sale (e.g. stock ran out), keep it in a **"Needs review"** list for an admin to resolve. Never silently drop a sale.
@@ -657,10 +712,10 @@ Log: logins (success/fail), password/2FA changes, staff create/deactivate/role c
 - **Environments:** `local` (wrangler dev + local D1), `preview` (per-PR), `production`.
 - **CI/CD:** GitHub Actions → lint, typecheck, test, apply D1 migrations, deploy with `wrangler deploy` on `main`.
 - **Versioning:** SemVer tags; `CHANGELOG.md` generated from Conventional Commits.
-- **Docs:** `docs/DEPLOY_FREE.md` explains how anyone can self-host POS Fast for free:
+- **Docs:** `docs/DEPLOY_FREE.md` explains how anyone can self-host BLS for free:
   1. Create a free Cloudflare account.
   2. `pnpm i` → `wrangler login`.
-  3. `wrangler d1 create pos-fast` and `wrangler r2 bucket create pos-fast-media`; paste IDs into `wrangler.jsonc`.
+  3. `wrangler d1 create bls-pos` and `wrangler r2 bucket create bls-pos-media`; paste IDs into `wrangler.jsonc`.
   4. Create a Turnstile widget; set secrets with `wrangler secret put`.
   5. `pnpm db:migrate:prod` → `pnpm deploy`.
   6. Open the URL and sign up as the first owner.
@@ -669,12 +724,12 @@ Log: logins (success/fail), password/2FA changes, staff create/deactivate/role c
 
 ## 12. Phases and dated commit plan
 
-**Start:** January 16, 2027 · **v1.0.0 (Free) target:** June 19, 2027 · Pace: part-time, about 3–4 commits per week.
+**Start:** January 16, 2027 · **v1.0.0 (Free) target:** July 1, 2027 · Pace: part-time, about 3–4 commits per week. (Phase 3.5 was inserted after Phase 3; every commit from Phase 4 on moved +12 days.)
 
 Each phase ends with: all tests passing, docs updated, and a short demo note in `docs/PROGRESS.md`. If a phase slips, move the later dates — do not cut security work.
 
 ### Phase 0 — Foundation (Jan 16 – Jan 24, 2027)
-**Goal:** a deployable "Hello POS Fast" with CI.
+**Goal:** a deployable "Hello BLS" with CI.
 | Date | Commit |
 |---|---|
 | 2027-01-16 | `chore: initialize repository with README, LICENSE, .gitignore, .editorconfig` |
@@ -731,100 +786,129 @@ Each phase ends with: all tests passing, docs updated, and a short demo note in 
 
 **Done when:** admins manage products with photos; staff can deduct stock with a reason; every change is logged.
 
-### Phase 4 — Selling (Mar 11 – Mar 27)
+### Phase 3.5 — Bulk import, export and backup (Mar 10 – Mar 21)
+**Goal:** a shop can load its whole catalog on day one.
+
+- Import products from **CSV or Excel (.xlsx)**, or rows pasted from Google Sheets.
+- Parse the file **on the device in a Web Worker** (SheetJS for .xlsx, Papa Parse for CSV) so the page never freezes.
+- Downloadable **template file** with the exact columns: `name, sku, category, price, cost, stock, low_stock_threshold, track_stock`.
+- **Validate every row before saving** and show an error preview ("Row 214: price is missing"), editable in place.
+- **Upsert by SKU:** re-importing the same file updates products instead of duplicating them.
+- Send rows to the server in **chunks of 200–500** with a progress bar, using D1 `batch()`. Stay inside Cloudflare free-tier CPU and request limits; check them in `docs/LIMITS.md`.
+- Enforce the plan's `maxProducts` on the server.
+- **Bulk image upload:** drag in many photos, matched to products by file name (`SKU.jpg`), compressed on the device, uploaded in the background with retries.
+- **Export** products, stock, stock movements and sales as CSV or .xlsx, streamed so thousands of rows don't time out. Keep the CSV formula-injection protection (Section 7.9).
+- **Full shop backup** download (JSON or zip) and **restore** through the same import flow (admin/owner only, with a confirmation and an audit log entry).
+- **Target:** importing 5,000 products completes without errors or timeouts on a normal connection.
+
 | Date | Commit |
 |---|---|
-| 2027-03-11 | `feat(db): add sales and sale_items schema with stock CHECK constraint` |
-| 2027-03-13 | `feat(sales): add atomic sale creation with server-side pricing` |
-| 2027-03-14 | `feat(sales): add idempotency keys to prevent duplicate sales` |
-| 2027-03-16 | `feat(payments): add payment adapter with cash and manual methods` |
-| 2027-03-18 | `feat(sales): add admin sale voiding with reason and restock` |
-| 2027-03-20 | `feat(web): add sell screen with product grid and cart` |
-| 2027-03-21 | `feat(web): add cash checkout with quick amounts and change` |
-| 2027-03-23 | `feat(web): add receipt view with print support` |
-| 2027-03-25 | `feat(web): add SKU search and barcode scanner input` |
-| 2027-03-27 | `test(sales): cover concurrent oversell, voids and duplicate submits` |
+| 2027-03-10 | `feat(import): add CSV/XLSX template and Web Worker parser` |
+| 2027-03-11 | `feat(import): add row validation and editable error preview` |
+| 2027-03-13 | `feat(import): add chunked bulk upsert by SKU with progress` |
+| 2027-03-15 | `feat(import): add bulk image upload matched by file name` |
+| 2027-03-17 | `feat(export): add streamed CSV/XLSX export` |
+| 2027-03-19 | `feat(backup): add full shop backup download and restore` |
+| 2027-03-21 | `test(import): cover 5,000-row import, duplicates, bad rows and restore` |
+
+**Done when:** a 5,000-row file imports without errors or timeouts; re-importing it updates instead of duplicating; a backup restores into an empty shop.
+
+### Phase 4 — Selling (Mar 23 – Apr 8)
+| Date | Commit |
+|---|---|
+| 2027-03-23 | `feat(db): add sales and sale_items schema with stock CHECK constraint` |
+| 2027-03-25 | `feat(sales): add atomic sale creation with server-side pricing` |
+| 2027-03-26 | `feat(sales): add idempotency keys to prevent duplicate sales` |
+| 2027-03-28 | `feat(payments): add payment adapter with cash and manual methods` |
+| 2027-03-30 | `feat(sales): add admin sale voiding with reason and restock` |
+| 2027-04-01 | `feat(web): add sell screen with product grid and cart` |
+| 2027-04-02 | `feat(web): add cash checkout with quick amounts and change` |
+| 2027-04-04 | `feat(web): add receipt view with print support` |
+| 2027-04-06 | `feat(web): add SKU search and barcode scanner input` |
+| 2027-04-08 | `test(sales): cover concurrent oversell, voids and duplicate submits` |
 
 **Done when:** a cashier completes a sale in under 10 seconds; overselling and duplicate sales are impossible.
 
-### Phase 5 — Dashboard and reports (Mar 29 – Apr 10)
+### Phase 5 — Dashboard and reports (Apr 10 – Apr 22)
 | Date | Commit |
 |---|---|
-| 2027-03-29 | `feat(reports): add daily summary cron in shop timezone` |
-| 2027-03-31 | `feat(reports): add income by day, week and month` |
-| 2027-04-02 | `feat(reports): add top products and sales by staff` |
-| 2027-04-04 | `feat(web): add admin dashboard with KPI cards and charts` |
-| 2027-04-06 | `feat(web): add staff shift view of own sales today` |
-| 2027-04-08 | `feat(reports): add CSV export with formula-injection protection` |
-| 2027-04-10 | `test(reports): verify totals, timezones and voided sales` |
+| 2027-04-10 | `feat(reports): add daily summary cron in shop timezone` |
+| 2027-04-12 | `feat(reports): add income by day, week and month` |
+| 2027-04-14 | `feat(reports): add top products and sales by staff` |
+| 2027-04-16 | `feat(web): add admin dashboard with KPI cards and charts` |
+| 2027-04-18 | `feat(web): add staff shift view of own sales today` |
+| 2027-04-20 | `feat(reports): add CSV export with formula-injection protection` |
+| 2027-04-21 | `feat(reports): add daily close report with locked totals` |
+| 2027-04-22 | `test(reports): verify totals, timezones and voided sales` |
 
 **Done when:** dashboard totals match sales data exactly, including voids, in the shop's timezone.
 
-### Phase 6 — Branding and storefront (Apr 12 – Apr 26)
+### Phase 6 — Branding and storefront (Apr 24 – May 8)
 | Date | Commit |
 |---|---|
-| 2027-04-12 | `feat(theme): add theme schema and OKLCH palette generator` |
-| 2027-04-14 | `feat(theme): add automatic contrast checking` |
-| 2027-04-15 | `feat(web): add color wheel and presets with live preview` |
-| 2027-04-17 | `feat(web): add cover photo and logo upload with cropping` |
-| 2027-04-19 | `feat(web): add dark mode and font choices` |
-| 2027-04-21 | `feat(profile): add user avatars and display names` |
-| 2027-04-23 | `feat(storefront): add public shop profile page` |
-| 2027-04-24 | `feat(storefront): add visibility settings and reserved slugs` |
-| 2027-04-26 | `feat(storefront): add share link and QR code` |
+| 2027-04-24 | `feat(theme): add theme schema and OKLCH palette generator` |
+| 2027-04-26 | `feat(theme): add automatic contrast checking` |
+| 2027-04-27 | `feat(web): add color wheel and presets with live preview` |
+| 2027-04-29 | `feat(web): add cover photo and logo upload with cropping` |
+| 2027-05-01 | `feat(web): add dark mode and font choices` |
+| 2027-05-03 | `feat(profile): add user avatars and display names` |
+| 2027-05-05 | `feat(storefront): add public shop profile page` |
+| 2027-05-06 | `feat(storefront): add visibility settings and reserved slugs` |
+| 2027-05-08 | `feat(storefront): add share link and QR code` |
 
 **Done when:** each shop looks like its own brand everywhere and has a shareable public page that leaks no internal data.
 
-### Phase 7 — Onboarding and help (Apr 28 – May 8)
+### Phase 7 — Onboarding and help (May 10 – May 20)
 | Date | Commit |
 |---|---|
-| 2027-04-28 | `feat(onboarding): add setup wizard steps for shop and branding` |
-| 2027-04-30 | `feat(onboarding): add wizard steps for products, staff and security` |
-| 2027-05-02 | `feat(onboarding): add business-type presets and sample products` |
-| 2027-05-04 | `feat(tour): add guided tour for owners and admins` |
-| 2027-05-05 | `feat(tour): add guided tour for staff` |
-| 2027-05-07 | `feat(help): add in-app help center` |
-| 2027-05-08 | `docs: add free self-hosting deployment guide` |
+| 2027-05-10 | `feat(onboarding): add setup wizard steps for shop and branding` |
+| 2027-05-12 | `feat(onboarding): add wizard steps for products, staff and security` |
+| 2027-05-14 | `feat(onboarding): add business-type presets and sample products` |
+| 2027-05-16 | `feat(tour): add guided tour for owners and admins` |
+| 2027-05-17 | `feat(tour): add guided tour for staff` |
+| 2027-05-19 | `feat(help): add in-app help center` |
+| 2027-05-20 | `docs: add free self-hosting deployment guide` |
 
 **Done when:** a new owner goes from signup to first sale in under 10 minutes without outside help.
 
-### Phase 8 — PWA and offline (May 10 – May 20)
+### Phase 8 — PWA and offline (May 22 – Jun 1)
 | Date | Commit |
 |---|---|
-| 2027-05-10 | `feat(pwa): add manifest, icons and service worker` |
-| 2027-05-12 | `feat(pwa): cache app shell and product list` |
-| 2027-05-14 | `feat(offline): queue sales in IndexedDB while offline` |
-| 2027-05-16 | `feat(offline): sync queued sales and add needs-review list` |
-| 2027-05-18 | `feat(web): add online and offline status indicator` |
-| 2027-05-20 | `test(offline): cover offline sale, sync and conflict handling` |
+| 2027-05-22 | `feat(pwa): add manifest, icons and service worker` (PNG icon sizes generated from `bls-logo.svg`) |
+| 2027-05-24 | `feat(pwa): cache app shell and product list` |
+| 2027-05-26 | `feat(offline): queue sales in IndexedDB while offline` |
+| 2027-05-28 | `feat(offline): sync queued sales and add needs-review list` |
+| 2027-05-30 | `feat(web): add online and offline status indicator` |
+| 2027-06-01 | `test(offline): cover offline sale, sync and conflict handling` |
 
 **Done when:** sales made with no internet appear in the dashboard after reconnecting, with no duplicates.
 
-### Phase 9 — Security hardening (May 22 – Jun 5)
+### Phase 9 — Security hardening (Jun 3 – Jun 17)
 | Date | Commit |
 |---|---|
-| 2027-05-22 | `feat(security): add CSP and security headers` |
-| 2027-05-24 | `feat(security): add origin check for state-changing requests` |
-| 2027-05-25 | `feat(auth): add optional TOTP two-factor for owners and admins` |
-| 2027-05-27 | `feat(auth): add active sessions page and log out all devices` |
-| 2027-05-29 | `chore(security): enable Dependabot, secret scanning and dependency audit` |
-| 2027-05-31 | `feat(backup): add nightly backup export to R2` |
-| 2027-06-02 | `test(e2e): add Playwright tests for critical flows` |
-| 2027-06-04 | `docs(security): add threat model and review checklist` |
-| 2027-06-05 | `fix(security): resolve findings from security review` |
+| 2027-06-03 | `feat(security): add CSP and security headers` |
+| 2027-06-05 | `feat(security): add origin check for state-changing requests` |
+| 2027-06-06 | `feat(auth): add optional TOTP two-factor for owners and admins` |
+| 2027-06-08 | `feat(auth): add active sessions page and log out all devices` |
+| 2027-06-10 | `chore(security): enable Dependabot, secret scanning and dependency audit` |
+| 2027-06-12 | `feat(backup): add nightly backup export to R2` |
+| 2027-06-13 | `feat(audit): add hash-chained tamper-evident audit log` |
+| 2027-06-14 | `test(e2e): add Playwright tests for critical flows` |
+| 2027-06-16 | `docs(security): add threat model and review checklist` |
+| 2027-06-17 | `fix(security): resolve findings from security review` |
 
 **Done when:** every item in Section 7 is implemented and checked off in `docs/SECURITY.md`.
 
-### Phase 10 — Polish and launch (Jun 7 – Jun 19)
+### Phase 10 — Polish and launch (Jun 19 – Jul 1)
 | Date | Commit |
 |---|---|
-| 2027-06-07 | `perf: reduce bundle size and lazy-load routes` |
-| 2027-06-09 | `feat(a11y): complete accessibility pass` |
-| 2027-06-11 | `feat(legal): add privacy policy, terms, data export and shop deletion` |
-| 2027-06-13 | `chore: configure production environment` |
-| 2027-06-15 | `chore(release): v1.0.0-rc.1 for pilot shops` |
-| 2027-06-17 | `fix: address pilot shop feedback` |
-| 2027-06-19 | `chore(release): v1.0.0` |
+| 2027-06-19 | `perf: reduce bundle size and lazy-load routes` |
+| 2027-06-21 | `feat(a11y): complete accessibility pass` |
+| 2027-06-23 | `feat(legal): add privacy policy, terms, data export and shop deletion` |
+| 2027-06-25 | `chore: configure production environment` |
+| 2027-06-27 | `chore(release): v1.0.0-rc.1 for pilot shops` |
+| 2027-06-29 | `fix: address pilot shop feedback` |
+| 2027-07-01 | `chore(release): v1.0.0` |
 
 **Done when:** 2–3 real pilot shops have used it for at least a few days without blocking issues.
 
@@ -832,7 +916,7 @@ Each phase ends with: all tests passing, docs updated, and a short demo note in 
 
 ## 13. Paid edition roadmap (later — do NOT build in Phases 0–10)
 
-Tentative, starting after v1.0.0 (July 2027 onward). Each item plugs into an adapter or entitlement already prepared above.
+The customer-facing Paid product is called **"BLS Shop"**. Tentative, starting after v1.0.0 (July 2027 onward). Each item plugs into an adapter or entitlement already prepared above.
 
 | Phase | Feature | Uses |
 |---|---|---|

@@ -1,6 +1,6 @@
 # Roadmap
 
-> The project was renamed from **POS Fast** to **Bilis POS** on 2026-10-29. `docs/MASTER_PROMPT.md` keeps the original name; wherever it says "POS Fast", `pos-fast` or `__Host-pf_session`, read "Bilis POS", `bilis-pos` and `__Host-bp_session`.
+> The project is called **BLS** (pronounced "bilis"). It was first named POS Fast, then Bilis POS; the master prompt was updated to BLS on 2026-10-29.
 
 > The master prompt (§12) holds the full dated commit plan. Dates are a **plan**: commits
 > are made when the work is actually done, with real timestamps. Work started
@@ -8,21 +8,28 @@
 
 ## Free edition — v1.0.0
 
-| Phase | Scope                                                           | Status                                                                          |
-| ----- | --------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| 0     | Foundation: repo, tooling, client + worker scaffold, CI, limits | **Code done** — preview deploy and green CI need GitHub push + Cloudflare login |
-| 1     | Database and authentication                                     | Not started                                                                     |
-| 2     | Tenancy, roles and staff                                        | Not started                                                                     |
-| 3     | Products and inventory                                          | Not started                                                                     |
-| 4     | Selling                                                         | Not started                                                                     |
-| 5     | Dashboard and reports                                           | Not started                                                                     |
-| 6     | Branding and storefront                                         | Not started                                                                     |
-| 7     | Onboarding and help                                             | Not started                                                                     |
-| 8     | PWA and offline                                                 | Not started                                                                     |
-| 9     | Security hardening                                              | Not started                                                                     |
-| 10    | Polish and launch                                               | Not started                                                                     |
+| Phase | Scope                                                           | Status                                               |
+| ----- | --------------------------------------------------------------- | ---------------------------------------------------- |
+| 0     | Foundation: repo, tooling, client + worker scaffold, CI, limits | Done (preview deploy still needs a Cloudflare login) |
+| 1     | Database and authentication                                     | Done                                                 |
+| 2     | Tenancy, roles and staff                                        | Done                                                 |
+| 3     | Products and inventory                                          | In progress                                          |
+| 3.5   | Bulk import, export and backup                                  | Not started                                          |
+| 4     | Selling                                                         | Not started                                          |
+| 5     | Dashboard and reports                                           | Not started                                          |
+| 6     | Branding and storefront                                         | Not started                                          |
+| 7     | Onboarding and help                                             | Not started                                          |
+| 8     | PWA and offline                                                 | Not started                                          |
+| 9     | Security hardening                                              | Not started                                          |
+| 10    | Polish and launch                                               | Not started                                          |
+
+## Before selling to other businesses
+
+- Before selling BLS to other businesses, consult a tax professional about BIR accreditation (CRM/POS/sales software) and the e-invoicing rules, including RMC No. 110-2026. BLS is **not** BIR-accredited; receipts must say they are not an official invoice until it is.
 
 ## Decisions needed
+
+- **5,000 products vs. the Free limit:** Phase 3.5 and the search budget target 5,000 products, but Free `maxProducts` is 500. Decide whether to raise the Free limit or test 5,000 rows with a test-only limit.
 
 - ~~**Phase 1:** PBKDF2 iteration count vs. the 10 ms free CPU limit~~ — decided 2026-10-29: 100,000, measured on a real Free account (see `LIMITS.md`).
 - **License:** MIT was chosen as a placeholder. With a Paid edition planned, consider
