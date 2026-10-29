@@ -29,7 +29,7 @@ Please do not open a public issue. Email the maintainer (see the GitHub profile 
 ### 7.3 Login protection
 
 - [x] Rate limit by shop+username (5 failures / 15 min) and IP hash (20 / 15 min — higher because carrier CGNAT puts many phones behind one IP)
-- [ ] 15-minute lock after 10 failures ✅ — admins notified in-app ⏳ (needs the audit log, Phase 2)
+- [ ] 15-minute lock after 10 failures ✅ — admins notified in-app ⏳ (`login.locked` is in the audit log; the in-app notice comes with the app shell)
 - [x] Turnstile on signup, on login after 3 failures (or 10 per IP), and always on recovery. Fails closed if Cloudflare is unreachable.
 - [x] Same generic error for wrong username or wrong password (plus dummy hash so timing matches)
 
@@ -85,7 +85,7 @@ Please do not open a public issue. Email the maintainer (see the GitHub profile 
 
 ### 7.13 Audit log
 
-- [ ] All listed sensitive actions logged; no secrets in details
+- [ ] All listed sensitive actions logged ⏳ (done so far: signup, logins, lockouts, recovery, staff create/deactivate; the rest land with their features); no secrets in details ✅ (keys scrubbed, tested)
 
 ### 7.14 Backups and data rights
 

@@ -15,6 +15,13 @@ describe('newId', () => {
     expect(a < b).toBe(true);
   });
 
+  it('keeps creation order within the same millisecond', () => {
+    const now = Date.now() + 60_000;
+    const ids = Array.from({ length: 5000 }, () => newId(now)); // more than the counter holds
+    expect([...ids].sort()).toEqual(ids);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
   it('does not repeat', () => {
     const ids = new Set(Array.from({ length: 1000 }, () => newId(0)));
     expect(ids.size).toBe(1000);

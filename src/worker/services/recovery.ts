@@ -16,6 +16,7 @@ import {
   recordFailure,
   retryAfterSeconds,
 } from './rate-limit';
+import { auditInsert, writeAudit } from './audit';
 
 export type RecoverResult = { userId: string; shopId: string; remainingCodes: number };
 
@@ -72,6 +73,14 @@ export async function recoverAccount(
 
   if (!owner || spent?.meta.changes !== 1) {
     await recordFailure(db, keys, now);
+    if (owner) {
+      await writeAudit(
+        db,
+        owner.shopId,
+        { action: 'recover.failed', target: { type: 'user', id: owner.id }, ipHash },
+        now,
+      );
+    }
     throw INVALID_RECOVERY();
   }
 
@@ -92,6 +101,17 @@ export async function recoverAccount(
           isNull(sessions.revokedAt),
         ),
       ),
+    auditInsert(
+      db,
+      owner.shopId,
+      {
+        action: 'password.recover',
+        userId: owner.id,
+        target: { type: 'user', id: owner.id },
+        ipHash,
+      },
+      now,
+    ),
   ]);
   await clearUserFailures(db, keys);
 

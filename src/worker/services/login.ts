@@ -15,6 +15,7 @@ import {
   recordFailure,
   retryAfterSeconds,
 } from './rate-limit';
+import { auditInsert, writeAudit } from './audit';
 
 export type LoginResult = { userId: string; shopId: string; role: Role };
 
@@ -99,31 +100,63 @@ export async function login(
 
   if (!user || !ok || !user.active) {
     await recordFailure(db, keys, now);
-    if (user && !ok) await countAccountFailure(db, user.shopId, user.id, now);
+    if (user) {
+      // Unknown usernames have no shop to log to; known accounts are logged for admins.
+      const audit = { userId: user.id, target: { type: 'user', id: user.id }, ipHash: ctx.ipHash };
+      await writeAudit(
+        db,
+        user.shopId,
+        {
+          ...audit,
+          action: 'login.failed',
+          details: { reason: ok ? 'inactive' : 'wrong_password' },
+        },
+        now,
+      );
+      if (!ok && (await countAccountFailure(db, user.shopId, user.id, now))) {
+        await writeAudit(db, user.shopId, { ...audit, action: 'login.locked' }, now);
+      }
+    }
     throw INVALID_CREDENTIALS();
   }
 
-  await db
-    .update(users)
-    .set({
-      failedLogins: 0,
-      lockedUntil: null,
-      ...(needsRehash ? { passwordHash: await hashPassword(input.password, pepper) } : {}),
-    })
-    .where(and(eq(users.id, user.id), eq(users.shopId, user.shopId)));
+  await db.batch([
+    db
+      .update(users)
+      .set({
+        failedLogins: 0,
+        lockedUntil: null,
+        ...(needsRehash ? { passwordHash: await hashPassword(input.password, pepper) } : {}),
+      })
+      .where(and(eq(users.id, user.id), eq(users.shopId, user.shopId))),
+    auditInsert(
+      db,
+      user.shopId,
+      { action: 'login.success', userId: user.id, ipHash: ctx.ipHash },
+      now,
+    ),
+  ]);
   await clearUserFailures(db, keys);
 
   return { userId: user.id, shopId: user.shopId, role: user.role };
 }
 
-async function countAccountFailure(db: Db, shopId: string, userId: string, now: number) {
+/** Counts one failed password; returns true if this failure locked the account. */
+async function countAccountFailure(
+  db: Db,
+  shopId: string,
+  userId: string,
+  now: number,
+): Promise<boolean> {
   // One statement, so concurrent failures cannot skip past the threshold.
-  // TODO(Phase 2): write `login.locked` to the audit log so admins see it in the app.
-  await db
+  const row = await db
     .update(users)
     .set({
       failedLogins: sql`CASE WHEN ${users.failedLogins} + 1 >= ${LOCK_AFTER_FAILURES} THEN 0 ELSE ${users.failedLogins} + 1 END`,
       lockedUntil: sql`CASE WHEN ${users.failedLogins} + 1 >= ${LOCK_AFTER_FAILURES} THEN ${now + LOCK_MS} ELSE ${users.lockedUntil} END`,
     })
-    .where(and(eq(users.id, userId), eq(users.shopId, shopId)));
+    .where(and(eq(users.id, userId), eq(users.shopId, shopId)))
+    .returning({ lockedUntil: users.lockedUntil })
+    .get();
+  return row.lockedUntil === now + LOCK_MS;
 }

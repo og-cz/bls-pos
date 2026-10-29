@@ -11,6 +11,10 @@ import { sessions, shops, users } from '../db/schema';
 import { ApiError } from '../lib/errors';
 import { newTemporaryPassword } from '../security/codes';
 import { hashPassword } from '../security/password';
+import { auditInsert } from './audit';
+
+/** The signed-in person doing the action, for permission checks and the audit log. */
+export type Actor = { userId: string; role: Role; ipHash: string | null };
 
 const memberColumns = {
   id: users.id,
@@ -48,11 +52,11 @@ export async function createStaff(
   db: Db,
   shopId: string,
   pepper: string,
-  actorRole: Role,
+  actor: Actor,
   input: CreateStaffInput,
   now: number = Date.now(),
 ): Promise<CreatedStaff> {
-  if (!canCreate(actorRole, input.role)) {
+  if (!canCreate(actor.role, input.role)) {
     throw new ApiError(403, 'FORBIDDEN', 'Only the owner can add admins.');
   }
 
@@ -91,11 +95,25 @@ export async function createStaff(
   };
 
   try {
-    await db.insert(users).values({
-      ...member,
-      shopId,
-      passwordHash: await hashPassword(temporaryPassword, pepper),
-    });
+    await db.batch([
+      db.insert(users).values({
+        ...member,
+        shopId,
+        passwordHash: await hashPassword(temporaryPassword, pepper),
+      }),
+      auditInsert(
+        db,
+        shopId,
+        {
+          action: 'staff.create',
+          userId: actor.userId,
+          target: { type: 'user', id: member.id },
+          details: { username: member.username, role: member.role },
+          ipHash: actor.ipHash,
+        },
+        now,
+      ),
+    ]);
   } catch (err) {
     if (isUniqueViolation(err, 'users.shop_id')) {
       throw new ApiError(409, 'USERNAME_TAKEN', 'Someone in this shop already has that username.', {
@@ -112,7 +130,7 @@ export async function createStaff(
  * Who may change whom: the owner manages admins and staff; admins manage staff only.
  * Nobody changes the owner through these routes, and nobody changes their own account.
  */
-function canManage(actor: { userId: string; role: Role }, target: { id: string; role: Role }) {
+function canManage(actor: Actor, target: { id: string; role: Role }) {
   if (target.id === actor.userId || target.role === 'owner') return false;
   return target.role === 'staff' ? hasRole(actor.role, 'admin') : actor.role === 'owner';
 }
@@ -121,7 +139,7 @@ function canManage(actor: { userId: string; role: Role }, target: { id: string; 
 export async function deactivateMember(
   db: Db,
   shopId: string,
-  actor: { userId: string; role: Role },
+  actor: Actor,
   targetId: string,
   now: number = Date.now(),
 ): Promise<StaffMember> {
@@ -151,6 +169,18 @@ export async function deactivateMember(
           isNull(sessions.revokedAt),
         ),
       ),
+    auditInsert(
+      db,
+      shopId,
+      {
+        action: 'staff.deactivate',
+        userId: actor.userId,
+        target: { type: 'user', id: target.id },
+        details: { username: target.username, wasActive: target.active },
+        ipHash: actor.ipHash,
+      },
+      now,
+    ),
   ]);
   return { ...target, active: false };
 }

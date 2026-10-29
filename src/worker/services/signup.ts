@@ -7,6 +7,7 @@ import { recoveryCodes, shops, users } from '../db/schema';
 import { isUniqueViolation } from '../db/errors';
 import { ApiError } from '../lib/errors';
 import { hashPassword } from '../security/password';
+import { auditInsert } from './audit';
 import { hashRecoveryCode, newRecoveryCode, RECOVERY_CODE_COUNT } from '../security/recovery-codes';
 
 export type SignupResult = {
@@ -24,6 +25,7 @@ export async function createShopWithOwner(
   db: Db,
   pepper: string,
   input: SignupInput,
+  ipHash: string | null = null,
   now: number = Date.now(),
 ): Promise<SignupResult> {
   const shopId = newId(now);
@@ -59,6 +61,12 @@ export async function createShopWithOwner(
         createdAt: now,
       }),
       db.insert(recoveryCodes).values(codeRows),
+      auditInsert(
+        db,
+        shopId,
+        { action: 'shop.create', userId, target: { type: 'shop', id: shopId }, ipHash },
+        now,
+      ),
     ]);
   } catch (err) {
     if (isUniqueViolation(err, 'shops.slug')) {

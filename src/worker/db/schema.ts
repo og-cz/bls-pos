@@ -125,6 +125,24 @@ export const loginAttempts = sqliteTable(
   (t) => [primaryKey({ columns: [t.key, t.windowStart] })],
 );
 
+// Who did what, when (Section 7.13). details_json never holds passwords, tokens or codes.
+export const auditLog = sqliteTable(
+  'audit_log',
+  {
+    id: text('id').primaryKey(),
+    shopId: text('shop_id').notNull(),
+    userId: text('user_id'),
+    action: text('action').notNull(),
+    targetType: text('target_type'),
+    targetId: text('target_id'),
+    detailsJson: text('details_json'),
+    ipHash: text('ip_hash'),
+    createdAt: integer('created_at').notNull(),
+  },
+  // Newest-first listing per shop; ids are UUIDv7 so they sort by time too.
+  (t) => [index('audit_log_shop_id').on(t.shopId, t.id)],
+);
+
 export type Shop = typeof shops.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;

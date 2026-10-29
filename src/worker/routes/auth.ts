@@ -5,9 +5,9 @@ import { loginSchema, recoverSchema, signupSchema } from '@shared/schemas/auth';
 import { getDb } from '../db/client';
 import type { AppEnv, AuthedEnv } from '../env';
 import { clearSessionCookie, writeSessionCookie } from '../lib/cookies';
+import { clientIpHash } from '../lib/ip';
 import { parseJson } from '../lib/validate';
 import { authed } from '../middleware/tenant';
-import { hashIp } from '../security/tokens';
 import { requireHuman } from '../security/turnstile';
 import { login, TooManyAttemptsError } from '../services/login';
 import { recoverAccount } from '../services/recovery';
@@ -15,11 +15,6 @@ import { createSession, revokeSession } from '../services/sessions';
 import { createShopWithOwner } from '../services/signup';
 
 export const authRoutes = new Hono<AppEnv>();
-
-async function clientIpHash(c: Context<AppEnv>): Promise<string | null> {
-  const ip = c.req.header('cf-connecting-ip');
-  return ip ? hashIp(ip, c.env.PEPPER) : null;
-}
 
 async function startSession(c: Context<AppEnv>, shopId: string, userId: string) {
   const { token, expiresAt } = await createSession(getDb(c.env.DB), shopId, userId, {
@@ -36,7 +31,12 @@ function verifyHuman(c: Context<AppEnv>, token: string | undefined) {
 authRoutes.post('/signup', async (c) => {
   const input = await parseJson(c, signupSchema);
   await verifyHuman(c, input.turnstileToken);
-  const result = await createShopWithOwner(getDb(c.env.DB), c.env.PEPPER, input);
+  const result = await createShopWithOwner(
+    getDb(c.env.DB),
+    c.env.PEPPER,
+    input,
+    await clientIpHash(c),
+  );
   await startSession(c, result.shop.id, result.user.id);
   return c.json(result, 201);
 });
