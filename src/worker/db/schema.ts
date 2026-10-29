@@ -7,6 +7,7 @@ import {
   sqliteTable,
   text,
   unique,
+  uniqueIndex,
 } from 'drizzle-orm/sqlite-core';
 
 import { BUSINESS_TYPES, type BusinessType } from '../../shared/business';
@@ -143,6 +144,101 @@ export const auditLog = sqliteTable(
   (t) => [index('audit_log_shop_id').on(t.shopId, t.id)],
 );
 
+export const categories = sqliteTable(
+  'categories',
+  {
+    id: text('id').primaryKey(),
+    shopId: text('shop_id')
+      .notNull()
+      .references(() => shops.id),
+    name: text('name').notNull(),
+    sortOrder: integer('sort_order').notNull().default(0),
+  },
+  (t) => [
+    unique('categories_shop_name').on(t.shopId, t.name),
+    index('categories_shop_id').on(t.shopId),
+  ],
+);
+
+export const products = sqliteTable(
+  'products',
+  {
+    id: text('id').primaryKey(),
+    shopId: text('shop_id')
+      .notNull()
+      .references(() => shops.id),
+    categoryId: text('category_id').references(() => categories.id),
+    name: text('name').notNull(),
+    // Unique per shop when present (partial index below).
+    sku: text('sku'),
+    // Money is integer centavos, never floating point.
+    priceCents: integer('price_cents').notNull(),
+    // Admin-only: never sent to staff (Section 7.4).
+    costCents: integer('cost_cents'),
+    trackStock: integer('track_stock', { mode: 'boolean' }).notNull().default(true),
+    stock: integer('stock').notNull().default(0),
+    lowStockThreshold: integer('low_stock_threshold').notNull().default(5),
+    imageKey: text('image_key'),
+    showOnStorefront: integer('show_on_storefront', { mode: 'boolean' }).notNull().default(true),
+    // "Remove product" = archive, so sales history stays intact.
+    archivedAt: integer('archived_at'),
+    createdAt: integer('created_at').notNull(),
+    updatedAt: integer('updated_at').notNull(),
+  },
+  (t) => [
+    uniqueIndex('products_shop_sku')
+      .on(t.shopId, t.sku)
+      .where(sql`${t.sku} IS NOT NULL`),
+    index('products_shop_id').on(t.shopId),
+    check('products_price', sql`${t.priceCents} >= 0`),
+    check('products_cost', sql`${t.costCents} >= 0`),
+    // The database itself refuses to oversell tracked items (Section 5.3).
+    check('products_stock', sql`${t.trackStock} = 0 OR ${t.stock} >= 0`),
+  ],
+);
+
+export const STOCK_REASONS = [
+  'restock',
+  'sale',
+  'void',
+  'damaged',
+  'expired',
+  'used',
+  'lost',
+  'correction',
+] as const;
+export type StockReason = (typeof STOCK_REASONS)[number];
+
+// Every stock change: who, when, how many, why (Section 1.2).
+export const stockMovements = sqliteTable(
+  'stock_movements',
+  {
+    id: text('id').primaryKey(),
+    shopId: text('shop_id').notNull(),
+    productId: text('product_id')
+      .notNull()
+      .references(() => products.id),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id),
+    // +restock, -sale, -deduct
+    delta: integer('delta').notNull(),
+    reason: text('reason', { enum: STOCK_REASONS }).notNull(),
+    note: text('note'),
+    saleId: text('sale_id'),
+    createdAt: integer('created_at').notNull(),
+  },
+  (t) => [
+    index('stock_movements_shop_id').on(t.shopId, t.id),
+    index('stock_movements_product_id').on(t.productId),
+    check(
+      'stock_movements_reason',
+      sql`${t.reason} IN ('restock','sale','void','damaged','expired','used','lost','correction')`,
+    ),
+  ],
+);
+
 export type Shop = typeof shops.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
+export type Product = typeof products.$inferSelect;
