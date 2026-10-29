@@ -1,4 +1,4 @@
-import { Boxes, LayoutDashboard, Package, ScrollText, ShoppingCart, Users } from 'lucide-react';
+import { Boxes, LayoutDashboard, Package, ShoppingCart } from 'lucide-react';
 
 import { useMe } from '@/app/session';
 import { EmptyState, PageHeader } from '@/components/empty-state';
@@ -46,28 +46,6 @@ export function ProductsPage() {
       <PageHeader title="Products" />
       <EmptyState icon={Package} title="No products yet">
         Adding products with prices and photos is coming next.
-      </EmptyState>
-    </>
-  );
-}
-
-export function StaffPage() {
-  return (
-    <>
-      <PageHeader title="Staff" />
-      <EmptyState icon={Users} title="Your team">
-        Add cashiers and admins here.
-      </EmptyState>
-    </>
-  );
-}
-
-export function ActivityPage() {
-  return (
-    <>
-      <PageHeader title="Activity" />
-      <EmptyState icon={ScrollText} title="Activity log">
-        Logins, staff changes and other important actions will be listed here.
       </EmptyState>
     </>
   );

@@ -3,14 +3,9 @@ import { useEffect, type JSX } from 'react';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { RecoverPage } from '@/features/auth/RecoverPage';
 import { SignupPage } from '@/features/auth/SignupPage';
-import {
-  ActivityPage,
-  DashboardPage,
-  InventoryPage,
-  ProductsPage,
-  SellPage,
-  StaffPage,
-} from '@/features/placeholders';
+import { ActivityPage } from '@/features/activity/ActivityPage';
+import { DashboardPage, InventoryPage, ProductsPage, SellPage } from '@/features/placeholders';
+import { StaffPage } from '@/features/staff/StaffPage';
 import { navigate, usePathname } from '@/lib/router';
 import { APP_NAME } from '@shared/app';
 import { hasRole } from '@shared/roles';
