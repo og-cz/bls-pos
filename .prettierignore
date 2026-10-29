@@ -4,3 +4,4 @@ coverage
 pnpm-lock.yaml
 worker-configuration.d.ts
 migrations/meta
+docs/MASTER_PROMPT.md
