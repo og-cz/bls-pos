@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import { check, index, integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
 
+import { BUSINESS_TYPES, type BusinessType } from '@shared/business';
 import { ROLES, type Role } from '@shared/roles';
 
 // Conventions (master prompt §4):
@@ -8,17 +9,7 @@ import { ROLES, type Role } from '@shared/roles';
 // - Money is integer centavos. Timestamps are UTC epoch milliseconds.
 // - Every tenant-owned table has shop_id and an index on it.
 
-export const BUSINESS_TYPES = [
-  'cafe',
-  'retail',
-  'sari_sari',
-  'salon',
-  'food_stall',
-  'other',
-] as const;
-export type BusinessType = (typeof BUSINESS_TYPES)[number];
-
-export { ROLES, type Role };
+export { BUSINESS_TYPES, type BusinessType, ROLES, type Role };
 
 export const shops = sqliteTable(
   'shops',
