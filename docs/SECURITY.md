@@ -13,25 +13,25 @@ Please do not open a public issue. Email the maintainer (see the GitHub profile 
 
 ### 7.1 Passwords
 
-- [ ] PBKDF2-HMAC-SHA256 via WebCrypto, 16-byte salt, server-side pepper
-- [ ] Iteration count stored in hash string (`pbkdf2$sha256$iter$salt$hash`) — 100,000 (Workers max, measured in `LIMITS.md`)
-- [ ] Min length 10 (owner/admin) / 8 (staff) + common-password list
-- [ ] Constant-time comparison
+- [x] PBKDF2-HMAC-SHA256 via WebCrypto, 16-byte salt, server-side pepper
+- [x] Iteration count stored in hash string (`pbkdf2$sha256$iter$salt$hash`) — 100,000 (Workers max, measured in `LIMITS.md`)
+- [x] Min length 10 (owner/admin) / 8 (staff) + common-password list
+- [x] Constant-time comparison
 
 ### 7.2 Sessions
 
-- [ ] 32 random bytes, `__Host-bp_session`, `HttpOnly; Secure; SameSite=Lax; Path=/`
-- [ ] Only SHA-256 of token stored
-- [ ] 12 h idle / 30 d absolute expiry; `last_seen_at` refreshed ≤ every 5 min
+- [x] 32 random bytes, `__Host-bp_session`, `HttpOnly; Secure; SameSite=Lax; Path=/`
+- [x] Only SHA-256 of token stored
+- [x] 12 h idle (staff) / 30 d absolute expiry; `last_seen_at` refreshed ≤ every 5 min
 - [ ] Revoke on password change, deactivation, role change, "log out all"
-- [ ] No tokens in localStorage
+- [x] No tokens in localStorage (HttpOnly cookie only)
 
 ### 7.3 Login protection
 
 - [ ] Rate limit by IP hash and shop+username (5 / 15 min)
 - [ ] 15-minute lock after 10 failures; admins notified in-app
 - [ ] Turnstile on signup + recovery; on login after 3 failures
-- [ ] Same generic error for wrong username or wrong password
+- [x] Same generic error for wrong username or wrong password (plus dummy hash so timing matches)
 
 ### 7.4 Authorization and tenant isolation
 

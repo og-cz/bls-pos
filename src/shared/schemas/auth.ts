@@ -43,3 +43,14 @@ export const signupSchema = z
   .strict();
 
 export type SignupInput = z.infer<typeof signupSchema>;
+
+// Login only looks values up, so it checks shape and size, not the signup rules.
+export const loginSchema = z
+  .object({
+    shopSlug: z.string().trim().toLowerCase().min(1, 'Required.').max(40),
+    username: z.string().trim().toLowerCase().min(1, 'Required.').max(32),
+    password: z.string().min(1, 'Required.').max(128),
+  })
+  .strict();
+
+export type LoginInput = z.infer<typeof loginSchema>;

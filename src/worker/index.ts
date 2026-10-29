@@ -5,7 +5,9 @@ import { API_BASE, APP_NAME } from '@shared/app';
 
 import type { AppEnv } from './env';
 import { ApiError } from './lib/errors';
+import { session } from './middleware/session';
 import { authRoutes } from './routes/auth';
+import { meRoutes } from './routes/me';
 
 export type { AppEnv };
 
@@ -20,8 +22,11 @@ app.use(
   }),
 );
 
+app.use(session);
+
 app.get('/health', (c) => c.json({ ok: true, name: APP_NAME }));
 app.route('/auth', authRoutes);
+app.route('/me', meRoutes);
 
 app.notFound((c) => c.json({ error: { code: 'NOT_FOUND', message: 'Not found' } }, 404));
 
