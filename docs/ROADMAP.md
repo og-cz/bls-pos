@@ -1,6 +1,6 @@
 # Roadmap
 
-> The project is called **BLS** (pronounced "bilis"). It was first named POS Fast, then Bilis POS; the master prompt was updated to BLS on 2026-10-29.
+> The project is called **BLS POS**. It was first named POS Fast, then Bilis POS; renamed to BLS POS on 2026-10-29.
 
 > The master prompt (§12) holds the full dated commit plan. Dates are a **plan**: commits
 > are made when the work is actually done, with real timestamps. Work started

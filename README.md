@@ -1,9 +1,9 @@
 <h1 align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.png" />
-    <img src="docs/assets/logo-light.png" alt="BLS logo" width="64" valign="middle" />
+    <img src="docs/assets/logo-light.png" alt="BLS POS logo" width="64" valign="middle" />
   </picture>
-  BLS (bilis)
+  BLS POS
 </h1>
 
 <p align="center">
@@ -16,14 +16,13 @@
 </p>
 
 <p align="center">
-  <b>BLS. Benta agad.</b><br />
-  Instant point-of-sale and inventory for any small business.<br />
+  <b>Instant point-of-sale and inventory for any small business.</b><br />
   Sign up, brand your shop, add products and staff, and start selling from a phone or PC — free.
 </p>
 
 ---
 
-BLS (said "bilis", Tagalog for "fast") is built for small shops, cafés, food stalls, salons and retail stores that need
+BLS POS is built for small shops, cafés, food stalls, salons and retail stores that need
 a checkout that is quick to learn, quick to use and costs nothing to run.
 
 > **Status:** early development (Phases 0–2 done, Phase 3 in progress). Not ready for real shops yet.

@@ -1,6 +1,6 @@
 # Handoff — read this first
 
-For any AI assistant (or person) picking up **BLS** (said "bilis"; formerly POS Fast / Bilis POS). Updated 2026-10-29.
+For any AI assistant (or person) picking up **BLS POS** (formerly POS Fast / Bilis POS). Updated 2026-10-29.
 
 ## Where things are
 
@@ -14,7 +14,7 @@ For any AI assistant (or person) picking up **BLS** (said "bilis"; formerly POS 
   starting with `feat(db): add categories, products and stock_movements schema`.
 - **Security tests:** `tests/api/security.test.ts` lists every API route with its
   minimum role. Add new routes there, or CI fails.
-- **Brand:** name **BLS**, tagline "BLS. Benta agad.", accent **Bilis Blue `#1E6FD9`**
+- **Brand:** name **BLS POS** (no tagline, no "(bilis)" — owner's call), accent **Bilis Blue `#1E6FD9`**
   (owner's pick). Code names: `bls-pos` (package, Worker, D1), cookie `__Host-bls_session`.
   The logo is `public/logo.svg` (from the owner's `bilispos-logo.svg`), shown via
   `BrandLogo` in `--brand-mark` blue. The owner will send `bls-logo.svg` (a B with a

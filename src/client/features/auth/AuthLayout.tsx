@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { BrandLogo } from '@/components/brand-logo';
-import { APP_NAME, APP_PRONUNCIATION, APP_TAGLINE } from '@shared/app';
+import { APP_NAME } from '@shared/app';
 
 type Props = { title: string; description?: ReactNode; children: ReactNode; footer?: ReactNode };
 
@@ -12,11 +12,7 @@ export function AuthLayout({ title, description, children, footer }: Props) {
       <div className="w-full max-w-md">
         <div className="mb-6 flex flex-col items-center gap-2 print:hidden">
           <BrandLogo decorative className="size-16" />
-          <span className="text-xl font-semibold tracking-tight">
-            {APP_NAME}{' '}
-            <span className="font-normal text-muted-foreground">({APP_PRONUNCIATION})</span>
-          </span>
-          <span className="text-sm text-muted-foreground">{APP_TAGLINE}</span>
+          <span className="text-xl font-semibold tracking-tight">{APP_NAME}</span>
         </div>
         <div className="rounded-xl border bg-card p-6 text-card-foreground shadow-sm sm:p-8 print:border-0 print:p-0 print:shadow-none">
           <div className="mb-6 space-y-1.5">
