@@ -63,3 +63,39 @@ for one code), `vite build` (JS 111 KB gzipped, budget 200 KB).
   of a router library. Five screens don't need one.
 - The Bilis POS logo is `public/logo.svg` (also the favicon), in a fixed blue
   `--brand-mark` color that shop themes don't change.
+
+## Phase 2 — Tenancy, roles and staff (2026-10-29)
+
+**Demo:** `pnpm db:migrate:local && pnpm dev`, sign up, and you land on the dashboard
+inside the app shell. That's a sidebar on a PC and a bottom tab bar on a phone.
+
+- `POST /api/v1/staff` (owner/admin) creates a cashier with a 12-character temporary
+  password, shown once. Log in as that cashier: the menu shows only **Sell** and
+  **Inventory**, and opening `/staff` sends you back to Sell.
+- `POST /api/v1/staff/:id/deactivate` signs the cashier out on every device at once.
+- `GET /api/v1/audit` lists signups, logins (including failures and lockouts),
+  recoveries and staff changes, newest first.
+
+**Proven by tests (136 total):** every API route has a declared minimum role (a new
+route without one fails CI). Every protected route refuses missing and forged
+sessions. A full staff/admin/owner permission matrix passes. One shop can neither see
+nor change another shop's data through any endpoint, whatever shop id the client
+sends. Every post-login service takes `(db, shopId, ...)`.
+
+**Rules implemented:** admins add and deactivate staff. Only the owner adds or
+deactivates admins. Nobody can create an owner or deactivate the owner or themselves.
+Free plan: up to 5 active admins + staff (the owner and deactivated accounts don't
+count), from the shared `entitlements` module.
+
+**Carried forward:**
+
+- The Staff and Activity screens are placeholders. Their APIs are done; the screens
+  come next.
+- Staff can't change their temporary password yet (`POST /auth/password` is planned
+  with the profile work). Reset by an admin comes with `PATCH /staff/:id`.
+- The in-app notice to admins when an account locks will read the `login.locked`
+  audit entries.
+
+**Notes:** UUIDv7 ids are now monotonic within a millisecond, so audit entries keep
+their true order. JS bundle 140 KB gzipped (budget 200 KB); the account menu added
+Radix DropdownMenu.

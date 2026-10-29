@@ -9,10 +9,11 @@ For any AI assistant (or person) picking up Bilis POS. Updated 2026-10-29.
   (the local `origin` still points at the old `fast-pos` URL; GitHub redirects).
 - **Plan:** `docs/MASTER_PROMPT.md` (original name "POS Fast" = Bilis POS). Follow it
   phase by phase, one Conventional Commit per planned item.
-- **Status:** Phase 0 and Phase 1 done and pushed (see `docs/PROGRESS.md`). Next is
-  **Phase 2** in the master prompt: `feat(api): add tenant middleware deriving shop from
-session`, then role guard, staff accounts, deactivation, audit log, isolation tests,
-  app shell.
+- **Status:** Phases 0–2 done and pushed (see `docs/PROGRESS.md`). Next: the Staff and
+  Activity screens (their APIs exist), then **Phase 3** (products and inventory),
+  starting with `feat(db): add categories, products and stock_movements schema`.
+- **Security tests:** `tests/api/security.test.ts` lists every API route with its
+  minimum role. Add new routes there, or CI fails.
 - **Brand:** the logo is `public/logo.svg` (from the owner's `bilispos-logo.svg`), shown
   via `BrandLogo` in Bilis blue (`--brand-mark`). Use it, not a generic icon.
 
