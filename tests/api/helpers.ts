@@ -46,6 +46,7 @@ export function signupBody(overrides: Record<string, unknown> = {}) {
     ownerName: 'Juan Dela Cruz',
     username: 'juan',
     password: 'mainit na kape araw-araw',
+    turnstileToken: 'valid-token',
     ...overrides,
   };
 }

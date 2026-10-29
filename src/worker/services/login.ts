@@ -18,6 +18,10 @@ import {
 
 export type LoginResult = { userId: string; shopId: string; role: Role };
 
+// Section 7.3: ask for a Turnstile check once an account or IP has a few recent failures.
+export const TURNSTILE_AFTER_USER_FAILURES = 3;
+export const TURNSTILE_AFTER_IP_FAILURES = 10;
+
 // Section 7.3: lock the account for 15 minutes after 10 failed logins.
 export const LOCK_AFTER_FAILURES = 10;
 export const LOCK_MS = 15 * 60 * 1000;
@@ -43,16 +47,26 @@ function getDummyHash(pepper: string): Promise<string> {
   return dummyHash;
 }
 
+export type LoginContext = {
+  ipHash: string | null;
+  /** Throws unless the request carries a valid Turnstile token. */
+  verifyHuman: () => Promise<void>;
+};
+
 export async function login(
   db: Db,
   pepper: string,
   input: LoginInput,
-  ipHash: string | null,
+  ctx: LoginContext,
   now: number = Date.now(),
 ): Promise<LoginResult> {
-  const keys = attemptKeys(input.shopSlug, input.username, ipHash);
-  if (isRateLimited(await failureCounts(db, keys, now))) {
+  const keys = attemptKeys(input.shopSlug, input.username, ctx.ipHash);
+  const counts = await failureCounts(db, keys, now);
+  if (isRateLimited(counts)) {
     throw new TooManyAttemptsError(retryAfterSeconds(now));
+  }
+  if (counts.user >= TURNSTILE_AFTER_USER_FAILURES || counts.ip >= TURNSTILE_AFTER_IP_FAILURES) {
+    await ctx.verifyHuman();
   }
 
   const user = await db

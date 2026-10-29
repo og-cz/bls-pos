@@ -40,6 +40,7 @@ describe('session cookie', () => {
       ownerName: 'Owner',
       username: 'owner',
       password: 'a long enough password',
+      turnstileToken: 'valid-token',
     });
     const header = res.headers.getSetCookie().find((c) => c.startsWith('__Host-bp_session='));
     expect(header).toBeDefined();

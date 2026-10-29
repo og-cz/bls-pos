@@ -2,3 +2,7 @@
 # Production values are set with: pnpm exec wrangler secret put PEPPER
 # Generate a real one with: node -e "console.log(crypto.randomBytes(32).toString('base64'))"
 PEPPER=local-dev-pepper-not-secret
+
+# Cloudflare's test secret: always passes. Use your real widget secret in production:
+#   pnpm exec wrangler secret put TURNSTILE_SECRET
+TURNSTILE_SECRET=1x0000000000000000000000000000000AA

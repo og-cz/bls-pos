@@ -8,6 +8,7 @@ import { clearSessionCookie, writeSessionCookie } from '../lib/cookies';
 import { parseJson } from '../lib/validate';
 import { requireAuth } from '../middleware/session';
 import { hashIp } from '../security/tokens';
+import { requireHuman } from '../security/turnstile';
 import { login, TooManyAttemptsError } from '../services/login';
 import { createSession, revokeSession } from '../services/sessions';
 import { createShopWithOwner } from '../services/signup';
@@ -27,8 +28,13 @@ async function startSession(c: Context<AppEnv>, shopId: string, userId: string) 
   writeSessionCookie(c, token, expiresAt);
 }
 
+function verifyHuman(c: Context<AppEnv>, token: string | undefined) {
+  return requireHuman(c.env.TURNSTILE_SECRET, token, c.req.header('cf-connecting-ip'));
+}
+
 authRoutes.post('/signup', async (c) => {
   const input = await parseJson(c, signupSchema);
+  await verifyHuman(c, input.turnstileToken);
   const result = await createShopWithOwner(getDb(c.env.DB), c.env.PEPPER, input);
   await startSession(c, result.shop.id, result.user.id);
   return c.json(result, 201);
@@ -38,7 +44,10 @@ authRoutes.post('/login', async (c) => {
   const input = await parseJson(c, loginSchema);
   let result;
   try {
-    result = await login(getDb(c.env.DB), c.env.PEPPER, input, await clientIpHash(c));
+    result = await login(getDb(c.env.DB), c.env.PEPPER, input, {
+      ipHash: await clientIpHash(c),
+      verifyHuman: () => verifyHuman(c, input.turnstileToken),
+    });
   } catch (err) {
     if (err instanceof TooManyAttemptsError) c.header('Retry-After', String(err.retryAfter));
     throw err;

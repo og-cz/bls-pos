@@ -18,6 +18,9 @@ export const shopSlugSchema = z
   .toLowerCase()
   .refine(isValidSlug, 'Use 3–40 lowercase letters, numbers or dashes. Some names are reserved.');
 
+// Filled in by the Turnstile widget. Verified on the server, never trusted as-is.
+const turnstileToken = z.string().max(2048).optional();
+
 const plainText = (max: number) =>
   z
     .string()
@@ -39,6 +42,7 @@ export const signupSchema = z
       if (problem)
         ctx.addIssue({ code: 'custom', message: passwordProblemMessage(problem, 'owner') });
     }),
+    turnstileToken,
   })
   .strict();
 
@@ -50,6 +54,7 @@ export const loginSchema = z
     shopSlug: z.string().trim().toLowerCase().min(1, 'Required.').max(40),
     username: z.string().trim().toLowerCase().min(1, 'Required.').max(32),
     password: z.string().min(1, 'Required.').max(128),
+    turnstileToken,
   })
   .strict();
 

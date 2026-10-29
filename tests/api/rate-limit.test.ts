@@ -3,12 +3,13 @@ import { describe, expect, it } from 'vitest';
 
 import { api, signUp } from './helpers';
 
-// Every request gets a client IP, as it would behind Cloudflare.
+// Every request gets a client IP, as it would behind Cloudflare. A valid Turnstile token
+// is included so these tests exercise the limits, not the human check.
 function login(body: { shopSlug: string; username: string; password: string }, ip: string) {
   return api('/auth/login', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'cf-connecting-ip': ip },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ turnstileToken: 'valid-token', ...body }),
   });
 }
 

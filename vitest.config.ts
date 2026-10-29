@@ -10,6 +10,8 @@ export default defineConfig({
       miniflare: {
         bindings: {
           PEPPER: 'test-pepper',
+          // Tests mock the siteverify call; this value is never sent anywhere.
+          TURNSTILE_SECRET: 'test-turnstile-secret',
           TEST_MIGRATIONS: await readD1Migrations(
             fileURLToPath(new URL('./migrations', import.meta.url)),
           ),
