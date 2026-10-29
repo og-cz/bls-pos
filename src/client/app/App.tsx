@@ -1,9 +1,24 @@
+import { useEffect, useState } from 'react';
 import { Zap } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { APP_NAME } from '@shared/app';
+import { API_BASE, APP_NAME } from '@shared/app';
+
+type ApiStatus = 'checking' | 'online' | 'offline';
 
 export function App() {
+  const [api, setApi] = useState<ApiStatus>('checking');
+
+  useEffect(() => {
+    fetch(`${API_BASE}/health`)
+      .then((res) => {
+        setApi(res.ok ? 'online' : 'offline');
+      })
+      .catch(() => {
+        setApi('offline');
+      });
+  }, []);
+
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-6 px-4 text-center">
       <div className="flex size-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md">
@@ -18,6 +33,9 @@ export function App() {
       <Button size="lg" disabled>
         Get started
       </Button>
+      <p className="text-sm text-muted-foreground" role="status">
+        API: {api}
+      </p>
     </main>
   );
 }

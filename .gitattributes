@@ -3,3 +3,4 @@
 *.jpg binary
 *.webp binary
 *.ico binary
+worker-configuration.d.ts linguist-generated=true
