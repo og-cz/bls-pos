@@ -9,9 +9,12 @@ For any AI assistant (or person) picking up **BLS POS** (formerly POS Fast / Bil
   (the local `origin` still points at the old `fast-pos` URL; GitHub redirects).
 - **Plan:** `docs/MASTER_PROMPT.md` (original name "POS Fast" = Bilis POS). Follow it
   phase by phase, one Conventional Commit per planned item.
-- **Status:** Phases 0–2 done and pushed (see `docs/PROGRESS.md`). Next: the Staff and
-  Activity screens (their APIs exist), then **Phase 3** (products and inventory),
-  starting with `feat(db): add categories, products and stock_movements schema`.
+- **Status:** Phases 0–2 done, plus the Staff and Activity screens. **Phase 3 backend
+  done:** schema, product CRUD, categories + archiving, R2 image uploads, restock/deduct,
+  low-stock alerts. **Next:** `feat(web): add product list with search and category
+filters`, then `feat(web): add product form with client-side image compression`, then
+  `test(inventory): cover stock movements and permission rules` (mostly covered — fill
+  gaps), the Phase 3 demo note, then **Phase 3.5** (bulk import/export/backup).
 - **Security tests:** `tests/api/security.test.ts` lists every API route with its
   minimum role. Add new routes there, or CI fails.
 - **Brand:** name **BLS POS** (no tagline, no "(bilis)" — owner's call), accent **Bilis Blue `#1E6FD9`**
