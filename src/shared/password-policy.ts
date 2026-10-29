@@ -59,6 +59,7 @@ const COMMON_PASSWORDS = new Set([
   'bilispos',
   'bilispos1',
   'bilispos123',
+  'blsposblspos',
   'mahalkita',
   'iloveyou2',
   'michael1',

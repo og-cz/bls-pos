@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "bilis-pos",
+  "name": "bls-pos",
   "main": "src/worker/index.ts",
   "compatibility_date": "2026-10-01",
   "observability": { "enabled": true },
@@ -13,8 +13,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "bilis-pos",
-      // Replace with the ID printed by `wrangler d1 create bilis-pos` before deploying.
+      "database_name": "bls-pos",
+      // Replace with the ID printed by `wrangler d1 create bls-pos` before deploying.
       // Local dev and tests ignore it.
       "database_id": "00000000-0000-0000-0000-000000000000",
       "migrations_dir": "migrations",

@@ -3,7 +3,7 @@ import { useSyncExternalStore } from 'react';
 // A tiny History API router. Enough for a handful of screens; the worker serves
 // index.html for every non-API path (wrangler.jsonc: single-page-application).
 
-const NAVIGATE_EVENT = 'bilis:navigate';
+const NAVIGATE_EVENT = 'bls:navigate';
 
 function subscribe(onChange: () => void) {
   window.addEventListener('popstate', onChange);

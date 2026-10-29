@@ -14,9 +14,9 @@ export function postJson(path: string, body: unknown, cookie?: string) {
   });
 }
 
-/** Returns `__Host-bp_session=<token>` from a response, for use as a Cookie header. */
+/** Returns `__Host-bls_session=<token>` from a response, for use as a Cookie header. */
 export function sessionCookie(res: Response): string {
-  const header = res.headers.getSetCookie().find((c) => c.startsWith('__Host-bp_session='));
+  const header = res.headers.getSetCookie().find((c) => c.startsWith('__Host-bls_session='));
   if (!header) throw new Error('No session cookie set');
   return header.split(';')[0] ?? '';
 }

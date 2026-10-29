@@ -42,7 +42,7 @@ describe('session cookie', () => {
       password: 'a long enough password',
       turnstileToken: 'valid-token',
     });
-    const header = res.headers.getSetCookie().find((c) => c.startsWith('__Host-bp_session='));
+    const header = res.headers.getSetCookie().find((c) => c.startsWith('__Host-bls_session='));
     expect(header).toBeDefined();
     expect(header).toMatch(/; HttpOnly/i);
     expect(header).toMatch(/; Secure/i);
@@ -140,7 +140,7 @@ describe('POST /auth/login', () => {
 describe('protected routes', () => {
   it('reject requests without a valid session', async () => {
     expect((await api('/me')).status).toBe(401);
-    const forged = await getWithCookie('/me', '__Host-bp_session=forged-token-value');
+    const forged = await getWithCookie('/me', '__Host-bls_session=forged-token-value');
     expect(forged.status).toBe(401);
     expect(await forged.json()).toMatchObject({ error: { code: 'UNAUTHENTICATED' } });
   });
@@ -148,7 +148,7 @@ describe('protected routes', () => {
   it('ignore a plain cookie name without the __Host- prefix', async () => {
     const { cookie } = await signUp();
     const token = cookie.split('=')[1] ?? '';
-    expect((await getWithCookie('/me', `bp_session=${token}`)).status).toBe(401);
+    expect((await getWithCookie('/me', `bls_session=${token}`)).status).toBe(401);
   });
 });
 
@@ -159,7 +159,7 @@ describe('POST /auth/logout', () => {
 
     const res = await postJson('/auth/logout', {}, cookie);
     expect(res.status).toBe(200);
-    expect(res.headers.getSetCookie().join()).toMatch(/__Host-bp_session=;/);
+    expect(res.headers.getSetCookie().join()).toMatch(/__Host-bls_session=;/);
 
     expect((await getWithCookie('/me', cookie)).status).toBe(401);
   });

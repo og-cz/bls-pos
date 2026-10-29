@@ -20,7 +20,7 @@ Please do not open a public issue. Email the maintainer (see the GitHub profile 
 
 ### 7.2 Sessions
 
-- [x] 32 random bytes, `__Host-bp_session`, `HttpOnly; Secure; SameSite=Lax; Path=/`
+- [x] 32 random bytes, `__Host-bls_session`, `HttpOnly; Secure; SameSite=Lax; Path=/`
 - [x] Only SHA-256 of token stored
 - [x] 12 h idle (staff) / 30 d absolute expiry; `last_seen_at` refreshed ≤ every 5 min
 - [ ] Revoke on password change, deactivation, role change, "log out all"

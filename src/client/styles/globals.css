@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Default Bilis POS theme. Per-shop themes override --primary, --ring and the
+ * Default BLS theme. Per-shop themes override --primary, --ring and the
  * --brand-* scale at runtime from validated theme JSON (Section 6.2).
  */
 :root {
@@ -28,7 +28,7 @@
   --border: oklch(0.92 0.004 286.32);
   --input: oklch(0.92 0.004 286.32);
   --ring: oklch(0.546 0.18 257);
-  /* The Bilis POS mark. Fixed: shop themes change --primary, never the app's own logo. */
+  /* The BLS mark. Fixed: shop themes change --primary, never the app's own logo. */
   --brand-mark: oklch(0.546 0.18 257);
 }
 

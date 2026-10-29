@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils';
 import { APP_NAME } from '@shared/app';
 
 /**
- * The Bilis POS mark (public/logo.svg), in Bilis blue. Drawn as a CSS mask so the color
+ * The BLS mark (public/logo.svg), in Bilis blue. Drawn as a CSS mask so the color
  * comes from the --brand-mark token, a little lighter in dark mode.
  */
 export function BrandLogo({

@@ -69,7 +69,7 @@ describe('authentication', () => {
   it('every non-public route refuses a forged session cookie', async () => {
     const shop = await signUp();
     for (const [route] of protectedRoutes) {
-      const res = await requestFor(route, shop, '__Host-bp_session=forged-token-value-123');
+      const res = await requestFor(route, shop, '__Host-bls_session=forged-token-value-123');
       expect(res.status, route).toBe(401);
     }
   });

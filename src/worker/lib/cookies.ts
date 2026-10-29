@@ -1,8 +1,8 @@
 import type { Context } from 'hono';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 
-// Sent as `__Host-bp_session`: HttpOnly, Secure, SameSite=Lax, Path=/ (Section 7.2).
-const NAME = 'bp_session';
+// Sent as `__Host-bls_session`: HttpOnly, Secure, SameSite=Lax, Path=/ (Section 7.2).
+const NAME = 'bls_session';
 
 export function readSessionCookie(c: Context): string | undefined {
   return getCookie(c, NAME, 'host');

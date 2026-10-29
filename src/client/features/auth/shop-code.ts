@@ -1,6 +1,6 @@
 // The last shop code used on this device, so cashiers don't retype it every shift.
 // Not a secret (it is also the public page address); tokens never go in localStorage.
-const KEY = 'bilis:shop-code';
+const KEY = 'bls:shop-code';
 
 export function rememberShopCode(slug: string) {
   try {
