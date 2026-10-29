@@ -9,6 +9,7 @@ export default defineConfig({
       wrangler: { configPath: './wrangler.jsonc' },
       miniflare: {
         bindings: {
+          PEPPER: 'test-pepper',
           TEST_MIGRATIONS: await readD1Migrations(
             fileURLToPath(new URL('./migrations', import.meta.url)),
           ),

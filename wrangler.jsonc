@@ -20,5 +20,7 @@
       "migrations_dir": "migrations",
     },
   ],
+  // Set with `wrangler secret put <NAME>` in production, `.dev.vars` locally.
+  "secrets": { "required": ["PEPPER"] },
   // R2 and cron bindings are added in later phases (see docs/ROADMAP.md).
 }

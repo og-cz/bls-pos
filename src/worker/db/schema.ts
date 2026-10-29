@@ -1,6 +1,8 @@
 import { sql } from 'drizzle-orm';
 import { check, index, integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
 
+import { ROLES, type Role } from '@shared/roles';
+
 // Conventions (master prompt §4):
 // - IDs are random strings (UUIDv7), never auto-increment numbers.
 // - Money is integer centavos. Timestamps are UTC epoch milliseconds.
@@ -16,8 +18,7 @@ export const BUSINESS_TYPES = [
 ] as const;
 export type BusinessType = (typeof BUSINESS_TYPES)[number];
 
-export const ROLES = ['owner', 'admin', 'staff'] as const;
-export type Role = (typeof ROLES)[number];
+export { ROLES, type Role };
 
 export const shops = sqliteTable(
   'shops',

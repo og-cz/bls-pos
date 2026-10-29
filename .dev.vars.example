@@ -1,0 +1,4 @@
+# Copy to .dev.vars for local development. Never commit .dev.vars.
+# Production values are set with: pnpm exec wrangler secret put PEPPER
+# Generate a real one with: node -e "console.log(crypto.randomBytes(32).toString('base64'))"
+PEPPER=local-dev-pepper-not-secret
