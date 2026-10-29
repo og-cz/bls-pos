@@ -37,7 +37,7 @@ Please do not open a public issue. Email the maintainer (see the GitHub profile 
 
 - [x] `shopId` only from session (`tenant` middleware)
 - [ ] Every query scoped by `shop_id` ⏳; services take `shopId` first ✅ (enforced by `tests/api/tenant.test.ts`)
-- [ ] Server-side role check on every route
+- [x] Server-side role check on every route (`tests/api/security.test.ts` fails if a route has no declared access level)
 - [ ] Staff never receive cost, profit, others' sales, audit logs
 - [ ] Admins cannot create or modify the owner
 
