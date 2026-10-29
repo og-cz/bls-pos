@@ -1,6 +1,14 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 
+import { getDb } from '../../src/worker/db/client';
+import {
+  attemptKeys,
+  failureCounts,
+  recordFailure,
+  retryAfterSeconds,
+  WINDOW_MS,
+} from '../../src/worker/services/rate-limit';
 import { api, signUp } from './helpers';
 
 // Every request gets a client IP, as it would behind Cloudflare. A valid Turnstile token
@@ -156,5 +164,41 @@ describe('account lockout', () => {
       .bind(a.userId)
       .first<{ failed_logins: number }>();
     expect(row?.failed_logins).toBe(0);
+  });
+});
+
+describe('failure windows', () => {
+  it('starts counting again in the next 15-minute window', async () => {
+    const db = getDb(env.DB);
+    const keys = attemptKeys(`window-${crypto.randomUUID()}`, 'juan', 'ip-window-test');
+    const start = Math.floor(Date.now() / WINDOW_MS) * WINDOW_MS;
+    for (let i = 0; i < 4; i++) await recordFailure(db, keys, start + 1000);
+    expect(await failureCounts(db, keys, start + 2000)).toEqual({ user: 4, ip: 4 });
+
+    const next = start + WINDOW_MS + 1000;
+    expect(await failureCounts(db, keys, next)).toEqual({ user: 0, ip: 0 });
+    await recordFailure(db, keys, next);
+    expect(await failureCounts(db, keys, next)).toEqual({ user: 1, ip: 1 });
+    // Old windows are cleaned up as new failures arrive.
+    const old = await env.DB.prepare(
+      'SELECT COUNT(*) AS n FROM login_attempts WHERE key = ? AND window_start = ?',
+    )
+      .bind(keys.user, start)
+      .first<{ n: number }>();
+    expect(old?.n).toBe(0);
+  });
+
+  it('keeps login and recovery counters apart but shares the IP counter', () => {
+    const login = attemptKeys('shop', 'juan', 'h');
+    const recover = attemptKeys('shop', 'juan', 'h', 'recover');
+    expect(login.user).not.toBe(recover.user);
+    expect(login.ip).toBe(recover.ip);
+    expect(attemptKeys('shop', 'juan', null).ip).toBeNull();
+  });
+
+  it('tells clients when the window ends', () => {
+    const start = Math.floor(Date.now() / WINDOW_MS) * WINDOW_MS;
+    expect(retryAfterSeconds(start)).toBe(15 * 60);
+    expect(retryAfterSeconds(start + WINDOW_MS - 1)).toBe(1);
   });
 });

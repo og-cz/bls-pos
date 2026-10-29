@@ -243,3 +243,23 @@ describe('session expiry', () => {
     expect((await getWithCookie('/me', cookie)).status).toBe(401);
   });
 });
+
+describe('session integrity', () => {
+  it('ends sessions when the shop is deleted', async () => {
+    const { cookie, shopId } = await signUp();
+    await env.DB.prepare('UPDATE shops SET deleted_at = ? WHERE id = ?')
+      .bind(Date.now(), shopId)
+      .run();
+    expect((await getWithCookie('/me', cookie)).status).toBe(401);
+  });
+
+  it('rejects a session whose shop does not match its user', async () => {
+    const a = await signUp();
+    const b = await signUp();
+    const hash = await sha256Hex(a.cookie.split('=')[1] ?? '');
+    await env.DB.prepare('UPDATE sessions SET shop_id = ? WHERE token_hash = ?')
+      .bind(b.shopId, hash)
+      .run();
+    expect((await getWithCookie('/me', a.cookie)).status).toBe(401);
+  });
+});

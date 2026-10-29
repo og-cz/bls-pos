@@ -203,3 +203,32 @@ describe('POST /auth/recover', () => {
     expect((await login(body.shopSlug, body.password)).status).toBe(200);
   });
 });
+
+describe('recovery edge cases', () => {
+  it('spends a code only once when two requests race', async () => {
+    const { body, recoveryCodes } = await signUp();
+    const code = recoveryCodes[0] ?? '';
+    const results = await Promise.all([
+      recover({ shopSlug: body.shopSlug, code, newPassword: 'first racing password' }),
+      recover({ shopSlug: body.shopSlug, code, newPassword: 'second racing password' }),
+    ]);
+    expect(results.map((r) => r.status).sort()).toEqual([200, 401]);
+  });
+
+  it('lets a locked-out owner back in and clears the lock', async () => {
+    const { body, userId, recoveryCodes } = await signUp();
+    await env.DB.prepare('UPDATE users SET locked_until = ?, failed_logins = 7 WHERE id = ?')
+      .bind(Date.now() + 10 * 60 * 1000, userId)
+      .run();
+    expect((await login(body.shopSlug, body.password)).status).toBe(429);
+
+    expect((await recover({ shopSlug: body.shopSlug, code: recoveryCodes[0] ?? '' })).status).toBe(
+      200,
+    );
+    const row = await env.DB.prepare('SELECT failed_logins, locked_until FROM users WHERE id = ?')
+      .bind(userId)
+      .first<{ failed_logins: number; locked_until: number | null }>();
+    expect(row).toEqual({ failed_logins: 0, locked_until: null });
+    expect((await login(body.shopSlug, NEW_PASSWORD)).status).toBe(200);
+  });
+});
