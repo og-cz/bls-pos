@@ -28,8 +28,8 @@ Please do not open a public issue. Email the maintainer (see the GitHub profile 
 
 ### 7.3 Login protection
 
-- [ ] Rate limit by IP hash and shop+username (5 / 15 min)
-- [ ] 15-minute lock after 10 failures; admins notified in-app
+- [x] Rate limit by shop+username (5 failures / 15 min) and IP hash (20 / 15 min — higher because carrier CGNAT puts many phones behind one IP)
+- [ ] 15-minute lock after 10 failures ✅ — admins notified in-app ⏳ (needs the audit log, Phase 2)
 - [ ] Turnstile on signup + recovery; on login after 3 failures
 - [x] Same generic error for wrong username or wrong password (plus dummy hash so timing matches)
 

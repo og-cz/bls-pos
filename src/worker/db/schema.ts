@@ -1,8 +1,16 @@
 import { sql } from 'drizzle-orm';
-import { check, index, integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
+import {
+  check,
+  index,
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+  unique,
+} from 'drizzle-orm/sqlite-core';
 
-import { BUSINESS_TYPES, type BusinessType } from '@shared/business';
-import { ROLES, type Role } from '@shared/roles';
+import { BUSINESS_TYPES, type BusinessType } from '../../shared/business';
+import { ROLES, type Role } from '../../shared/roles';
 
 // Conventions (master prompt §4):
 // - IDs are random strings (UUIDv7), never auto-increment numbers.
@@ -89,6 +97,18 @@ export const sessions = sqliteTable(
     revokedAt: integer('revoked_at'),
   },
   (t) => [index('sessions_shop_id').on(t.shopId), index('sessions_user_id').on(t.userId)],
+);
+
+// Failed-login counters per fixed 15-minute window (Section 7.3).
+// key is 'ip:<hash>' or 'user:<shopSlug>:<username>'.
+export const loginAttempts = sqliteTable(
+  'login_attempts',
+  {
+    key: text('key').notNull(),
+    windowStart: integer('window_start').notNull(),
+    count: integer('count').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.key, t.windowStart] })],
 );
 
 export type Shop = typeof shops.$inferSelect;
