@@ -60,3 +60,26 @@ export function signupBody(overrides: Record<string, unknown> = {}) {
     ...overrides,
   };
 }
+
+type Member = { id: string; username: string; role: string };
+
+/** Adds an admin or staff member through the API and logs them in. */
+export async function addMember(
+  owner: { body: { shopSlug: string }; cookie: string },
+  role: 'admin' | 'staff',
+  username = `${role}-${crypto.randomUUID().slice(0, 6)}`,
+  actorCookie = owner.cookie,
+) {
+  const res = await postJson('/staff', { username, displayName: username, role }, actorCookie);
+  if (res.status !== 201) throw new Error(`addMember failed: ${res.status}`);
+  const { user, temporaryPassword } = await res.json<{
+    user: Member;
+    temporaryPassword: string;
+  }>();
+  const login = await postJson('/auth/login', {
+    shopSlug: owner.body.shopSlug,
+    username,
+    password: temporaryPassword,
+  });
+  return { id: user.id, username, temporaryPassword, cookie: sessionCookie(login) };
+}

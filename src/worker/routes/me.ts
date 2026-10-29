@@ -1,6 +1,8 @@
 import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 
+import { entitlementsFor } from '@shared/entitlements';
+
 import { getDb } from '../db/client';
 import { shops } from '../db/schema';
 import type { AuthedEnv } from '../env';
@@ -10,7 +12,6 @@ export const meRoutes = new Hono<AuthedEnv>();
 
 meRoutes.use(...authed);
 
-// Entitlements are added with the plans work (Section 2.4).
 meRoutes.get('/', async (c) => {
   const { shopId } = c.var;
   const { userId, role, username, displayName } = c.var.auth;
@@ -33,5 +34,6 @@ meRoutes.get('/', async (c) => {
   return c.json({
     user: { id: userId, username, displayName, role },
     shop: { ...rest, theme: JSON.parse(themeJson) as unknown },
+    entitlements: entitlementsFor(rest.plan),
   });
 });

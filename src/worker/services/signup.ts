@@ -4,6 +4,7 @@ import type { SignupInput } from '@shared/schemas/auth';
 import type { Db } from '../db/client';
 import { newId } from '../db/id';
 import { recoveryCodes, shops, users } from '../db/schema';
+import { isUniqueViolation } from '../db/errors';
 import { ApiError } from '../lib/errors';
 import { hashPassword } from '../security/password';
 import { hashRecoveryCode, newRecoveryCode, RECOVERY_CODE_COUNT } from '../security/recovery-codes';
@@ -14,11 +15,6 @@ export type SignupResult = {
   /** Shown once, at signup. Only hashes are stored. */
   recoveryCodes: string[];
 };
-
-function isUniqueViolation(err: unknown, column: string): boolean {
-  const text = String(err instanceof Error && err.cause ? err.cause : err);
-  return text.includes('UNIQUE constraint failed') && text.includes(column);
-}
 
 /**
  * Creates a shop and its owner together. Signup is the one operation without a shopId

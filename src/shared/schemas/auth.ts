@@ -3,14 +3,9 @@ import { z } from 'zod';
 import { BUSINESS_TYPES } from '../business';
 import { checkPassword, passwordProblemMessage } from '../password-policy';
 import { isValidSlug } from '../slug';
+import { plainText, usernameSchema } from './common';
 
-export const USERNAME_PATTERN = /^[a-z0-9](?:[a-z0-9._-]{1,30})[a-z0-9]$/;
-
-export const usernameSchema = z
-  .string()
-  .trim()
-  .toLowerCase()
-  .regex(USERNAME_PATTERN, 'Use 3–32 letters, numbers, dots, dashes or underscores.');
+export { USERNAME_PATTERN, usernameSchema } from './common';
 
 export const shopSlugSchema = z
   .string()
@@ -20,15 +15,6 @@ export const shopSlugSchema = z
 
 // Filled in by the Turnstile widget. Verified on the server, never trusted as-is.
 const turnstileToken = z.string().max(2048).optional();
-
-const plainText = (max: number) =>
-  z
-    .string()
-    .trim()
-    .min(1, 'Required.')
-    .max(max, `Use at most ${max} characters.`)
-    // Plain text only: no control characters.
-    .refine((s) => !/\p{Cc}/u.test(s), 'Contains characters that are not allowed.');
 
 const ownerPassword = z.string().superRefine((pw, ctx) => {
   const problem = checkPassword(pw, 'owner');
