@@ -7,7 +7,7 @@ import type { AuthedEnv } from '../env';
 import { parseJson } from '../lib/validate';
 import { requireRole } from '../middleware/role';
 import { authed } from '../middleware/tenant';
-import { createStaff, listMembers } from '../services/staff';
+import { createStaff, deactivateMember, listMembers } from '../services/staff';
 
 export const staffRoutes = new Hono<AuthedEnv>();
 
@@ -27,4 +27,15 @@ staffRoutes.post('/', async (c) => {
     input,
   );
   return c.json(result, 201);
+});
+
+staffRoutes.post('/:id/deactivate', async (c) => {
+  const { userId, role } = c.var.auth;
+  const user = await deactivateMember(
+    getDb(c.env.DB),
+    c.var.shopId,
+    { userId, role },
+    c.req.param('id'),
+  );
+  return c.json({ user });
 });

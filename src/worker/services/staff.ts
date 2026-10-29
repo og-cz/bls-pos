@@ -1,4 +1,4 @@
-import { and, asc, count, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, count, eq, inArray, isNull, sql } from 'drizzle-orm';
 
 import { entitlementsFor } from '@shared/entitlements';
 import { hasRole, type Role } from '@shared/roles';
@@ -7,7 +7,7 @@ import type { CreateStaffInput, StaffMember } from '@shared/schemas/staff';
 import type { Db } from '../db/client';
 import { isUniqueViolation } from '../db/errors';
 import { newId } from '../db/id';
-import { shops, users } from '../db/schema';
+import { sessions, shops, users } from '../db/schema';
 import { ApiError } from '../lib/errors';
 import { newTemporaryPassword } from '../security/codes';
 import { hashPassword } from '../security/password';
@@ -106,4 +106,51 @@ export async function createStaff(
   }
 
   return { user: member, temporaryPassword };
+}
+
+/**
+ * Who may change whom: the owner manages admins and staff; admins manage staff only.
+ * Nobody changes the owner through these routes, and nobody changes their own account.
+ */
+function canManage(actor: { userId: string; role: Role }, target: { id: string; role: Role }) {
+  if (target.id === actor.userId || target.role === 'owner') return false;
+  return target.role === 'staff' ? hasRole(actor.role, 'admin') : actor.role === 'owner';
+}
+
+/** Deactivates an account and signs it out everywhere (Section 7.2). Safe to repeat. */
+export async function deactivateMember(
+  db: Db,
+  shopId: string,
+  actor: { userId: string; role: Role },
+  targetId: string,
+  now: number = Date.now(),
+): Promise<StaffMember> {
+  const target = await db
+    .select(memberColumns)
+    .from(users)
+    .where(and(eq(users.id, targetId), eq(users.shopId, shopId)))
+    .get();
+  // Another shop's user looks exactly like a user that doesn't exist.
+  if (!target) throw new ApiError(404, 'NOT_FOUND', 'No such account in this shop.');
+  if (!canManage(actor, target)) {
+    throw new ApiError(403, 'FORBIDDEN', "You can't deactivate this account.");
+  }
+
+  await db.batch([
+    db
+      .update(users)
+      .set({ active: false })
+      .where(and(eq(users.id, target.id), eq(users.shopId, shopId))),
+    db
+      .update(sessions)
+      .set({ revokedAt: now })
+      .where(
+        and(
+          eq(sessions.userId, target.id),
+          eq(sessions.shopId, shopId),
+          isNull(sessions.revokedAt),
+        ),
+      ),
+  ]);
+  return { ...target, active: false };
 }
