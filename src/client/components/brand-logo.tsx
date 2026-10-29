@@ -2,8 +2,8 @@ import { cn } from '@/lib/utils';
 import { APP_NAME } from '@shared/app';
 
 /**
- * The Bilis POS mark (public/logo.svg). Drawn as a CSS mask so it takes the current text
- * color and stays visible in light and dark mode.
+ * The Bilis POS mark (public/logo.svg), in Bilis blue. Drawn as a CSS mask so the color
+ * comes from the --brand-mark token, a little lighter in dark mode.
  */
 export function BrandLogo({
   className,
@@ -18,7 +18,7 @@ export function BrandLogo({
       {...(decorative
         ? { 'aria-hidden': true }
         : { role: 'img', 'aria-label': `${APP_NAME} logo` })}
-      className={cn('inline-block size-10 shrink-0 bg-current', className)}
+      className={cn('inline-block size-10 shrink-0 bg-brand-mark', className)}
       style={{
         maskImage: 'url(/logo.svg)',
         maskRepeat: 'no-repeat',

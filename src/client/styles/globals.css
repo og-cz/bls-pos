@@ -28,6 +28,8 @@
   --border: oklch(0.92 0.004 286.32);
   --input: oklch(0.92 0.004 286.32);
   --ring: oklch(0.546 0.18 257);
+  /* The Bilis POS mark. Fixed: shop themes change --primary, never the app's own logo. */
+  --brand-mark: oklch(0.546 0.18 257);
 }
 
 .dark {
@@ -49,6 +51,7 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.62 0.17 257);
+  --brand-mark: oklch(0.66 0.16 257);
 }
 
 @theme inline {
@@ -75,6 +78,7 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-brand-mark: var(--brand-mark);
 }
 
 @layer base {
