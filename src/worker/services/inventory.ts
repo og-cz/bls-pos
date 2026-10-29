@@ -1,6 +1,7 @@
-import { and, desc, eq, lt, sql } from 'drizzle-orm';
+import { and, count, desc, eq, isNull, lt, sql } from 'drizzle-orm';
 
 import { hasRole } from '@shared/roles';
+import { stockStatus, type StockStatus } from '@shared/schemas/products';
 import type {
   DeductInput,
   MovementDto,
@@ -35,7 +36,7 @@ async function moveStock(
     note?: string | undefined;
   },
   now: number,
-): Promise<{ productId: string; stock: number }> {
+): Promise<{ productId: string; stock: number; stockStatus: StockStatus }> {
   const product = await db
     .select({
       name: products.name,
@@ -63,7 +64,7 @@ async function moveStock(
         .update(products)
         .set({ stock: sql`${products.stock} + ${input.delta}`, updatedAt: now })
         .where(where)
-        .returning({ stock: products.stock }),
+        .returning({ stock: products.stock, lowStockThreshold: products.lowStockThreshold }),
       db.insert(stockMovements).values({
         id: newId(now),
         shopId,
@@ -87,10 +88,13 @@ async function moveStock(
         now,
       ),
     ]);
-    const stock = updated[0]?.stock;
-    if (stock === undefined)
-      throw new ApiError(409, 'STOCK_NOT_TRACKED', 'Stock changed, try again.');
-    return { productId: input.productId, stock };
+    const row = updated[0];
+    if (!row) throw new ApiError(409, 'STOCK_NOT_TRACKED', 'Stock changed, try again.');
+    return {
+      productId: input.productId,
+      stock: row.stock,
+      stockStatus: stockStatus({ trackStock: true, ...row }),
+    };
   } catch (err) {
     if (isCheckViolation(err)) {
       throw new ApiError(409, 'STOCK_INSUFFICIENT', `Not enough stock for ${product.name}.`);
@@ -171,4 +175,24 @@ export async function listMovements(
     })),
     nextCursor: rows.length > query.limit ? (page.at(-1)?.id ?? null) : null,
   };
+}
+
+/**
+ * Low-stock alerts (Section 1.2): how many active, tracked products are low or out.
+ * The lists themselves come from GET /products?stock=low|out.
+ */
+export async function stockAlerts(db: Db, shopId: string): Promise<{ low: number; out: number }> {
+  const row = await db
+    .select({
+      out: count(sql`CASE WHEN ${products.stock} <= 0 THEN 1 END`),
+      low: count(
+        sql`CASE WHEN ${products.stock} > 0 AND ${products.stock} <= ${products.lowStockThreshold} THEN 1 END`,
+      ),
+    })
+    .from(products)
+    .where(
+      and(eq(products.shopId, shopId), isNull(products.archivedAt), eq(products.trackStock, true)),
+    )
+    .get();
+  return { low: row?.low ?? 0, out: row?.out ?? 0 };
 }

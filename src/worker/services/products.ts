@@ -2,11 +2,12 @@ import { and, count, eq, isNotNull, isNull, sql, type SQL } from 'drizzle-orm';
 
 import { entitlementsFor } from '@shared/entitlements';
 import { hasRole, type Role } from '@shared/roles';
-import type {
-  CreateProductInput,
-  ProductDto,
-  ProductQuery,
-  UpdateProductInput,
+import {
+  stockStatus,
+  type CreateProductInput,
+  type ProductDto,
+  type ProductQuery,
+  type UpdateProductInput,
 } from '@shared/schemas/products';
 
 import type { Db } from '../db/client';
@@ -28,6 +29,7 @@ function toProductDto(row: Product, role: Role): ProductDto {
     trackStock: row.trackStock,
     stock: row.stock,
     lowStockThreshold: row.lowStockThreshold,
+    stockStatus: stockStatus(row),
     showOnStorefront: row.showOnStorefront,
     archived: row.archivedAt !== null,
     createdAt: row.createdAt,
@@ -66,6 +68,9 @@ export async function listProducts(
     eq(products.shopId, shopId),
     archived ? isNotNull(products.archivedAt) : isNull(products.archivedAt),
     query.categoryId ? eq(products.categoryId, query.categoryId) : undefined,
+    query.stock ? eq(products.trackStock, true) : undefined,
+    query.stock === 'out' ? sql`${products.stock} <= 0` : undefined,
+    query.stock === 'low' ? sql`${products.stock} <= ${products.lowStockThreshold}` : undefined,
   ];
   if (query.q) {
     // instr() instead of LIKE, so % and _ typed by the user are plain characters.

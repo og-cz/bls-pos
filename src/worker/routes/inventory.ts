@@ -9,7 +9,7 @@ import { ApiError } from '../lib/errors';
 import { parseJson } from '../lib/validate';
 import { requireRole } from '../middleware/role';
 import { authed } from '../middleware/tenant';
-import { deduct, listMovements, restock } from '../services/inventory';
+import { deduct, listMovements, restock, stockAlerts } from '../services/inventory';
 
 export const inventoryRoutes = new Hono<AuthedEnv>();
 
@@ -30,4 +30,8 @@ inventoryRoutes.get('/movements', async (c) => {
   const query = movementQuerySchema.safeParse(c.req.query());
   if (!query.success) throw new ApiError(400, 'VALIDATION_ERROR', 'Invalid filter or paging.');
   return c.json(await listMovements(getDb(c.env.DB), c.var.shopId, await actorOf(c), query.data));
+});
+
+inventoryRoutes.get('/alerts', async (c) => {
+  return c.json(await stockAlerts(getDb(c.env.DB), c.var.shopId));
 });

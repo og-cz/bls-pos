@@ -31,7 +31,7 @@ describe('POST /inventory/restock', () => {
       owner.cookie,
     );
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ productId: p.id, stock: 12 });
+    expect(await res.json()).toEqual({ productId: p.id, stock: 12, stockStatus: 'ok' });
 
     const { movements } = await (
       await getWithCookie(`/inventory/movements?productId=${p.id}`, owner.cookie)
@@ -76,7 +76,7 @@ describe('POST /inventory/deduct', () => {
       staff.cookie,
     );
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ productId: p.id, stock: 3 });
+    expect(await res.json()).toEqual({ productId: p.id, stock: 3, stockStatus: 'low' });
 
     const audit = await env.DB.prepare(
       "SELECT user_id, details_json FROM audit_log WHERE shop_id = ? AND action = 'stock.deduct'",

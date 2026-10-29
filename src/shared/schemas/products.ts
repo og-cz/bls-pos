@@ -61,6 +61,8 @@ export const productQuerySchema = z
     q: z.string().trim().max(80).optional(),
     categoryId: id.optional(),
     archived: z.enum(['true', 'false']).optional(),
+    // 'low' = at or below its low-stock threshold (includes out of stock); 'out' = none left.
+    stock: z.enum(['low', 'out']).optional(),
     cursor: z.string().max(200).optional(),
     limit: z.coerce.number().int().min(1).max(100).default(100),
   })
@@ -69,6 +71,22 @@ export const productQuerySchema = z
 export type CreateProductInput = z.infer<typeof createProductSchema>;
 export type UpdateProductInput = z.infer<typeof updateProductSchema>;
 export type ProductQuery = z.infer<typeof productQuerySchema>;
+
+/**
+ * Badge for stock (Section 6.5: green / amber low / red out). Untracked items (e.g.
+ * made-to-order drinks) have no badge.
+ */
+export type StockStatus = 'ok' | 'low' | 'out' | 'untracked';
+
+export function stockStatus(p: {
+  trackStock: boolean;
+  stock: number;
+  lowStockThreshold: number;
+}): StockStatus {
+  if (!p.trackStock) return 'untracked';
+  if (p.stock <= 0) return 'out';
+  return p.stock <= p.lowStockThreshold ? 'low' : 'ok';
+}
 
 /** A product as the API returns it. `costCents` is present only for admins and the owner. */
 export type ProductDto = {
@@ -81,6 +99,7 @@ export type ProductDto = {
   trackStock: boolean;
   stock: number;
   lowStockThreshold: number;
+  stockStatus: StockStatus;
   showOnStorefront: boolean;
   archived: boolean;
   createdAt: number;
