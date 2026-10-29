@@ -18,10 +18,13 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc -b",
     "deploy": "pnpm build && wrangler deploy",
-    "cf-typegen": "wrangler types"
+    "cf-typegen": "wrangler types",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.65.0",
+    "@cloudflare/vitest-plugin": "^1.4.9",
     "@eslint/js": "^10.0.1",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^22.20.5",
@@ -39,6 +42,7 @@
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.72.1",
     "vite": "^8.3.5",
+    "vitest": "~4.1.12",
     "wrangler": "^4.154.0"
   },
   "dependencies": {
