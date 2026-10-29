@@ -9,12 +9,12 @@ For any AI assistant (or person) picking up Bilis POS. Updated 2026-10-29.
   (the local `origin` still points at the old `fast-pos` URL; GitHub redirects).
 - **Plan:** `docs/MASTER_PROMPT.md` (original name "POS Fast" = Bilis POS). Follow it
   phase by phase, one Conventional Commit per planned item.
-- **Status:** Phase 0 done (CI green). Phase 1 in progress. Done and pushed:
-  schema, migrations + seed, PBKDF2 hashing, signup, login/logout/sessions, rate
-  limiting + lockout, Turnstile on signup/login/recovery, one-time recovery codes
-  (`POST /api/v1/auth/recover`), auth test gap-fill (90 tests).
-- **Then the rest of Phase 1:** `feat(web): add signup and login pages` (React; the Turnstile site key test value is `1x00000000000000000000AA`).
-  Then write the Phase 1 demo note in `docs/PROGRESS.md`.
+- **Status:** Phase 0 and Phase 1 done and pushed (see `docs/PROGRESS.md`). Next is
+  **Phase 2** in the master prompt: `feat(api): add tenant middleware deriving shop from
+session`, then role guard, staff accounts, deactivation, audit log, isolation tests,
+  app shell.
+- **Brand:** the logo is `public/logo.svg` (from the owner's `bilispos-logo.svg`), shown
+  via `BrandLogo` in Bilis blue (`--brand-mark`). Use it, not a generic icon.
 
 ## Rules the owner set (follow them)
 
