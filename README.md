@@ -22,9 +22,8 @@
 
 ---
 
-_Bilis_ means **"fast"** in Filipino. Bilis POS is built for sari-sari stores, cafés, food
-stalls, salons and small retail shops that need a checkout that is quick to learn, quick
-to use and costs nothing to run.
+Bilis POS is built for small shops, cafés, food stalls, salons and retail stores that need
+a checkout that is quick to learn, quick to use and costs nothing to run.
 
 > **Status:** early development (Phase 0 — Foundation). Not ready for real shops yet.
 
