@@ -20,7 +20,7 @@ Please do not open a public issue. Email the maintainer (see the GitHub profile 
 
 ### 7.2 Sessions
 
-- [ ] 32 random bytes, `__Host-pf_session`, `HttpOnly; Secure; SameSite=Lax; Path=/`
+- [ ] 32 random bytes, `__Host-bp_session`, `HttpOnly; Secure; SameSite=Lax; Path=/`
 - [ ] Only SHA-256 of token stored
 - [ ] 12 h idle / 30 d absolute expiry; `last_seen_at` refreshed ≤ every 5 min
 - [ ] Revoke on password change, deactivation, role change, "log out all"

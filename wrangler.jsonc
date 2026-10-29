@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "pos-fast",
+  "name": "bilis-pos",
   "main": "src/worker/index.ts",
   "compatibility_date": "2026-10-01",
   "observability": { "enabled": true },

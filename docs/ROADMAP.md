@@ -1,5 +1,7 @@
 # Roadmap
 
+> The project was renamed from **POS Fast** to **Bilis POS** on 2026-10-29. `docs/MASTER_PROMPT.md` keeps the original name; wherever it says "POS Fast", `pos-fast` or `__Host-pf_session`, read "Bilis POS", `bilis-pos` and `__Host-bp_session`.
+
 > The master prompt (§12) holds the full dated commit plan. Dates are a **plan**: commits
 > are made when the work is actually done, with real timestamps. Work started
 > 2026-10-29, ahead of the planned 2027-01-16 start, so real dates run earlier than the plan.

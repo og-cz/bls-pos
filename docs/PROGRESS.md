@@ -5,7 +5,7 @@ Short demo notes at the end of each phase.
 ## Phase 0 — Foundation (2026-10-29)
 
 **Demo:** `pnpm install && pnpm dev` → open the printed URL. The page shows
-"Hello, POS Fast" and **API: online**, fetched from `GET /api/v1/health` on the same
+"Hello, Bilis POS" and **API: online**, fetched from `GET /api/v1/health` on the same
 Worker. Deep links like `/some/route` fall back to the SPA. Unknown `/api/v1/*` paths
 return a JSON `NOT_FOUND` error.
 

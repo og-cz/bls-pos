@@ -1,4 +1,4 @@
-# POS Fast
+# Bilis POS
 
 Instant point-of-sale and inventory for any small business — sign up, brand your
 shop, add products and staff, and start selling from a phone or PC.

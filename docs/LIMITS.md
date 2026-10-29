@@ -1,6 +1,6 @@
 # Cloudflare free-tier limits
 
-POS Fast must run at **$0** on services that allow commercial use and never sleep.
+Bilis POS must run at **$0** on services that allow commercial use and never sleep.
 These are the limits we design against.
 
 **Verified:** 2026-10-29, from Cloudflare's official docs (page "last updated" dates
@@ -8,7 +8,7 @@ in brackets). Free tiers change, so re-check this file before each release.
 
 ## Workers (Free plan) — [docs, updated 2026-10-12](https://developers.cloudflare.com/workers/platform/limits/)
 
-| Limit              | Free                                                  | What it means for POS Fast                                                                                                    |
+| Limit              | Free                                                  | What it means for Bilis POS                                                                                                   |
 | ------------------ | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | Requests           | **100,000 / day**, resets 00:00 UTC (then Error 1027) | Shared by every shop on one deployment. Roughly 30–50 small shops at typical volumes. Static assets do not count (see below). |
 | CPU time           | **10 ms per HTTP request**, 10 ms per Cron Trigger    | The tightest limit. See _Password hashing_ below. Keep handlers lean; no heavy work per request.                              |

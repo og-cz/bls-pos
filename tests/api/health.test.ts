@@ -5,7 +5,7 @@ describe('GET /api/v1/health', () => {
   it('reports the API is up', async () => {
     const res = await exports.default.fetch('https://pos.test/api/v1/health');
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true, name: 'POS Fast' });
+    expect(await res.json()).toEqual({ ok: true, name: 'Bilis POS' });
   });
 });
 

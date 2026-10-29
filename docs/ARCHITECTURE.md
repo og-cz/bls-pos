@@ -4,7 +4,7 @@
 
 ## Overview
 
-POS Fast is **one Cloudflare Worker** serving two things from one origin:
+Bilis POS is **one Cloudflare Worker** serving two things from one origin:
 
 - **Static assets** — the React SPA build (`dist/client`), served by Workers Static
   Assets. Unknown paths fall back to `index.html` (`not_found_handling:
@@ -15,7 +15,7 @@ single-page-application`).
 One origin means no CORS, `SameSite=Lax` cookies work, and the CSP can stay `'self'`.
 
 ```
-Browser / PWA ──HTTPS──► Worker "pos-fast"
+Browser / PWA ──HTTPS──► Worker "bilis-pos"
                            ├─ static assets (SPA)
                            └─ /api/v1/* → Hono → services → D1 / R2
 Cron Trigger ──► backups + daily summaries
