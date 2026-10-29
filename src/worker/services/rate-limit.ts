@@ -13,12 +13,14 @@ export const MAX_FAILURES_PER_IP = 20;
 
 export type AttemptKeys = { user: string; ip: string | null };
 
+/** `kind` keeps login and recovery counters apart; the IP counter is shared. */
 export function attemptKeys(
   shopSlug: string,
   username: string,
   ipHash: string | null,
+  kind: 'user' | 'recover' = 'user',
 ): AttemptKeys {
-  return { user: `user:${shopSlug}:${username}`, ip: ipHash ? `ip:${ipHash}` : null };
+  return { user: `${kind}:${shopSlug}:${username}`, ip: ipHash ? `ip:${ipHash}` : null };
 }
 
 function windowStart(now: number): number {

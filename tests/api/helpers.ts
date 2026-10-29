@@ -30,8 +30,18 @@ export async function signUp(overrides: Record<string, unknown> = {}) {
   const body = signupBody(overrides);
   const res = await postJson('/auth/signup', body);
   if (res.status !== 201) throw new Error(`signup failed: ${res.status}`);
-  const json = await res.json<{ shop: { id: string }; user: { id: string } }>();
-  return { body, shopId: json.shop.id, userId: json.user.id, cookie: sessionCookie(res) };
+  const json = await res.json<{
+    shop: { id: string };
+    user: { id: string };
+    recoveryCodes: string[];
+  }>();
+  return {
+    body,
+    shopId: json.shop.id,
+    userId: json.user.id,
+    recoveryCodes: json.recoveryCodes,
+    cookie: sessionCookie(res),
+  };
 }
 
 let counter = 0;

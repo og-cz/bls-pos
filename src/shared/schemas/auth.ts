@@ -30,6 +30,11 @@ const plainText = (max: number) =>
     // Plain text only: no control characters.
     .refine((s) => !/\p{Cc}/u.test(s), 'Contains characters that are not allowed.');
 
+const ownerPassword = z.string().superRefine((pw, ctx) => {
+  const problem = checkPassword(pw, 'owner');
+  if (problem) ctx.addIssue({ code: 'custom', message: passwordProblemMessage(problem, 'owner') });
+});
+
 export const signupSchema = z
   .object({
     shopName: plainText(80),
@@ -37,11 +42,7 @@ export const signupSchema = z
     businessType: z.enum(BUSINESS_TYPES),
     ownerName: plainText(60),
     username: usernameSchema,
-    password: z.string().superRefine((pw, ctx) => {
-      const problem = checkPassword(pw, 'owner');
-      if (problem)
-        ctx.addIssue({ code: 'custom', message: passwordProblemMessage(problem, 'owner') });
-    }),
+    password: ownerPassword,
     turnstileToken,
   })
   .strict();
@@ -59,3 +60,16 @@ export const loginSchema = z
   .strict();
 
 export type LoginInput = z.infer<typeof loginSchema>;
+
+// Owner password reset with a one-time recovery code (Section 7.12).
+export const recoverSchema = z
+  .object({
+    shopSlug: z.string().trim().toLowerCase().min(1, 'Required.').max(40),
+    username: z.string().trim().toLowerCase().min(1, 'Required.').max(32),
+    code: z.string().trim().min(1, 'Required.').max(32),
+    newPassword: ownerPassword,
+    turnstileToken,
+  })
+  .strict();
+
+export type RecoverInput = z.infer<typeof recoverSchema>;

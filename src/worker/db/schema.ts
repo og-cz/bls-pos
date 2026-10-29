@@ -99,6 +99,20 @@ export const sessions = sqliteTable(
   (t) => [index('sessions_shop_id').on(t.shopId), index('sessions_user_id').on(t.userId)],
 );
 
+// Owner password reset without email (Section 7.12). Codes are stored hashed.
+export const recoveryCodes = sqliteTable(
+  'recovery_codes',
+  {
+    id: text('id').primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id),
+    codeHash: text('code_hash').notNull(),
+    usedAt: integer('used_at'),
+  },
+  (t) => [index('recovery_codes_user_id').on(t.userId)],
+);
+
 // Failed-login counters per fixed 15-minute window (Section 7.3).
 // key is 'ip:<hash>' or 'user:<shopSlug>:<username>'.
 export const loginAttempts = sqliteTable(

@@ -1,6 +1,6 @@
 import { Hono, type Context } from 'hono';
 
-import { loginSchema, signupSchema } from '@shared/schemas/auth';
+import { loginSchema, recoverSchema, signupSchema } from '@shared/schemas/auth';
 
 import { getDb } from '../db/client';
 import type { AppEnv, AuthedEnv } from '../env';
@@ -10,6 +10,7 @@ import { requireAuth } from '../middleware/session';
 import { hashIp } from '../security/tokens';
 import { requireHuman } from '../security/turnstile';
 import { login, TooManyAttemptsError } from '../services/login';
+import { recoverAccount } from '../services/recovery';
 import { createSession, revokeSession } from '../services/sessions';
 import { createShopWithOwner } from '../services/signup';
 
@@ -54,6 +55,21 @@ authRoutes.post('/login', async (c) => {
   }
   await startSession(c, result.shopId, result.userId);
   return c.json({ ok: true, role: result.role });
+});
+
+authRoutes.post('/recover', async (c) => {
+  const input = await parseJson(c, recoverSchema);
+  await verifyHuman(c, input.turnstileToken);
+  let result;
+  try {
+    result = await recoverAccount(getDb(c.env.DB), c.env.PEPPER, input, await clientIpHash(c));
+  } catch (err) {
+    if (err instanceof TooManyAttemptsError) c.header('Retry-After', String(err.retryAfter));
+    throw err;
+  }
+  // All old sessions were revoked; this device gets a fresh one.
+  await startSession(c, result.shopId, result.userId);
+  return c.json({ ok: true, remainingCodes: result.remainingCodes });
 });
 
 authRoutes.post('/logout', requireAuth, async (c: Context<AuthedEnv>) => {

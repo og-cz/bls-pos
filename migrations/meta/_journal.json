@@ -15,6 +15,13 @@
       "when": 1793281486781,
       "tag": "0001_login_attempts",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1793281848843,
+      "tag": "0002_recovery_codes",
+      "breakpoints": true
     }
   ]
 }

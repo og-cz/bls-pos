@@ -3,13 +3,16 @@ import type { SignupInput } from '@shared/schemas/auth';
 
 import type { Db } from '../db/client';
 import { newId } from '../db/id';
-import { shops, users } from '../db/schema';
+import { recoveryCodes, shops, users } from '../db/schema';
 import { ApiError } from '../lib/errors';
 import { hashPassword } from '../security/password';
+import { hashRecoveryCode, newRecoveryCode, RECOVERY_CODE_COUNT } from '../security/recovery-codes';
 
 export type SignupResult = {
   shop: { id: string; slug: string; name: string };
   user: { id: string; username: string; displayName: string; role: 'owner' };
+  /** Shown once, at signup. Only hashes are stored. */
+  recoveryCodes: string[];
 };
 
 function isUniqueViolation(err: unknown, column: string): boolean {
@@ -30,9 +33,17 @@ export async function createShopWithOwner(
   const shopId = newId(now);
   const userId = newId(now);
   const passwordHash = await hashPassword(input.password, pepper);
+  const codes = Array.from({ length: RECOVERY_CODE_COUNT }, newRecoveryCode);
+  const codeRows = await Promise.all(
+    codes.map(async (code) => ({
+      id: newId(now),
+      userId,
+      codeHash: await hashRecoveryCode(code, pepper),
+    })),
+  );
 
   try {
-    // One batch = one transaction: never a shop without an owner, or the reverse.
+    // One batch = one transaction: never a shop without an owner, or an owner without codes.
     await db.batch([
       db.insert(shops).values({
         id: shopId,
@@ -51,6 +62,7 @@ export async function createShopWithOwner(
         passwordHash,
         createdAt: now,
       }),
+      db.insert(recoveryCodes).values(codeRows),
     ]);
   } catch (err) {
     if (isUniqueViolation(err, 'shops.slug')) {
@@ -64,5 +76,6 @@ export async function createShopWithOwner(
   return {
     shop: { id: shopId, slug: input.shopSlug, name: input.shopName },
     user: { id: userId, username: input.username, displayName: input.ownerName, role: 'owner' },
+    recoveryCodes: codes,
   };
 }

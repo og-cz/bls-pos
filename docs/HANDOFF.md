@@ -11,21 +11,8 @@ For any AI assistant (or person) picking up Bilis POS. Updated 2026-10-29.
   phase by phase, one Conventional Commit per planned item.
 - **Status:** Phase 0 done (CI green). Phase 1 in progress. Done and pushed:
   schema, migrations + seed, PBKDF2 hashing, signup, login/logout/sessions, rate
-  limiting + lockout, Turnstile on signup/login.
-- **In progress, NOT committed:** `feat(auth): add one-time recovery codes for owner
-password reset`. Written so far (all uncommitted in the working tree):
-  - `migrations/0002_recovery_codes.sql`, `recoveryCodes` table in `src/worker/db/schema.ts`
-  - `src/worker/security/recovery-codes.ts` (generate / normalize / HMAC-hash codes)
-  - signup now issues 10 codes in the same batch and returns `recoveryCodes`
-  - `src/worker/services/recovery.ts` + `POST /api/v1/auth/recover` (Turnstile always,
-    rate limit key `recover:…`, atomic code spend, revokes all sessions, new session)
-  - `recoverSchema` in `src/shared/schemas/auth.ts`; `attemptKeys(..., kind)` in rate-limit
-  - **Still to do:** run `pnpm lint && pnpm typecheck && pnpm test`, write
-    `tests/api/recovery.test.ts` (signup returns 10 unique codes; codes stored hashed;
-    recover works once per code; wrong code → 401 INVALID_RECOVERY; non-owner can't
-    recover; old sessions revoked; Turnstile required; rate limited), tick the
-    Turnstile-on-recovery + 7.12 items in `docs/SECURITY.md`, apply migration locally
-    (`CI=1 pnpm db:migrate:local`), commit, push.
+  limiting + lockout, Turnstile on signup/login/recovery, one-time recovery codes
+  (`POST /api/v1/auth/recover`, tests in `tests/api/recovery.test.ts`).
 - **Then the rest of Phase 1:** `test(auth): cover hashing, sessions, lockout and
 recovery` (mostly covered already — fill gaps), `feat(web): add signup and login
 pages` (React; the Turnstile site key test value is `1x00000000000000000000AA`).
