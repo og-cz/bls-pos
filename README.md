@@ -1,7 +1,30 @@
-# Bilis POS
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.png" />
+    <img src="docs/assets/logo-light.png" alt="Bilis POS logo" width="64" valign="middle" />
+  </picture>
+  Bilis POS
+</h1>
 
-Instant point-of-sale and inventory for any small business — sign up, brand your
-shop, add products and staff, and start selling from a phone or PC.
+<p align="center">
+  <a href="https://github.com/og-cz/bilis-pos"><img src="https://img.shields.io/github/stars/og-cz/bilis-pos?style=flat&amp;label=%E2%98%85&amp;color=1E6FD9" alt="GitHub stars" /></a>
+  <a href="https://github.com/og-cz/bilis-pos/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/og-cz/bilis-pos/ci.yml?branch=main&amp;style=flat&amp;label=CI" alt="CI status" /></a>
+  <img src="https://img.shields.io/badge/license-MIT-1E6FD9?style=flat" alt="License: MIT" />
+  <img src="https://img.shields.io/badge/Cloudflare%20Workers-F38020?logo=cloudflare&amp;logoColor=white" alt="Runs on Cloudflare Workers" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&amp;logoColor=white" alt="Written in TypeScript" />
+  <img src="https://img.shields.io/badge/Web%20%7C%20Android%20%7C%20iOS%20%7C%20Windows%20%7C%20macOS-4493F8?style=flat-square" alt="Supported platforms: Web, Android, iOS, Windows and macOS (installable PWA)" />
+</p>
+
+<p align="center">
+  <b>Instant point-of-sale and inventory for any small business.</b><br />
+  Sign up, brand your shop, add products and staff, and start selling from a phone or PC — free.
+</p>
+
+---
+
+_Bilis_ means **"fast"** in Filipino. Bilis POS is built for sari-sari stores, cafés, food
+stalls, salons and small retail shops that need a checkout that is quick to learn, quick
+to use and costs nothing to run.
 
 > **Status:** early development (Phase 0 — Foundation). Not ready for real shops yet.
 
