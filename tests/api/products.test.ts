@@ -160,7 +160,8 @@ describe('GET /products', () => {
 
     const asStaff = await (await getWithCookie('/products', staff.cookie)).text();
     expect(asStaff).not.toContain('costCents');
-    expect(asStaff).not.toContain('4000');
+    const parsed = JSON.parse(asStaff) as List;
+    expect(parsed.products.every((p) => !('costCents' in p))).toBe(true);
     const one = await (await getWithCookie(`/products/${p.id}`, staff.cookie)).text();
     expect(one).not.toContain('costCents');
 

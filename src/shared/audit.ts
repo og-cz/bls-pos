@@ -10,6 +10,11 @@ export const AUDIT_ACTIONS = [
   'staff.deactivate',
   'product.create',
   'product.update',
+  'product.archive',
+  'product.unarchive',
+  'category.create',
+  'category.update',
+  'category.delete',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

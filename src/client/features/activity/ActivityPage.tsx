@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import {
+  Archive,
+  ArchiveRestore,
   KeyRound,
   Package,
   Pencil,
@@ -7,6 +9,7 @@ import {
   Lock,
   ShieldAlert,
   Store,
+  Tag,
   UserMinus,
   UserPlus,
   ScrollText,
@@ -34,6 +37,11 @@ const ACTIONS: Record<AuditAction, { icon: LucideIcon; text: string; warn?: bool
   'staff.deactivate': { icon: UserMinus, text: 'deactivated' },
   'product.create': { icon: Package, text: 'added product' },
   'product.update': { icon: Pencil, text: 'edited product' },
+  'product.archive': { icon: Archive, text: 'archived product' },
+  'product.unarchive': { icon: ArchiveRestore, text: 'restored product' },
+  'category.create': { icon: Tag, text: 'added category' },
+  'category.update': { icon: Tag, text: 'renamed category' },
+  'category.delete': { icon: Tag, text: 'removed category' },
 };
 
 const timeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
@@ -47,7 +55,12 @@ function describe(entry: AuditEntry): string {
     case 'staff.deactivate':
       return `${who} ${info.text} ${target}`.trim();
     case 'product.create':
-    case 'product.update': {
+    case 'product.update':
+    case 'product.archive':
+    case 'product.unarchive':
+    case 'category.create':
+    case 'category.update':
+    case 'category.delete': {
       const name = typeof entry.details?.name === 'string' ? entry.details.name : '';
       return `${who} ${info.text} ${name}`.trim();
     }

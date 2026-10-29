@@ -13,7 +13,13 @@ import { ApiError } from '../lib/errors';
 import { parseJson } from '../lib/validate';
 import { requireRole } from '../middleware/role';
 import { authed } from '../middleware/tenant';
-import { createProduct, getProduct, listProducts, updateProduct } from '../services/products';
+import {
+  createProduct,
+  getProduct,
+  listProducts,
+  setArchived,
+  updateProduct,
+} from '../services/products';
 
 export const productRoutes = new Hono<AuthedEnv>();
 
@@ -53,3 +59,19 @@ productRoutes.patch('/:id', requireRole('admin'), async (c) => {
   );
   return c.json({ product });
 });
+
+for (const [action, archived] of [
+  ['archive', true],
+  ['unarchive', false],
+] as const) {
+  productRoutes.post(`/:id/${action}`, requireRole('admin'), async (c) => {
+    const product = await setArchived(
+      getDb(c.env.DB),
+      c.var.shopId,
+      await actorOf(c),
+      c.req.param('id'),
+      archived,
+    );
+    return c.json({ product });
+  });
+}

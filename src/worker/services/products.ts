@@ -132,6 +132,25 @@ async function checkCategory(db: Db, shopId: string, categoryId: string | null |
   }
 }
 
+/** Archived products don't count, so archiving makes room (plan's maxProducts). */
+async function checkProductLimit(db: Db, shopId: string) {
+  const shop = await db.select({ plan: shops.plan }).from(shops).where(eq(shops.id, shopId)).get();
+  if (!shop) throw new ApiError(404, 'NOT_FOUND', 'Shop not found.');
+  const { maxProducts } = entitlementsFor(shop.plan);
+  const current = await db
+    .select({ n: count() })
+    .from(products)
+    .where(and(eq(products.shopId, shopId), isNull(products.archivedAt)))
+    .get();
+  if ((current?.n ?? 0) >= maxProducts) {
+    throw new ApiError(
+      409,
+      'PRODUCT_LIMIT_REACHED',
+      `Your plan allows up to ${maxProducts} products. Archive ones you no longer sell to add more.`,
+    );
+  }
+}
+
 const SKU_TAKEN = () =>
   new ApiError(409, 'SKU_TAKEN', 'Another product already uses that SKU.', {
     sku: 'Already used by another product.',
@@ -146,22 +165,7 @@ export async function createProduct(
 ): Promise<ProductDto> {
   await checkCategory(db, shopId, input.categoryId);
 
-  const shop = await db.select({ plan: shops.plan }).from(shops).where(eq(shops.id, shopId)).get();
-  if (!shop) throw new ApiError(404, 'NOT_FOUND', 'Shop not found.');
-  // Archived products don't count, so archiving makes room.
-  const { maxProducts } = entitlementsFor(shop.plan);
-  const current = await db
-    .select({ n: count() })
-    .from(products)
-    .where(and(eq(products.shopId, shopId), isNull(products.archivedAt)))
-    .get();
-  if ((current?.n ?? 0) >= maxProducts) {
-    throw new ApiError(
-      409,
-      'PRODUCT_LIMIT_REACHED',
-      `Your plan allows up to ${maxProducts} products. Archive ones you no longer sell to add more.`,
-    );
-  }
+  await checkProductLimit(db, shopId);
 
   const trackStock = input.trackStock ?? true;
   const stock = trackStock ? (input.stock ?? 0) : 0;
@@ -282,4 +286,39 @@ export async function updateProduct(
     throw err;
   }
   return toProductDto({ ...before, ...changes, updatedAt: now }, actor.role);
+}
+
+/** "Remove product" = archive (Section 4): it leaves the sell screen but keeps its history. */
+export async function setArchived(
+  db: Db,
+  shopId: string,
+  actor: Actor,
+  id: string,
+  archived: boolean,
+  now: number = Date.now(),
+): Promise<ProductDto> {
+  const before = await findProduct(db, shopId, id);
+  if ((before.archivedAt !== null) === archived) return toProductDto(before, actor.role);
+  if (!archived) await checkProductLimit(db, shopId);
+
+  const archivedAt = archived ? now : null;
+  await db.batch([
+    db
+      .update(products)
+      .set({ archivedAt, updatedAt: now })
+      .where(and(eq(products.id, id), eq(products.shopId, shopId))),
+    auditInsert(
+      db,
+      shopId,
+      {
+        action: archived ? 'product.archive' : 'product.unarchive',
+        userId: actor.userId,
+        target: { type: 'product', id },
+        details: { name: before.name },
+        ipHash: actor.ipHash,
+      },
+      now,
+    ),
+  ]);
+  return toProductDto({ ...before, archivedAt, updatedAt: now }, actor.role);
 }

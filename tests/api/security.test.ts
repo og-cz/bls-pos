@@ -22,6 +22,12 @@ const ROUTES: Record<string, Access> = {
   'GET /api/v1/products/:id': 'staff',
   'POST /api/v1/products': 'admin',
   'PATCH /api/v1/products/:id': 'admin',
+  'POST /api/v1/products/:id/archive': 'admin',
+  'POST /api/v1/products/:id/unarchive': 'admin',
+  'GET /api/v1/categories': 'staff',
+  'POST /api/v1/categories': 'admin',
+  'PATCH /api/v1/categories/:id': 'admin',
+  'DELETE /api/v1/categories/:id': 'admin',
 };
 
 type Shop = Awaited<ReturnType<typeof signUp>>;
@@ -51,7 +57,20 @@ async function requestFor(route: string, shop: Shop, cookie: string): Promise<Re
         body: JSON.stringify({ priceCents: 150 }),
       });
     }
+    if (method === 'POST') return postJson(target, {}, cookie);
     return api(target, { headers: { cookie } });
+  }
+  if (route === 'POST /api/v1/categories') {
+    return postJson(rel, { name: `Cat ${crypto.randomUUID().slice(0, 6)}` }, cookie);
+  }
+  if (rel.includes('/categories/:id')) {
+    const made = await postJson('/categories', { name: `Cat ${crypto.randomUUID()}` }, shop.cookie);
+    const { category } = await made.json<{ category: { id: string } }>();
+    return api(rel.replace(':id', category.id), {
+      method,
+      headers: { cookie, 'content-type': 'application/json' },
+      ...(method === 'PATCH' ? { body: JSON.stringify({ sortOrder: 2 }) } : {}),
+    });
   }
   return api(rel, {
     method,
