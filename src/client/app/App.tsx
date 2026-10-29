@@ -1,41 +1,28 @@
-import { useEffect, useState } from 'react';
-import { Zap } from 'lucide-react';
+import { useEffect, type JSX } from 'react';
 
-import { Button } from '@/components/ui/button';
-import { API_BASE, APP_NAME } from '@shared/app';
+import { LoginPage } from '@/features/auth/LoginPage';
+import { RecoverPage } from '@/features/auth/RecoverPage';
+import { SignupPage } from '@/features/auth/SignupPage';
+import { HomePage } from '@/features/home/HomePage';
+import { navigate, usePathname } from '@/lib/router';
+import { APP_NAME } from '@shared/app';
 
-type ApiStatus = 'checking' | 'online' | 'offline';
+const ROUTES: Record<string, { title: string; Page: () => JSX.Element }> = {
+  '/': { title: APP_NAME, Page: HomePage },
+  '/login': { title: `Log in · ${APP_NAME}`, Page: LoginPage },
+  '/signup': { title: `Create your shop · ${APP_NAME}`, Page: SignupPage },
+  '/recover': { title: `Reset password · ${APP_NAME}`, Page: RecoverPage },
+};
 
 export function App() {
-  const [api, setApi] = useState<ApiStatus>('checking');
+  const pathname = usePathname();
+  const route = ROUTES[pathname];
 
   useEffect(() => {
-    fetch(`${API_BASE}/health`)
-      .then((res) => {
-        setApi(res.ok ? 'online' : 'offline');
-      })
-      .catch(() => {
-        setApi('offline');
-      });
-  }, []);
+    if (route) document.title = route.title;
+    else navigate('/', { replace: true });
+  }, [route]);
 
-  return (
-    <main className="flex min-h-dvh flex-col items-center justify-center gap-6 px-4 text-center">
-      <div className="flex size-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md">
-        <Zap className="size-8" aria-hidden="true" />
-      </div>
-      <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Hello, {APP_NAME}</h1>
-        <p className="max-w-sm text-muted-foreground">
-          Fast, secure point-of-sale for small businesses. Coming soon.
-        </p>
-      </div>
-      <Button size="lg" disabled>
-        Get started
-      </Button>
-      <p className="text-sm text-muted-foreground" role="status">
-        API: {api}
-      </p>
-    </main>
-  );
+  if (!route) return null;
+  return <route.Page />;
 }

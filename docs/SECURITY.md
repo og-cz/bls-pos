@@ -81,7 +81,7 @@ Please do not open a public issue. Email the maintainer (see the GitHub profile 
 
 ### 7.12 Account recovery
 
-- [ ] 10 hashed one-time recovery codes at signup, shown once ✅ — Download/Print buttons ⏳ (with the signup page)
+- [x] 10 hashed one-time recovery codes at signup, shown once, with Download, Print and Copy
 
 ### 7.13 Audit log
 
