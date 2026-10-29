@@ -10,6 +10,7 @@ import { MAX_UPLOAD_BYTES } from './security/images';
 import { auditRoutes } from './routes/audit';
 import { authRoutes } from './routes/auth';
 import { categoryRoutes } from './routes/categories';
+import { inventoryRoutes } from './routes/inventory';
 import { meRoutes } from './routes/me';
 import { productRoutes } from './routes/products';
 import { mediaRoutes, uploadRoutes } from './routes/uploads';
@@ -40,6 +41,7 @@ app.route('/staff', staffRoutes);
 app.route('/audit', auditRoutes);
 app.route('/products', productRoutes);
 app.route('/categories', categoryRoutes);
+app.route('/inventory', inventoryRoutes);
 app.route('/uploads', uploadRoutes);
 app.route('/media', mediaRoutes);
 

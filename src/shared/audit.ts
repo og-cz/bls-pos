@@ -15,6 +15,8 @@ export const AUDIT_ACTIONS = [
   'category.create',
   'category.update',
   'category.delete',
+  'stock.restock',
+  'stock.deduct',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

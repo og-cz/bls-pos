@@ -31,6 +31,9 @@ const ROUTES: Record<string, Access> = {
   // Avatars are for everyone; the service limits the other kinds to admins (uploads.test.ts).
   'POST /api/v1/uploads/:kind': 'staff',
   'GET /api/v1/media/*': 'staff',
+  'POST /api/v1/inventory/restock': 'admin',
+  'POST /api/v1/inventory/deduct': 'staff',
+  'GET /api/v1/inventory/movements': 'staff',
 };
 
 type Shop = Awaited<ReturnType<typeof signUp>>;

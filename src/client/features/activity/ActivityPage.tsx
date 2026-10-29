@@ -4,6 +4,8 @@ import {
   ArchiveRestore,
   KeyRound,
   Package,
+  PackageMinus,
+  PackagePlus,
   Pencil,
   LogIn,
   Lock,
@@ -42,6 +44,8 @@ const ACTIONS: Record<AuditAction, { icon: LucideIcon; text: string; warn?: bool
   'category.create': { icon: Tag, text: 'added category' },
   'category.update': { icon: Tag, text: 'renamed category' },
   'category.delete': { icon: Tag, text: 'removed category' },
+  'stock.restock': { icon: PackagePlus, text: 'restocked' },
+  'stock.deduct': { icon: PackageMinus, text: 'took out stock of' },
 };
 
 const timeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
@@ -60,7 +64,9 @@ function describe(entry: AuditEntry): string {
     case 'product.unarchive':
     case 'category.create':
     case 'category.update':
-    case 'category.delete': {
+    case 'category.delete':
+    case 'stock.restock':
+    case 'stock.deduct': {
       const name = typeof entry.details?.name === 'string' ? entry.details.name : '';
       return `${who} ${info.text} ${name}`.trim();
     }
