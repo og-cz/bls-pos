@@ -20,7 +20,11 @@
     "deploy": "pnpm build && wrangler deploy",
     "cf-typegen": "wrangler types",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "db:migrate:prod": "wrangler d1 migrations apply DB --remote",
+    "db:seed": "wrangler d1 execute DB --local --file scripts/seed.sql"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.65.0",
