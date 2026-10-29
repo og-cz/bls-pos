@@ -3,26 +3,72 @@ import { useEffect, type JSX } from 'react';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { RecoverPage } from '@/features/auth/RecoverPage';
 import { SignupPage } from '@/features/auth/SignupPage';
-import { HomePage } from '@/features/home/HomePage';
+import {
+  ActivityPage,
+  DashboardPage,
+  InventoryPage,
+  ProductsPage,
+  SellPage,
+  StaffPage,
+} from '@/features/placeholders';
 import { navigate, usePathname } from '@/lib/router';
 import { APP_NAME } from '@shared/app';
+import { hasRole } from '@shared/roles';
 
-const ROUTES: Record<string, { title: string; Page: () => JSX.Element }> = {
-  '/': { title: APP_NAME, Page: HomePage },
-  '/login': { title: `Log in · ${APP_NAME}`, Page: LoginPage },
-  '/signup': { title: `Create your shop · ${APP_NAME}`, Page: SignupPage },
-  '/recover': { title: `Reset password · ${APP_NAME}`, Page: RecoverPage },
+import { AppShell } from './AppShell';
+import { homeFor, NAV } from './nav';
+import { SessionGate } from './SessionGate';
+import { useMe } from './session';
+
+type Page = () => JSX.Element;
+
+const PUBLIC: Record<string, { title: string; Page: Page }> = {
+  '/login': { title: 'Log in', Page: LoginPage },
+  '/signup': { title: 'Create your shop', Page: SignupPage },
+  '/recover': { title: 'Reset password', Page: RecoverPage },
 };
+
+const SIGNED_IN: Record<string, Page> = {
+  '/': DashboardPage,
+  '/sell': SellPage,
+  '/inventory': InventoryPage,
+  '/products': ProductsPage,
+  '/staff': StaffPage,
+  '/activity': ActivityPage,
+};
+
+/** Signed-in screens. A screen the role can't use sends the user to their home screen. */
+function SignedInRoutes({ pathname }: { pathname: string }) {
+  const { user } = useMe();
+  const item = NAV.find((i) => i.href === pathname);
+  const Page = SIGNED_IN[pathname];
+  const allowed = Boolean(item && Page && hasRole(user.role, item.minRole));
+
+  useEffect(() => {
+    if (!allowed) navigate(homeFor(user.role), { replace: true });
+    else if (item) document.title = `${item.label} · ${APP_NAME}`;
+  }, [allowed, item, user.role]);
+
+  if (!allowed || !Page) return null;
+  return (
+    <AppShell>
+      <Page />
+    </AppShell>
+  );
+}
 
 export function App() {
   const pathname = usePathname();
-  const route = ROUTES[pathname];
+  const publicRoute = PUBLIC[pathname];
 
   useEffect(() => {
-    if (route) document.title = route.title;
-    else navigate('/', { replace: true });
-  }, [route]);
+    if (publicRoute) document.title = `${publicRoute.title} · ${APP_NAME}`;
+  }, [publicRoute]);
 
-  if (!route) return null;
-  return <route.Page />;
+  if (publicRoute) return <publicRoute.Page />;
+  return (
+    <SessionGate>
+      <SignedInRoutes pathname={pathname} />
+    </SessionGate>
+  );
 }

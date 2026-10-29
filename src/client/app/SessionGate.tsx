@@ -1,0 +1,44 @@
+import { useEffect, useState, type ReactNode } from 'react';
+
+import { ApiClientError, apiGet } from '@/lib/api';
+import { navigate } from '@/lib/router';
+
+import { MeContext, type Me } from './session';
+
+/** Loads /me once; sends signed-out visitors to the login page. */
+export function SessionGate({ children }: { children: ReactNode }) {
+  const [me, setMe] = useState<Me | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    apiGet<Me>('/me')
+      .then(setMe)
+      .catch((err: unknown) => {
+        if (err instanceof ApiClientError && err.status === 401) {
+          navigate('/login', { replace: true });
+        } else {
+          setError(err instanceof Error ? err.message : 'Something went wrong.');
+        }
+      });
+  }, []);
+
+  if (error) {
+    return (
+      <main className="flex min-h-dvh items-center justify-center px-4">
+        <p role="alert" className="text-destructive">
+          {error}
+        </p>
+      </main>
+    );
+  }
+  if (!me) {
+    return (
+      <main className="flex min-h-dvh items-center justify-center px-4">
+        <p role="status" className="text-muted-foreground">
+          Loading…
+        </p>
+      </main>
+    );
+  }
+  return <MeContext value={me}>{children}</MeContext>;
+}

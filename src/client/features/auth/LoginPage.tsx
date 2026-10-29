@@ -1,5 +1,6 @@
 import { useRef, useState, type SyntheticEvent } from 'react';
 
+import { homeFor } from '@/app/nav';
 import { FormAlert, PasswordField, TextField } from '@/components/field';
 import { Turnstile } from '@/components/turnstile';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,7 @@ import { ApiClientError, apiPost } from '@/lib/api';
 import { focusFirstError, validate, withoutError, type FieldErrors } from '@/lib/form';
 import { Link } from '@/components/link';
 import { navigate } from '@/lib/router';
+import type { Role } from '@shared/roles';
 import { loginSchema } from '@shared/schemas/auth';
 
 import { AuthLayout } from './AuthLayout';
@@ -50,9 +52,9 @@ export function LoginPage() {
 
     setSubmitting(true);
     try {
-      await apiPost('/auth/login', checked.data);
+      const { role } = await apiPost<{ role: Role }>('/auth/login', checked.data);
       rememberShopCode(checked.data.shopSlug);
-      navigate('/', { replace: true });
+      navigate(homeFor(role), { replace: true });
     } catch (err) {
       const apiErr =
         err instanceof ApiClientError
