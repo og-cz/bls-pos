@@ -83,3 +83,23 @@ export async function addMember(
   });
   return { id: user.id, username, temporaryPassword, cookie: sessionCookie(login) };
 }
+
+type ProductJson = {
+  id: string;
+  name: string;
+  sku: string | null;
+  stock: number;
+  priceCents: number;
+};
+
+/** Creates a product through the API with the given (admin or owner) session. */
+export async function createProductAs(cookie: string, fields: Record<string, unknown> = {}) {
+  const res = await postJson(
+    '/products',
+    { name: 'Iced Latte', priceCents: 12_000, ...fields },
+    cookie,
+  );
+  if (res.status !== 201)
+    throw new Error(`createProduct failed: ${res.status} ${await res.text()}`);
+  return (await res.json<{ product: ProductJson }>()).product;
+}

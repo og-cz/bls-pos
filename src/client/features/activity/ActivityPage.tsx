@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import {
   KeyRound,
+  Package,
+  Pencil,
   LogIn,
   Lock,
   ShieldAlert,
@@ -30,6 +32,8 @@ const ACTIONS: Record<AuditAction, { icon: LucideIcon; text: string; warn?: bool
   'recover.failed': { icon: ShieldAlert, text: 'wrong recovery code entered', warn: true },
   'staff.create': { icon: UserPlus, text: 'added' },
   'staff.deactivate': { icon: UserMinus, text: 'deactivated' },
+  'product.create': { icon: Package, text: 'added product' },
+  'product.update': { icon: Pencil, text: 'edited product' },
 };
 
 const timeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
@@ -42,6 +46,11 @@ function describe(entry: AuditEntry): string {
     case 'staff.create':
     case 'staff.deactivate':
       return `${who} ${info.text} ${target}`.trim();
+    case 'product.create':
+    case 'product.update': {
+      const name = typeof entry.details?.name === 'string' ? entry.details.name : '';
+      return `${who} ${info.text} ${name}`.trim();
+    }
     case 'login.failed':
     case 'login.locked':
     case 'recover.failed':

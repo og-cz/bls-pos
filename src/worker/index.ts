@@ -9,6 +9,7 @@ import { session } from './middleware/session';
 import { auditRoutes } from './routes/audit';
 import { authRoutes } from './routes/auth';
 import { meRoutes } from './routes/me';
+import { productRoutes } from './routes/products';
 import { staffRoutes } from './routes/staff';
 
 export type { AppEnv };
@@ -31,6 +32,7 @@ app.route('/auth', authRoutes);
 app.route('/me', meRoutes);
 app.route('/staff', staffRoutes);
 app.route('/audit', auditRoutes);
+app.route('/products', productRoutes);
 
 app.notFound((c) => c.json({ error: { code: 'NOT_FOUND', message: 'Not found' } }, 404));
 

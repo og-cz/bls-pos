@@ -1,22 +1,18 @@
-import { Hono, type Context } from 'hono';
+import { Hono } from 'hono';
 
 import { createStaffSchema } from '@shared/schemas/staff';
 
 import { getDb } from '../db/client';
 import type { AuthedEnv } from '../env';
-import { clientIpHash } from '../lib/ip';
+import { actorOf } from '../lib/actor';
 import { parseJson } from '../lib/validate';
 import { requireRole } from '../middleware/role';
 import { authed } from '../middleware/tenant';
-import { createStaff, deactivateMember, listMembers, type Actor } from '../services/staff';
+import { createStaff, deactivateMember, listMembers } from '../services/staff';
 
 export const staffRoutes = new Hono<AuthedEnv>();
 
 staffRoutes.use(...authed, requireRole('admin'));
-
-async function actorOf(c: Context<AuthedEnv>): Promise<Actor> {
-  return { userId: c.var.auth.userId, role: c.var.auth.role, ipHash: await clientIpHash(c) };
-}
 
 staffRoutes.get('/', async (c) => {
   return c.json({ members: await listMembers(getDb(c.env.DB), c.var.shopId) });

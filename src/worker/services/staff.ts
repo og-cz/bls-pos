@@ -8,13 +8,11 @@ import type { Db } from '../db/client';
 import { isUniqueViolation } from '../db/errors';
 import { newId } from '../db/id';
 import { sessions, shops, users } from '../db/schema';
+import type { Actor } from '../lib/actor';
 import { ApiError } from '../lib/errors';
 import { newTemporaryPassword } from '../security/codes';
 import { hashPassword } from '../security/password';
 import { auditInsert } from './audit';
-
-/** The signed-in person doing the action, for permission checks and the audit log. */
-export type Actor = { userId: string; role: Role; ipHash: string | null };
 
 const memberColumns = {
   id: users.id,

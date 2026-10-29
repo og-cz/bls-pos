@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { hasRole, type Role } from '../../src/shared/roles';
 import app from '../../src/worker/index';
-import { addMember, api, postJson, signUp } from './helpers';
+import { addMember, api, createProductAs, postJson, signUp } from './helpers';
 
 // Every API route and the lowest role allowed to call it (Section 5.2).
 // 'public' = no session needed. A new route must be added here, or the first test fails.
@@ -18,6 +18,10 @@ const ROUTES: Record<string, Access> = {
   'POST /api/v1/staff': 'admin',
   'POST /api/v1/staff/:id/deactivate': 'admin',
   'GET /api/v1/audit': 'admin',
+  'GET /api/v1/products': 'staff',
+  'GET /api/v1/products/:id': 'staff',
+  'POST /api/v1/products': 'admin',
+  'PATCH /api/v1/products/:id': 'admin',
 };
 
 type Shop = Awaited<ReturnType<typeof signUp>>;
@@ -33,6 +37,21 @@ async function requestFor(route: string, shop: Shop, cookie: string): Promise<Re
   if (route === 'POST /api/v1/staff/:id/deactivate') {
     const target = await addMember(shop, 'staff');
     return postJson(rel.replace(':id', target.id), {}, cookie);
+  }
+  if (route === 'POST /api/v1/products') {
+    return postJson(rel, { name: 'Test item', priceCents: 100 }, cookie);
+  }
+  if (rel.includes('/products/:id')) {
+    const product = await createProductAs(shop.cookie);
+    const target = rel.replace(':id', product.id);
+    if (method === 'PATCH') {
+      return api(target, {
+        method,
+        headers: { cookie, 'content-type': 'application/json' },
+        body: JSON.stringify({ priceCents: 150 }),
+      });
+    }
+    return api(target, { headers: { cookie } });
   }
   return api(rel, {
     method,
