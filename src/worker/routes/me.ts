@@ -7,6 +7,7 @@ import { parseTheme } from '@shared/theme';
 import { getDb } from '../db/client';
 import { shops } from '../db/schema';
 import type { AuthedEnv } from '../env';
+import { mediaUrl } from '../lib/media';
 import { authed } from '../middleware/tenant';
 
 function parseStoredTheme(json: string) {
@@ -33,6 +34,8 @@ meRoutes.get('/', async (c) => {
       plan: shops.plan,
       currency: shops.currency,
       themeJson: shops.themeJson,
+      logoKey: shops.logoKey,
+      coverKey: shops.coverKey,
       onboardingStep: shops.onboardingStep,
     })
     .from(shops)
@@ -40,10 +43,15 @@ meRoutes.get('/', async (c) => {
     .get();
 
   if (!shop) return c.json({ error: { code: 'NOT_FOUND', message: 'Shop not found' } }, 404);
-  const { themeJson, ...rest } = shop;
+  const { themeJson, logoKey, coverKey, ...rest } = shop;
   return c.json({
     user: { id: userId, username, displayName, role },
-    shop: { ...rest, theme: parseStoredTheme(themeJson) },
+    shop: {
+      ...rest,
+      theme: parseStoredTheme(themeJson),
+      logoUrl: logoKey ? mediaUrl(logoKey) : null,
+      coverUrl: coverKey ? mediaUrl(coverKey) : null,
+    },
     entitlements: entitlementsFor(rest.plan),
   });
 });

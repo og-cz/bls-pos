@@ -180,3 +180,50 @@ describe('PATCH /shop/theme', () => {
     expect(me.shop.theme.brand).toBe('#8B5E3C'); // the cafe default
   });
 });
+
+describe('logo and cover', () => {
+  // A 1×1 PNG.
+  const png = Uint8Array.from(
+    atob(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    ),
+    (ch) => ch.charCodeAt(0),
+  );
+  const upload = (cookie: string, kind: string) =>
+    api(`/uploads/${kind}`, {
+      method: 'POST',
+      headers: { 'content-type': 'image/png', cookie },
+      body: png,
+    });
+  const me = async (cookie: string) =>
+    (
+      await (
+        await getWithCookie('/me', cookie)
+      ).json<{
+        shop: { logoUrl: string | null; coverUrl: string | null };
+      }>()
+    ).shop;
+
+  it('uploads show in /me, and removing deletes them', async () => {
+    const owner = await signUp();
+    expect((await upload(owner.cookie, 'logo')).status).toBe(201);
+    expect((await upload(owner.cookie, 'cover')).status).toBe(201);
+    const shop = await me(owner.cookie);
+    expect(shop.logoUrl).toMatch(/^\/api\/v1\/media\/shops\/.+\/logo\//);
+    expect(shop.coverUrl).toMatch(/\/cover\//);
+
+    const del = await api('/shop/logo', { method: 'DELETE', headers: { cookie: owner.cookie } });
+    expect(del.status).toBe(200);
+    expect((await me(owner.cookie)).logoUrl).toBeNull();
+    const key = (shop.logoUrl ?? '').replace('/api/v1/media/', '');
+    expect(await env.MEDIA.head(key)).toBeNull();
+  });
+
+  it('staff cannot change the logo', async () => {
+    const owner = await signUp();
+    const staff = await addMember(owner, 'staff');
+    expect((await upload(staff.cookie, 'logo')).status).toBe(403);
+    const del = await api('/shop/cover', { method: 'DELETE', headers: { cookie: staff.cookie } });
+    expect(del.status).toBe(403);
+  });
+});

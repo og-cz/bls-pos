@@ -57,6 +57,10 @@ export function apiPatch<T>(path: string, data: unknown): Promise<T> {
   });
 }
 
+export function apiDelete<T>(path: string): Promise<T> {
+  return request<T>(path, { method: 'DELETE', headers: { accept: 'application/json' } });
+}
+
 /** Sends raw image bytes; the type travels in Content-Type (Section 7.8). */
 export function apiUpload<T>(path: string, blob: Blob): Promise<T> {
   return request<T>(path, {

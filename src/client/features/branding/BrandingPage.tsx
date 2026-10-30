@@ -9,11 +9,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { apiPatch } from '@/lib/api';
 import { applyShopTheme } from '@/lib/shop-theme';
+import { dominantColors } from '@/lib/logo-colors';
 import { cn } from '@/lib/utils';
 import { formatCents } from '@shared/money';
+import { ShopImages } from './ShopImages';
 import { DEFAULT_THEME, HEX, PRESETS, resolvedColors, type Theme } from '@shared/theme';
 
-type Tab = 'presets' | 'wheel';
+type Tab = 'presets' | 'wheel' | 'logo';
 
 /** What the shop will look like: a sell tile, the pay button, a card and the storefront. */
 function Preview({ shopName, currency }: { shopName: string; currency: string }) {
@@ -58,6 +60,65 @@ function Preview({ shopName, currency }: { shopName: string; currency: string })
           />
         ))}
       </div>
+    </div>
+  );
+}
+
+/** The logo's main colors, one tap each (Section 6.4 "Pick from logo"). */
+function LogoColors({
+  url,
+  current,
+  onPick,
+}: {
+  url: string;
+  current: string;
+  onPick: (hex: string) => void;
+}) {
+  const [colors, setColors] = useState<{ url: string; list: string[] } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    dominantColors(url)
+      .then((list) => {
+        if (!cancelled) setColors({ url, list });
+      })
+      .catch(() => {
+        if (!cancelled) setColors({ url, list: [] });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [url]);
+  if (colors?.url !== url) {
+    return <p className="text-sm text-muted-foreground">Reading your logo&apos;s colors…</p>;
+  }
+  if (colors.list.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        No clear colors found in your logo. Try a preset or the color wheel.
+      </p>
+    );
+  }
+  return (
+    <div role="radiogroup" aria-label="Colors from your logo" className="flex flex-wrap gap-3">
+      {colors.list.map((hex) => (
+        <button
+          key={hex}
+          type="button"
+          role="radio"
+          aria-checked={current === hex}
+          aria-label={hex}
+          onClick={() => {
+            onPick(hex);
+          }}
+          className={cn(
+            'flex size-14 items-center justify-center rounded-full border-4 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
+            current === hex ? 'border-foreground' : 'border-transparent',
+          )}
+          style={{ background: hex }}
+        >
+          {current === hex ? <Check className="size-5 text-white" aria-hidden="true" /> : null}
+        </button>
+      ))}
     </div>
   );
 }
@@ -134,6 +195,7 @@ export function BrandingPage() {
               [
                 ['presets', 'Presets'],
                 ['wheel', 'Color wheel'],
+                ...(shop.logoUrl ? ([['logo', 'From logo']] as const) : []),
               ] as const
             ).map(([id, label]) => (
               <button
@@ -156,7 +218,9 @@ export function BrandingPage() {
             ))}
           </div>
 
-          {tab === 'presets' ? (
+          {tab === 'logo' && shop.logoUrl ? (
+            <LogoColors url={shop.logoUrl} current={draft.brand} onPick={pick} />
+          ) : tab === 'presets' ? (
             <div
               role="radiogroup"
               aria-label="Presets"
@@ -256,7 +320,15 @@ export function BrandingPage() {
           </div>
         </section>
 
-        <aside className="space-y-2">
+        <ShopImages
+          overlay={draft.coverOverlay}
+          onOverlay={(coverOverlay) => {
+            setSaved(false);
+            setDraft((d) => ({ ...d, coverOverlay }));
+          }}
+        />
+
+        <aside className="space-y-2 lg:col-start-2 lg:row-span-2 lg:row-start-1">
           <h2 className="text-sm font-medium text-muted-foreground">Preview</h2>
           <Preview shopName={shop.name} currency={shop.currency} />
         </aside>

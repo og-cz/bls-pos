@@ -15,6 +15,8 @@ export type Me = {
     plan: string;
     currency: string;
     theme: Theme;
+    logoUrl: string | null;
+    coverUrl: string | null;
   };
   entitlements: Entitlements;
 };

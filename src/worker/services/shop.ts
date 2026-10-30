@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 
 import { themeSchema, type Theme } from '@shared/theme';
 
+import type { StorageAdapter } from '../adapters/types';
 import type { Db } from '../db/client';
 import { shops } from '../db/schema';
 import type { Actor } from '../lib/actor';
@@ -47,4 +48,25 @@ export async function updateTheme(
     ),
   ]);
   return theme;
+}
+
+/** Removes the shop's logo or cover photo, from the shop and from storage. */
+export async function removeShopImage(
+  db: Db,
+  shopId: string,
+  storage: StorageAdapter,
+  kind: 'logo' | 'cover',
+): Promise<void> {
+  const shop = await db
+    .select({ logoKey: shops.logoKey, coverKey: shops.coverKey })
+    .from(shops)
+    .where(eq(shops.id, shopId))
+    .get();
+  const key = kind === 'logo' ? shop?.logoKey : shop?.coverKey;
+  if (!key) return;
+  await db
+    .update(shops)
+    .set(kind === 'logo' ? { logoKey: null } : { coverKey: null })
+    .where(eq(shops.id, shopId));
+  await storage.delete(key);
 }

@@ -13,16 +13,21 @@ type Props = {
   source: Blob;
   onDone: (photo: Blob) => void;
   onCancel: () => void;
+  /** Width:height of the result. Product photos are 4:3; logos 1:1, covers 16:5. */
+  aspect?: number;
+  /** What to tell the person; product photos get the shelf hint and centering guide. */
+  hint?: string;
 };
 
 type View = { zoom: number; rotation: 0 | 90 | 180 | 270; x: number; y: number };
 const START: View = { zoom: 1, rotation: 0, x: 0, y: 0 };
 
 /**
- * Crop and adjust a photo before it's used: drag to move, zoom, rotate. The result is
- * always 4:3 with the guide showing where the product should sit.
+ * Crop and adjust a photo before it's used: drag to move, zoom, rotate. Product photos
+ * are 4:3 with a guide showing where the product should sit; logos and covers pass their
+ * own shape.
  */
-export function PhotoEditor({ source, onDone, onCancel }: Props) {
+export function PhotoEditor({ source, onDone, onCancel, aspect = PHOTO_ASPECT, hint }: Props) {
   const frameRef = useRef<HTMLDivElement>(null);
   // The loaded photo and its temporary address; set together once it has loaded.
   const [loaded, setLoaded] = useState<{ img: HTMLImageElement; url: string } | null>(null);
@@ -59,7 +64,7 @@ export function PhotoEditor({ source, onDone, onCancel }: Props) {
     };
   }, []);
 
-  const frameHeight = frameWidth / PHOTO_ASPECT;
+  const frameHeight = frameWidth / aspect;
   const sideways = view.rotation === 90 || view.rotation === 270;
   const natW = img?.naturalWidth ?? 1;
   const natH = img?.naturalHeight ?? 1;
@@ -112,7 +117,7 @@ export function PhotoEditor({ source, onDone, onCancel }: Props) {
     try {
       // Never enlarge past the photo's own detail: output at most what the frame shows.
       const outW = Math.round(Math.min(OUTPUT_WIDTH, frameWidth / scale));
-      const outH = Math.round(outW / PHOTO_ASPECT);
+      const outH = Math.round(outW / aspect);
       const k = outW / frameWidth;
       const canvas = document.createElement('canvas');
       canvas.width = outW;
@@ -138,7 +143,7 @@ export function PhotoEditor({ source, onDone, onCancel }: Props) {
       <div
         ref={frameRef}
         className="relative w-full cursor-grab touch-none overflow-hidden rounded-xl bg-black select-none active:cursor-grabbing"
-        style={{ aspectRatio: String(PHOTO_ASPECT) }}
+        style={{ aspectRatio: String(aspect) }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -164,11 +169,11 @@ export function PhotoEditor({ source, onDone, onCancel }: Props) {
             }}
           />
         ) : null}
-        <GuideFrame />
+        {hint ? null : <GuideFrame />}
       </div>
       <p className="text-sm text-muted-foreground">
-        Put the product in the box. Keep some of the shelf or bin around it, so staff can see where
-        it&apos;s kept.
+        {hint ??
+          "Put the product in the box. Keep some of the shelf or bin around it, so staff can see where it's kept."}
       </p>
 
       <div className="flex items-center gap-3">

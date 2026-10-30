@@ -123,7 +123,7 @@ async function centerCrop(source: ImageBitmap, aspect: number): Promise<ImageBit
 }
 
 /** Logos, covers and avatars: one size, WebP (or JPEG). */
-export async function compressImage(file: File, maxEdge: number): Promise<Blob> {
+export async function compressImage(file: Blob, maxEdge: number): Promise<Blob> {
   const bitmap = await readImage(file);
   try {
     const type = (await canWriteWebp()) ? 'image/webp' : 'image/jpeg';
