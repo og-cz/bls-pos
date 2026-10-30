@@ -83,10 +83,19 @@ function StockForm({ action, onDone }: { action: StockAction; onDone: Props['onD
 
   return (
     <form onSubmit={(e) => void onSubmit(e)} noValidate className="space-y-5">
-      <div>
-        <div className="font-medium">{product.name}</div>
-        <div className="text-sm text-muted-foreground tabular">
-          {product.stock.toLocaleString()} in stock now
+      <div className="flex items-center gap-3">
+        {(product.thumbUrl ?? product.imageUrl) ? (
+          <img
+            src={product.thumbUrl ?? product.imageUrl ?? ''}
+            alt=""
+            className="size-16 shrink-0 rounded-lg bg-muted object-cover"
+          />
+        ) : null}
+        <div>
+          <div className="font-medium">{product.name}</div>
+          <div className="text-sm text-muted-foreground tabular">
+            {product.stock.toLocaleString()} in stock now
+          </div>
         </div>
       </div>
       {formError ? <FormAlert>{formError}</FormAlert> : null}

@@ -1,10 +1,11 @@
 import { useDeferredValue, useMemo, useState, type ReactNode } from 'react';
-import { ImageOff, Package, Plus, Search, SearchX, Upload } from 'lucide-react';
+import { Package, Plus, Search, SearchX, Upload } from 'lucide-react';
 
 import { useMe } from '@/app/session';
 import { EmptyState, PageHeader } from '@/components/empty-state';
 import { FormAlert } from '@/components/field';
 import { Link } from '@/components/link';
+import { PhotoViewer, ProductPhoto } from '@/components/product-photo';
 import { StockBadge } from '@/components/stock-badge';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
@@ -42,21 +43,6 @@ function Chip({
     >
       {children}
     </button>
-  );
-}
-
-function Thumb({ product }: { product: ProductDto }) {
-  return product.imageUrl ? (
-    <img
-      src={product.imageUrl}
-      alt=""
-      loading="lazy"
-      className="size-12 shrink-0 rounded-lg bg-muted object-cover"
-    />
-  ) : (
-    <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-      <ImageOff className="size-5" aria-hidden="true" />
-    </span>
   );
 }
 
@@ -109,6 +95,7 @@ export function ProductsPage() {
   const filtered = query !== '' || categoryId !== null || stockFilter !== 'all';
   // 'new' = the add form; a product = its edit form. Editing is for admins only.
   const [editing, setEditing] = useState<ProductDto | 'new' | null>(null);
+  const [viewing, setViewing] = useState<Parameters<typeof PhotoViewer>[0]['photo']>(null);
   const open = (p: ProductDto) => {
     if (isAdmin) setEditing(p);
   };
@@ -239,7 +226,7 @@ export function ProductsPage() {
                   isAdmin && 'hover:bg-accent/50',
                 )}
               >
-                <Thumb product={p} />
+                <ProductPhoto product={p} onOpen={setViewing} />
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">
                     {isAdmin ? (
@@ -299,7 +286,7 @@ export function ProductsPage() {
                   <tr key={p.id}>
                     <td className="px-4 py-2">
                       <div className="flex items-center gap-3">
-                        <Thumb product={p} />
+                        <ProductPhoto product={p} onOpen={setViewing} />
                         <div className="min-w-0">
                           <div className="font-medium">
                             {isAdmin ? (
@@ -343,6 +330,13 @@ export function ProductsPage() {
           </div>
         </>
       ) : null}
+
+      <PhotoViewer
+        photo={viewing}
+        onClose={() => {
+          setViewing(null);
+        }}
+      />
 
       <Dialog
         open={editing !== null}

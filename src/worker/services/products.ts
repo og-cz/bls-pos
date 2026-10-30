@@ -16,7 +16,7 @@ import { newId } from '../db/id';
 import { categories, products, shops, stockMovements, type Product } from '../db/schema';
 import type { Actor } from '../lib/actor';
 import { ApiError } from '../lib/errors';
-import { mediaUrl } from '../lib/media';
+import { mediaUrl, thumbKeyFor } from '../lib/media';
 import { auditInsert } from './audit';
 
 /** Staff never receive cost (Section 7.4): the key is left out, not just emptied. */
@@ -36,6 +36,7 @@ function toProductDto(row: Product, role: Role): ProductDto {
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     imageUrl: row.imageKey ? mediaUrl(row.imageKey) : null,
+    thumbUrl: row.imageKey ? mediaUrl(thumbKeyFor(row.imageKey)) : null,
   };
   if (hasRole(role, 'admin')) dto.costCents = row.costCents;
   return dto;

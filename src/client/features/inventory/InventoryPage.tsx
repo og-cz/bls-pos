@@ -4,6 +4,7 @@ import { Boxes, History, Minus, Plus, Search, SearchX } from 'lucide-react';
 import { useMe } from '@/app/session';
 import { EmptyState, PageHeader } from '@/components/empty-state';
 import { FormAlert } from '@/components/field';
+import { PhotoViewer, ProductPhoto } from '@/components/product-photo';
 import { StockBadge } from '@/components/stock-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -64,6 +65,7 @@ export function InventoryPage() {
   const [query, setQuery] = useState('');
   const [onlyLow, setOnlyLow] = useState(false);
   const [action, setAction] = useState<StockAction | null>(null);
+  const [viewing, setViewing] = useState<Parameters<typeof PhotoViewer>[0]['photo']>(null);
   const [historyVersion, setHistoryVersion] = useState(0);
   const deferredQuery = useDeferredValue(query);
 
@@ -155,8 +157,12 @@ export function InventoryPage() {
         <ul className="divide-y rounded-xl border bg-card">
           {visible.map((p) => (
             <li key={p.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+              <ProductPhoto product={p} onOpen={setViewing} className="size-16" />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-medium">{p.name}</div>
+                {p.sku ? (
+                  <div className="truncate font-mono text-xs text-muted-foreground">{p.sku}</div>
+                ) : null}
                 <div className="mt-1">
                   <StockBadge status={p.stockStatus} stock={p.stock} />
                 </div>
@@ -202,6 +208,13 @@ export function InventoryPage() {
         {/* Remounted after each change so it reloads. */}
         <RecentMovements key={historyVersion} isAdmin={isAdmin} />
       </section>
+
+      <PhotoViewer
+        photo={viewing}
+        onClose={() => {
+          setViewing(null);
+        }}
+      />
 
       <StockDialog
         action={action}

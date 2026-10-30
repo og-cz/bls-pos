@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ApiClientError, apiPatch, apiPost, apiUpload } from '@/lib/api';
 import { focusFirstError, validate, withoutError, type FieldErrors } from '@/lib/form';
-import { compressImage, IMAGE_ACCEPT, MAX_WIDTH } from '@/lib/image';
+import { IMAGE_ACCEPT, prepareProductPhoto } from '@/lib/image';
 import { centsToInput, parseAmountToCents } from '@shared/money';
 import type { CategoryDto } from '@shared/schemas/categories';
 import {
@@ -54,7 +54,7 @@ export function ProductForm({ product, categories: initialCategories, onSaved }:
   const [values, setValues] = useState<Values>(() => initialValues(product));
   const [categories, setCategories] = useState(initialCategories);
   const [newCategory, setNewCategory] = useState<string | null>(null);
-  const [photo, setPhoto] = useState<Blob | null>(null);
+  const [photo, setPhoto] = useState<{ full: Blob; thumb: Blob } | null>(null);
   const [preview, setPreview] = useState<string | null>(product?.imageUrl ?? null);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -79,9 +79,9 @@ export function ProductForm({ product, categories: initialCategories, onSaved }:
     setFormError(null);
     setBusy('Preparing photo…');
     try {
-      const blob = await compressImage(file, MAX_WIDTH.product);
-      setPhoto(blob);
-      setPreview(URL.createObjectURL(blob));
+      const prepared = await prepareProductPhoto(file);
+      setPhoto(prepared);
+      setPreview(URL.createObjectURL(prepared.full));
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Could not use that photo.');
     } finally {
@@ -143,7 +143,8 @@ export function ProductForm({ product, categories: initialCategories, onSaved }:
         : await apiPost<{ product: ProductDto }>('/products', checked.data);
       if (photo) {
         setBusy('Uploading photo…');
-        await apiUpload(`/uploads/product?productId=${saved.product.id}`, photo);
+        await apiUpload(`/uploads/product?productId=${saved.product.id}`, photo.full);
+        await apiUpload(`/uploads/product-thumb?productId=${saved.product.id}`, photo.thumb);
       }
       onSaved();
     } catch (err) {

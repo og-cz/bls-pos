@@ -106,4 +106,6 @@ export type ProductDto = {
   updatedAt: number;
   /** Served by the API to signed-in members of the shop; null when there's no photo. */
   imageUrl: string | null;
+  /** Small copy for lists. Photos from before thumbnails existed fall back to imageUrl. */
+  thumbUrl: string | null;
 };
