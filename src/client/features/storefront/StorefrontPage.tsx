@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { ImageOff, Store } from 'lucide-react';
+import { Check, ImageOff, Share2, Store } from 'lucide-react';
 
 import { BrandLogo } from '@/components/brand-logo';
+import { Button } from '@/components/ui/button';
 import { ApiClientError, apiGet } from '@/lib/api';
 import { applyShopTheme } from '@/lib/shop-theme';
 import { cn } from '@/lib/utils';
@@ -9,6 +10,36 @@ import { APP_NAME } from '@shared/app';
 import { BUSINESS_LABEL } from '@shared/business';
 import { formatCents } from '@shared/money';
 import type { Storefront } from '@shared/schemas/storefront';
+
+/** Shares this page through the phone's share sheet, or copies the link. */
+function ShareButton({ name }: { name: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      onClick={() => {
+        const url = location.href;
+        if (typeof navigator.share === 'function') {
+          navigator.share({ title: name, url }).catch(() => {
+            // Closed without sharing.
+          });
+        } else {
+          void navigator.clipboard.writeText(url).then(() => {
+            setCopied(true);
+            setTimeout(() => {
+              setCopied(false);
+            }, 2000);
+          });
+        }
+      }}
+    >
+      {copied ? <Check aria-hidden="true" /> : <Share2 aria-hidden="true" />}
+      {copied ? 'Link copied' : 'Share'}
+    </Button>
+  );
+}
 
 type State =
   | { status: 'loading' }
@@ -92,6 +123,9 @@ export function StorefrontPage({ slug }: { slug: string }) {
             ) : (
               <Store className="size-8 text-muted-foreground" aria-hidden="true" />
             )}
+          </div>
+          <div className="absolute top-3 right-4 md:right-6">
+            <ShareButton name={s.name} />
           </div>
           <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">{s.name}</h1>
           {s.businessType === 'other' ? null : (

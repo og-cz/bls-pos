@@ -11,6 +11,8 @@ import { useApiGet } from '@/lib/use-api';
 import { cn } from '@/lib/utils';
 import { BIO_MAX, type ShopSettings } from '@shared/schemas/shop';
 
+import { ShareCard } from './ShareCard';
+
 function Toggle({
   label,
   hint,
@@ -147,6 +149,10 @@ function Form({ initial }: { initial: ShopSettings }) {
           </Link>
         ) : null}
       </section>
+
+      {saved.storefrontEnabled ? (
+        <ShareCard url={`${location.origin}${pagePath}`} shopName={saved.name} slug={saved.slug} />
+      ) : null}
 
       <section className="space-y-4 rounded-xl border bg-card p-4">
         <TextField
