@@ -13,7 +13,7 @@
 | 0     | Foundation: repo, tooling, client + worker scaffold, CI, limits | Done (preview deploy still needs a Cloudflare login) |
 | 1     | Database and authentication                                     | Done                                                 |
 | 2     | Tenancy, roles and staff                                        | Done                                                 |
-| 3     | Products and inventory                                          | In progress                                          |
+| 3     | Products and inventory                                          | Done                                                 |
 | 3.5   | Bulk import, export and backup                                  | Not started                                          |
 | 4     | Selling                                                         | Not started                                          |
 | 5     | Dashboard and reports                                           | Not started                                          |

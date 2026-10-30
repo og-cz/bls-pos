@@ -99,3 +99,36 @@ count), from the shared `entitlements` module.
 **Notes:** UUIDv7 ids are now monotonic within a millisecond, so audit entries keep
 their true order. JS bundle 140 KB gzipped (budget 200 KB); the account menu added
 Radix DropdownMenu.
+
+## Phase 3 — Products and inventory (2026-10-30)
+
+**Demo:** `pnpm db:migrate:local && pnpm dev`, log in as an owner.
+
+1. **Products → Add product:** name, price in pesos (stored as centavos), optional
+   cost, SKU, category (a new one can be made right there), opening stock, low-stock
+   level and a photo. The photo is resized on the device to an 800 px WebP before
+   upload (a 3000×2000 test image became about 4 KB).
+2. The list searches on the device as you type (accent-insensitive, so "cafe" finds
+   "Café Latte", or by SKU), with category chips, a **Low stock** filter and an
+   **Archived** view. A table on PC, cards on phones; cost shows for admins only.
+3. **Inventory:** counts of what is running low or out, **Deduct** with a required
+   reason for everyone, **Restock** for admins, and the recent stock history.
+4. Log in as a cashier: no cost anywhere, no Add/Restock buttons, no archived
+   products, and the history shows only their own changes.
+
+**Proven by tests (207):** the database refuses negative stock, so two cashiers taking
+the last items at once can't oversell and a refused change leaves no movement behind;
+stock always equals the sum of its movements. SKUs are unique per shop; categories,
+products, photos and history never cross shops. Uploads accept only real JPEG/PNG/WebP
+(SVG and disguised files refused), up to 2 MB, within the plan's image space. Free
+limits: 500 active products, 200 MB of images.
+
+**Carried forward:**
+
+- The R2 bucket `bls-pos-media` must be created on Cloudflare before the first deploy.
+- Product photos are private to the shop; the public storefront opens them up in Phase 6.
+- JS bundle 153 KB gzipped (budget 200 KB). Route-level code splitting is planned in
+  Phase 10 and may be pulled forward if the sell screen gets close to the budget.
+
+**Notes:** tests now pin the clock to the middle of a 15-minute window, after a
+login rate-limit test failed once when a run crossed a window edge.
