@@ -3,9 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { defaultTheme } from '../../src/shared/business';
 import {
   brandScale,
+  contrastRatio,
   hexToOklch,
   oklchToHex,
   parseTheme,
+  readableColor,
+  resolvedColors,
   PRESETS,
   SHADES,
   themeCss,
@@ -81,5 +84,49 @@ describe('/me theme', () => {
       shop: { theme: { brand: string; presetId: string } };
     }>();
     expect(me.shop.theme).toMatchObject({ brand: '#C2577A', presetId: 'salon-blush' });
+  });
+});
+
+describe('contrast guard', () => {
+  it('measures WCAG contrast', () => {
+    expect(contrastRatio('#FFFFFF', '#000000')).toBeCloseTo(21, 1);
+    expect(contrastRatio('#1E6FD9', '#FFFFFF')).toBeGreaterThan(4.5);
+  });
+
+  it('leaves good colors alone and picks the readable text', () => {
+    expect(readableColor('#1E6FD9', 'light')).toEqual({
+      color: '#1E6FD9',
+      foreground: '#FFFFFF',
+      adjusted: false,
+    });
+    // Orange: dark text reads better than white.
+    expect(readableColor('#F06A27', 'light').foreground).toBe('#0A0A0A');
+  });
+
+  it('adjusts colors that would vanish, keeping them close', () => {
+    for (const hex of ['#FFE600', '#F5F5F5', '#C8F7C5']) {
+      const r = readableColor(hex, 'light');
+      expect(r.adjusted).toBe(true);
+      expect(contrastRatio(r.color, r.foreground)).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(r.color, '#FFFFFF')).toBeGreaterThanOrEqual(3);
+    }
+    expect(readableColor('#27272A', 'dark').adjusted).toBe(true);
+  });
+
+  it('every preset and random colors pass in both modes', () => {
+    const colors: string[] = PRESETS.map((p) => p.brand);
+    for (let i = 0; i < 200; i++) {
+      colors.push(
+        `#${Math.floor(Math.random() * 0xffffff)
+          .toString(16)
+          .padStart(6, '0')}`,
+      );
+    }
+    for (const brand of colors) {
+      const { light, dark } = resolvedColors(parseTheme({ brand }));
+      for (const r of [light, dark]) {
+        expect(contrastRatio(r.color, r.foreground)).toBeGreaterThanOrEqual(4.5);
+      }
+    }
   });
 });

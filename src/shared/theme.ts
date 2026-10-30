@@ -157,6 +157,76 @@ export function brandScale(brand: string): Record<Shade, string> {
   return out;
 }
 
+// ---- Contrast (WCAG 2.2) ----
+
+/** WCAG relative luminance, 0 (black) to 1 (white). */
+export function luminance(hex: string): number {
+  const [r, g, b] = hexToRgb(hex).map(toLinear) as Rgb;
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/** WCAG contrast ratio, 1 to 21. */
+export function contrastRatio(a: string, b: string): number {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number];
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+/** Normal text needs 4.5:1; buttons, focus rings and icons need 3:1 against the page. */
+export const TEXT_CONTRAST = 4.5;
+export const UI_CONTRAST = 3;
+
+export const LIGHT_TEXT = '#FFFFFF';
+export const DARK_TEXT = '#0A0A0A';
+
+// The app's surfaces (globals.css): the lightest and darkest a brand color sits on.
+const SURFACES = {
+  light: [oklchToHex({ l: 1, c: 0, h: 0 }), oklchToHex({ l: 0.967, c: 0, h: 0 })],
+  dark: [oklchToHex({ l: 0.145, c: 0, h: 0 }), oklchToHex({ l: 0.205, c: 0, h: 0 })],
+} as const;
+
+/** White or near-black, whichever reads better on `bg`. */
+export function textOn(bg: string): string {
+  return contrastRatio(bg, LIGHT_TEXT) >= contrastRatio(bg, DARK_TEXT) ? LIGHT_TEXT : DARK_TEXT;
+}
+
+function passes(color: string, mode: 'light' | 'dark'): boolean {
+  return (
+    contrastRatio(color, textOn(color)) >= TEXT_CONTRAST &&
+    SURFACES[mode].every((surface) => contrastRatio(color, surface) >= UI_CONTRAST)
+  );
+}
+
+export type ReadableColor = { color: string; foreground: string; adjusted: boolean };
+
+/**
+ * The brand color as a button: readable text on it (4.5:1) and visible against the
+ * page (3:1). If it can't be, the lightness is moved the smallest step that works, the
+ * hue kept, and `adjusted` says so ("We adjusted your color slightly…").
+ */
+export function readableColor(color: string, mode: 'light' | 'dark'): ReadableColor {
+  if (passes(color, mode)) return { color, foreground: textOn(color), adjusted: false };
+  const base = hexToOklch(color);
+  for (let step = 0.01; step <= 1; step += 0.01) {
+    for (const l of [base.l - step, base.l + step]) {
+      if (l < 0 || l > 1) continue;
+      const candidate = oklchToHex({ ...base, l });
+      if (passes(candidate, mode)) {
+        return { color: candidate, foreground: textOn(candidate), adjusted: true };
+      }
+    }
+  }
+  // Unreachable for sRGB colors; a safe fallback all the same.
+  const fallback = mode === 'light' ? '#1E6FD9' : '#5C9DFF';
+  return { color: fallback, foreground: textOn(fallback), adjusted: true };
+}
+
+/** What the theme will really use, per mode, and whether the color had to change. */
+export function resolvedColors(theme: Theme) {
+  const light = readableColor(theme.brand, 'light');
+  const dark = readableColor(brandScale(theme.brand)[500], 'dark');
+  return { light, dark, adjusted: light.adjusted };
+}
+
 /**
  * The CSS that applies a shop's theme: the brand scale and the primary color for light
  * and dark mode. Built only from validated hex values, never from user text.
@@ -164,8 +234,9 @@ export function brandScale(brand: string): Record<Shade, string> {
 export function themeCss(theme: Theme): string {
   const scale = brandScale(theme.brand);
   const vars = SHADES.map((s) => `--brand-${String(s)}: ${scale[s]};`).join(' ');
-  const light = `--primary: ${theme.brand}; --ring: ${theme.brand}; --primary-foreground: #FFFFFF;`;
-  const dark = `--primary: ${scale[500]}; --ring: ${scale[500]}; --primary-foreground: #FFFFFF;`;
+  const { light: l, dark: d } = resolvedColors(theme);
+  const light = `--primary: ${l.color}; --ring: ${l.color}; --primary-foreground: ${l.foreground};`;
+  const dark = `--primary: ${d.color}; --ring: ${d.color}; --primary-foreground: ${d.foreground};`;
   return `:root { ${vars} ${light} }
 .dark { ${dark} }`;
 }
