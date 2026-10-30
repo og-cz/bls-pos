@@ -1,7 +1,12 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 
-import type { IncomeReport, StaffSales, TopProduct } from '../../src/shared/schemas/reports';
+import type {
+  Dashboard,
+  IncomeReport,
+  StaffSales,
+  TopProduct,
+} from '../../src/shared/schemas/reports';
 import type { Receipt } from '../../src/shared/schemas/sales';
 import { addDays, dayStartMs, localDay } from '../../src/shared/time';
 import { runNightly } from '../../src/worker/cron';
@@ -142,8 +147,24 @@ describe('top products and sales by staff', () => {
       ).products;
 
     expect(await get('revenue')).toEqual([
-      { productId: oil.id, name: 'Oil', quantity: 2, revenueCents: 60_000, profitCents: 20_000 },
-      { productId: bolt.id, name: 'Bolt', quantity: 10, revenueCents: 5_000, profitCents: 5_000 },
+      {
+        productId: oil.id,
+        name: 'Oil',
+        quantity: 2,
+        revenueCents: 60_000,
+        profitCents: 20_000,
+        imageUrl: null,
+        thumbUrl: null,
+      },
+      {
+        productId: bolt.id,
+        name: 'Bolt',
+        quantity: 10,
+        revenueCents: 5_000,
+        profitCents: 5_000,
+        imageUrl: null,
+        thumbUrl: null,
+      },
     ]);
     expect((await get('quantity')).map((p) => p.name)).toEqual(['Bolt', 'Oil']);
   });
@@ -191,5 +212,27 @@ describe('top products and sales by staff', () => {
     expect(bad.status).toBe(400);
     const noRange = await getWithCookie('/reports/by-staff', owner.cookie);
     expect(noRange.status).toBe(400);
+  });
+});
+
+describe('dashboard', () => {
+  it('returns today and the last 7 days in one request', async () => {
+    const owner = await signUp();
+    const p = await createProductAs(owner.cookie, { priceCents: 2_000, costCents: 500, stock: 3 });
+    const today = localDay(Date.now(), TZ);
+    await sellOn(owner.cookie, p.id, 2, today);
+    await sellOn(owner.cookie, p.id, 1, addDays(today, -7)); // just outside 7 days
+
+    const res = await getWithCookie('/reports/dashboard?days=7', owner.cookie);
+    const body = await res.json<Dashboard>();
+    expect(body.income.buckets).toHaveLength(7);
+    expect(body.income.buckets.at(-1)).toMatchObject({ key: today, grossCents: 4_000 });
+    expect(body.income.totals.grossCents).toBe(4_000);
+    expect(body.topProducts).toEqual([expect.objectContaining({ productId: p.id, quantity: 2 })]);
+    expect(body.staff).toEqual([expect.objectContaining({ userId: owner.userId, salesCount: 1 })]);
+    expect(body.alerts).toEqual({ low: 0, out: 1 });
+
+    expect((await getWithCookie('/reports/dashboard?days=30', owner.cookie)).status).toBe(200);
+    expect((await getWithCookie('/reports/dashboard?days=90', owner.cookie)).status).toBe(400);
   });
 });

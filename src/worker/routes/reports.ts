@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import type { z } from 'zod';
 
 import {
+  dashboardQuerySchema,
   incomeQuerySchema,
   reportRangeSchema,
   topProductsQuerySchema,
@@ -12,7 +13,7 @@ import type { AuthedEnv } from '../env';
 import { ApiError } from '../lib/errors';
 import { requireRole } from '../middleware/role';
 import { authed } from '../middleware/tenant';
-import { incomeReport, salesByStaff, topProducts } from '../services/reports';
+import { dashboard, incomeReport, salesByStaff, topProducts } from '../services/reports';
 
 export const reportRoutes = new Hono<AuthedEnv>();
 
@@ -30,6 +31,11 @@ function parseQuery<T extends z.ZodType>(query: Record<string, string>, schema: 
   }
   return result.data;
 }
+
+reportRoutes.get('/dashboard', async (c) => {
+  const { days } = parseQuery(c.req.query(), dashboardQuerySchema);
+  return c.json(await dashboard(getDb(c.env.DB), c.var.shopId, days));
+});
 
 reportRoutes.get('/income', async (c) => {
   const query = parseQuery(c.req.query(), incomeQuerySchema);

@@ -1,6 +1,7 @@
 import { and, between, eq } from 'drizzle-orm';
 
 import type {
+  Dashboard,
   IncomeBucket,
   IncomeQuery,
   IncomeReport,
@@ -16,6 +17,8 @@ import { addDays, dayStartMs, daysBetween, localDay } from '@shared/time';
 import type { Db } from '../db/client';
 import { dailySummaries, shops } from '../db/schema';
 import { ApiError } from '../lib/errors';
+import { mediaUrl, thumbKeyFor } from '../lib/media';
+import { stockAlerts } from './inventory';
 import { SUMMARY_COLUMNS } from './summaries';
 
 type DayTotals = Omit<IncomeTotals, 'profitCents'>;
@@ -180,7 +183,7 @@ export async function topProducts(
   const { results } = await db.$client
     .prepare(
       `SELECT i.product_id AS productId,
-         coalesce(p.name, max(i.name_snapshot)) AS name,
+         coalesce(p.name, max(i.name_snapshot)) AS name, p.image_key AS imageKey,
          sum(i.quantity) AS quantity,
          sum(i.line_total_cents) AS revenue,
          sum(i.line_total_cents - coalesce(i.unit_cost_cents, 0) * i.quantity) AS profit
@@ -194,13 +197,22 @@ export async function topProducts(
        LIMIT ?4`,
     )
     .bind(shopId, start, end, query.limit)
-    .all<{ productId: string; name: string; quantity: number; revenue: number; profit: number }>();
+    .all<{
+      productId: string;
+      name: string;
+      imageKey: string | null;
+      quantity: number;
+      revenue: number;
+      profit: number;
+    }>();
   return results.map((r) => ({
     productId: r.productId,
     name: r.name,
     quantity: r.quantity,
     revenueCents: r.revenue,
     profitCents: r.profit,
+    imageUrl: r.imageKey ? mediaUrl(r.imageKey) : null,
+    thumbUrl: r.imageKey ? mediaUrl(thumbKeyFor(r.imageKey)) : null,
   }));
 }
 
@@ -227,4 +239,26 @@ export async function salesByStaff(
     .bind(shopId, start, end)
     .all<Omit<StaffSales, 'active'> & { active: number }>();
   return results.map((r) => ({ ...r, active: r.active === 1 }));
+}
+
+/**
+ * Everything the admin dashboard shows (Section 6.6) in one request, for the last `days`
+ * local days ending today: income per day, top 5 products, sales by staff, stock alerts.
+ */
+export async function dashboard(
+  db: Db,
+  shopId: string,
+  days: number,
+  now: number = Date.now(),
+): Promise<Dashboard> {
+  const timeZone = await shopTimeZone(db, shopId);
+  const to = localDay(now, timeZone);
+  const range = { from: addDays(to, 1 - days), to };
+  const [income, top, staff, alerts] = await Promise.all([
+    incomeReport(db, shopId, { ...range, group: 'day' }, now),
+    topProducts(db, shopId, { ...range, sort: 'revenue', limit: 5 }),
+    salesByStaff(db, shopId, range),
+    stockAlerts(db, shopId),
+  ]);
+  return { income, topProducts: top, staff, alerts };
 }

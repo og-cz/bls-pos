@@ -43,6 +43,24 @@ export type TopProduct = {
   quantity: number;
   revenueCents: number;
   profitCents: number;
+  imageUrl: string | null;
+  thumbUrl: string | null;
+};
+
+export const DASHBOARD_DAYS = [7, 30] as const;
+
+export const dashboardQuerySchema = z.object({
+  days: z.coerce
+    .number()
+    .refine((n) => (DASHBOARD_DAYS as readonly number[]).includes(n), 'Pick 7 or 30 days.')
+    .default(7),
+});
+
+export type Dashboard = {
+  income: IncomeReport;
+  topProducts: TopProduct[];
+  staff: StaffSales[];
+  alerts: { low: number; out: number };
 };
 
 export type StaffSales = {
