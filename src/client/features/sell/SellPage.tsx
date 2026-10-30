@@ -19,9 +19,11 @@ import {
 } from '@shared/cart';
 import { formatCents } from '@shared/money';
 import type { ProductDto } from '@shared/schemas/products';
+import type { Receipt } from '@shared/schemas/sales';
 
 import { searchKey, useCatalog } from '../products/use-catalog';
 import { CartPanel } from './CartPanel';
+import { Checkout } from './Checkout';
 
 function Chip({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
   return (
@@ -112,6 +114,8 @@ export function SellPage() {
   const [query, setQuery] = useState('');
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
+  const [checkingOut, setCheckingOut] = useState(false);
+  const [lastSale, setLastSale] = useState<Receipt | null>(null);
   const deferred = useDeferredValue(query);
   const money = (c: number) => formatCents(c, shop.currency);
 
@@ -156,6 +160,10 @@ export function SellPage() {
       }}
       onClear={() => {
         setRawCart([]);
+      }}
+      onCharge={() => {
+        setCartOpen(false);
+        setCheckingOut(true);
       }}
     />
   );
@@ -257,6 +265,45 @@ export function SellPage() {
           <span className="tabular">{money(subtotalCents)}</span>
         </Button>
       </div>
+      <Dialog open={checkingOut} onOpenChange={setCheckingOut} title="Checkout">
+        {checkingOut ? (
+          <Checkout
+            cart={cart}
+            totalCents={subtotalCents}
+            currency={shop.currency}
+            onStockChanged={catalog.reload}
+            onSold={(receipt) => {
+              setCheckingOut(false);
+              setRawCart([]);
+              setLastSale(receipt);
+              catalog.reload();
+            }}
+          />
+        ) : null}
+      </Dialog>
+      <Dialog
+        open={lastSale !== null}
+        onOpenChange={(open) => {
+          if (!open) setLastSale(null);
+        }}
+        title={lastSale ? `Sale #${String(lastSale.number)}` : 'Sale'}
+      >
+        {lastSale ? (
+          <div className="space-y-4 text-center">
+            <p className="text-sm text-muted-foreground">Change</p>
+            <p className="text-4xl font-bold tabular">{money(lastSale.changeCents ?? 0)}</p>
+            <Button
+              size="lg"
+              className="h-14 w-full text-lg"
+              onClick={() => {
+                setLastSale(null);
+              }}
+            >
+              New sale
+            </Button>
+          </div>
+        ) : null}
+      </Dialog>
       <Dialog open={cartOpen} onOpenChange={setCartOpen} title="Cart">
         <div className="-mx-5 -my-5 h-[calc(100dvh-5rem)] sm:h-[70dvh]">{panel}</div>
       </Dialog>
