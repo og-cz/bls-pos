@@ -43,6 +43,13 @@
       "when": 1793350055268,
       "tag": "0005_sales",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1793353441586,
+      "tag": "0006_daily_summaries",
+      "breakpoints": true
     }
   ]
 }

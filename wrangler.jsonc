@@ -24,5 +24,6 @@
   "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "bls-pos-media" }],
   // Set with `wrangler secret put <NAME>` in production, `.dev.vars` locally.
   "secrets": { "required": ["PEPPER", "TURNSTILE_SECRET"] },
-  // Cron triggers are added in later phases (see docs/ROADMAP.md).
+  // Nightly daily summaries at 16:10 UTC = 00:10 in Manila (src/worker/cron.ts).
+  "triggers": { "crons": ["10 16 * * *"] },
 }

@@ -10,6 +10,7 @@ import { newId } from '../db/id';
 import { products, saleItems, sales, shops, stockMovements, users } from '../db/schema';
 import type { Actor } from '../lib/actor';
 import { ApiError } from '../lib/errors';
+import { refreshShopDayAt } from './summaries';
 
 function isCheckViolation(err: unknown): boolean {
   const text = String(err instanceof Error && err.cause ? err.cause : err);
@@ -301,7 +302,12 @@ export async function voidSale(
   now: number = Date.now(),
 ): Promise<Receipt> {
   const sale = await db
-    .select({ status: sales.status, number: sales.number, totalCents: sales.totalCents })
+    .select({
+      status: sales.status,
+      number: sales.number,
+      totalCents: sales.totalCents,
+      createdAt: sales.createdAt,
+    })
     .from(sales)
     .where(and(eq(sales.id, saleId), eq(sales.shopId, shopId)))
     .get();
@@ -361,5 +367,7 @@ export async function voidSale(
   if (results[0]?.meta.changes !== 1) {
     throw new ApiError(409, 'ALREADY_VOIDED', 'This sale is already voided.');
   }
+  // The sale's day may be in the past: bring its summary up to date now.
+  await refreshShopDayAt(db, shopId, sale.createdAt);
   return getReceipt(db, shopId, actor, saleId);
 }

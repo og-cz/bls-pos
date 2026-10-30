@@ -305,6 +305,22 @@ export const saleItems = sqliteTable(
   ],
 );
 
+// One row per shop per local day (shop timezone), filled by the nightly job and refreshed
+// when a sale of that day is voided, so dashboards never scan all sales (Section 4).
+export const dailySummaries = sqliteTable(
+  'daily_summaries',
+  {
+    shopId: text('shop_id').notNull(),
+    // 'YYYY-MM-DD' in the shop's timezone.
+    day: text('day').notNull(),
+    salesCount: integer('sales_count').notNull(),
+    grossCents: integer('gross_cents').notNull(),
+    voidedCents: integer('voided_cents').notNull(),
+    costCents: integer('cost_cents').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.shopId, t.day] })],
+);
+
 export type Shop = typeof shops.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;

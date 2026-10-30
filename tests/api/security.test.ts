@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { hasRole, type Role } from '../../src/shared/roles';
-import app from '../../src/worker/index';
+import { app } from '../../src/worker/index';
 import { addMember, api, createProductAs, postJson, signUp } from './helpers';
 
 // Every API route and the lowest role allowed to call it (Section 5.2).

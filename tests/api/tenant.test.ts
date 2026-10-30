@@ -31,6 +31,7 @@ const PRE_TENANT = new Set([
   'rate-limit.retryAfterSeconds',
   'rate-limit.recordFailure',
   'rate-limit.clearUserFailures',
+  'summaries.summaryStatement', // nightly cron: scoped to one shop or to every shop in a timezone
 ]);
 
 const services = import.meta.glob<Record<string, unknown>>('../../src/worker/services/*.ts', {

@@ -4,6 +4,7 @@ import { bodyLimit } from 'hono/body-limit';
 import { API_BASE, APP_NAME } from '@shared/app';
 
 import type { AppEnv } from './env';
+import { runNightly } from './cron';
 import { ApiError } from './lib/errors';
 import { session } from './middleware/session';
 import { MAX_UPLOAD_BYTES } from './security/images';
@@ -19,7 +20,7 @@ import { staffRoutes } from './routes/staff';
 
 export type { AppEnv };
 
-const app = new Hono<AppEnv>().basePath(API_BASE);
+export const app = new Hono<AppEnv>().basePath(API_BASE);
 
 // JSON bodies are capped at 64 KB (Section 5.1); image uploads at 2 MB (Section 7.8).
 const limit = (maxSize: number, message: string) =>
@@ -56,4 +57,10 @@ app.onError((err, c) => {
   return c.json({ error: { code: 'INTERNAL', message: 'Something went wrong' } }, 500);
 });
 
-export default app;
+export default {
+  fetch: app.fetch,
+  // Nightly daily summaries (wrangler.jsonc "triggers").
+  scheduled(_controller, env, ctx) {
+    ctx.waitUntil(runNightly(env));
+  },
+} satisfies ExportedHandler<Env>;
