@@ -10,7 +10,15 @@ export const UNREACHABLE_TURNSTILE = 'unreachable';
 
 // No real network in tests. Turnstile's siteverify is simulated:
 // 'valid-token' passes, 'unreachable' throws like a network error, anything else fails.
+// Login and recovery failures are counted in fixed 15-minute windows. A test that runs
+// across a window edge would see its counter reset and fail by chance, so each test runs
+// with the clock pinned to the middle of a window. Only Date is faked; timers stay real.
+const WINDOW_MS = 15 * 60 * 1000;
+
 beforeEach(() => {
+  const now = Date.now();
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(Math.floor(now / WINDOW_MS) * WINDOW_MS + WINDOW_MS / 2);
   vi.spyOn(globalThis, 'fetch').mockImplementation((input, init) => {
     const url = input instanceof Request ? input.url : String(input);
     if (url === 'https://challenges.cloudflare.com/turnstile/v0/siteverify') {
@@ -26,5 +34,6 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
 });

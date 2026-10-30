@@ -202,3 +202,14 @@ describe('failure windows', () => {
     expect(retryAfterSeconds(start + WINDOW_MS - 1)).toBe(1);
   });
 });
+
+describe('test clock', () => {
+  it('is pinned mid-window for the Worker too, so window edges never flake these tests', async () => {
+    const { shopId } = await signUp();
+    const row = await env.DB.prepare('SELECT created_at FROM shops WHERE id = ?')
+      .bind(shopId)
+      .first<{ created_at: number }>();
+    expect(row?.created_at).toBe(Date.now());
+    expect(Date.now() % WINDOW_MS).toBe(WINDOW_MS / 2);
+  });
+});
