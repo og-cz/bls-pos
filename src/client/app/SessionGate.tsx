@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 
 import { ApiClientError, apiGet } from '@/lib/api';
+import { kvGet, kvSet } from '@/lib/offline-store';
 import { navigate } from '@/lib/router';
 import { applyShopTheme } from '@/lib/shop-theme';
 
@@ -16,8 +17,19 @@ export function SessionGate({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     apiGet<Me>('/me')
-      .then(setMe)
-      .catch((err: unknown) => {
+      .then((m) => {
+        setMe(m);
+        void kvSet('me', m);
+      })
+      .catch(async (err: unknown) => {
+        // Offline: open with this device's last copy, so selling can go on (Section 10).
+        if (err instanceof ApiClientError && err.status === 0) {
+          const saved = await kvGet<Me>('me');
+          if (saved) {
+            setMe(saved);
+            return;
+          }
+        }
         if (err instanceof ApiClientError && err.status === 401) {
           navigate('/login', { replace: true });
         } else {

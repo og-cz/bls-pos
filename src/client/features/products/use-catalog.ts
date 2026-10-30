@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { ApiClientError, apiGet } from '@/lib/api';
+import { kvGet, kvSet } from '@/lib/offline-store';
 import { navigate } from '@/lib/router';
 import type { CategoryDto } from '@shared/schemas/categories';
 import type { ProductDto } from '@shared/schemas/products';
 
 type Page = { products: ProductDto[]; nextCursor: string | null };
+
+const OFFLINE_KEY = 'catalog';
+type Snapshot = { products: ProductDto[]; categories: CategoryDto[]; savedAt: number };
 
 async function fetchAllProducts(archived: boolean): Promise<ProductDto[]> {
   const all: ProductDto[] = [];
@@ -29,6 +33,8 @@ export type Catalog = {
   reload: () => void;
   /** Replaces one product in place after an edit, without reloading everything. */
   replace: (product: ProductDto) => void;
+  /** When offline: when the device's copy of the list was saved. */
+  offlineSince: number | null;
 };
 
 /**
@@ -41,19 +47,42 @@ export function useCatalog(archived = false): Catalog {
   const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
   const [doneKey, setDoneKey] = useState<string | null>(null);
+  const [offlineSince, setOfflineSince] = useState<number | null>(null);
   const key = `${String(archived)}#${version}`;
 
   useEffect(() => {
     let cancelled = false;
+    const isCancelled = () => cancelled;
     Promise.all([fetchAllProducts(archived), apiGet<{ categories: CategoryDto[] }>('/categories')])
       .then(([p, c]) => {
         if (cancelled) return;
         setProducts(p);
         setCategories(c.categories);
         setError(null);
+        setOfflineSince(null);
+        // The device's copy for selling offline (Section 10): no costs, refreshed each load.
+        if (!archived) {
+          const snapshot: Snapshot = {
+            products: p.map((x) => ({ ...x, costCents: null })),
+            categories: c.categories,
+            savedAt: Date.now(),
+          };
+          void kvSet(OFFLINE_KEY, snapshot);
+        }
       })
-      .catch((err: unknown) => {
+      .catch(async (err: unknown) => {
         if (cancelled) return;
+        if (err instanceof ApiClientError && err.status === 0 && !archived) {
+          const snapshot = await kvGet<Snapshot>(OFFLINE_KEY);
+          // (The screen may have closed while reading.)
+          if (snapshot && !isCancelled()) {
+            setProducts(snapshot.products);
+            setCategories(snapshot.categories);
+            setError(null);
+            setOfflineSince(snapshot.savedAt);
+            return;
+          }
+        }
         if (err instanceof ApiClientError && err.status === 401) {
           navigate('/login', { replace: true });
           return;
@@ -75,7 +104,7 @@ export function useCatalog(archived = false): Catalog {
     setProducts((list) => list.map((p) => (p.id === product.id ? product : p)));
   }, []);
 
-  return { products, categories, loading: doneKey !== key, error, reload, replace };
+  return { products, categories, loading: doneKey !== key, error, reload, replace, offlineSince };
 }
 
 /** Lowercase, no accents: "Café" matches "cafe". */

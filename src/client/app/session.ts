@@ -1,6 +1,7 @@
 import { createContext, use } from 'react';
 
 import { apiPost } from '@/lib/api';
+import { clearOffline } from '@/lib/offline-store';
 import { navigate } from '@/lib/router';
 import type { BusinessType } from '@shared/business';
 import type { Entitlements } from '@shared/entitlements';
@@ -51,6 +52,7 @@ export async function logout() {
   try {
     await apiPost('/auth/logout');
   } finally {
+    await clearOffline();
     navigate('/login', { replace: true });
   }
 }
