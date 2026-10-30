@@ -36,12 +36,20 @@ export const signupSchema = z
 export type SignupInput = z.infer<typeof signupSchema>;
 
 // Login only looks values up, so it checks shape and size, not the signup rules.
+/** A 6-digit code from an authenticator app. */
+export const totpCode = z
+  .string()
+  .trim()
+  .regex(/^\d{6}$/, 'Enter the 6-digit code.');
+
 export const loginSchema = z
   .object({
     shopSlug: z.string().trim().toLowerCase().min(1, 'Required.').max(40),
     username: z.string().trim().toLowerCase().min(1, 'Required.').max(32),
     password: z.string().min(1, 'Required.').max(128),
     turnstileToken,
+    // Only for accounts with two-step login on; asked for after the password is right.
+    totpCode: totpCode.optional(),
   })
   .strict();
 
@@ -59,3 +67,8 @@ export const recoverSchema = z
   .strict();
 
 export type RecoverInput = z.infer<typeof recoverSchema>;
+
+export const enableTotpSchema = z
+  .object({ secret: z.string().regex(/^[A-Z2-7]{32}$/), code: totpCode })
+  .strict();
+export const disableTotpSchema = z.object({ code: totpCode }).strict();

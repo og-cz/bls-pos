@@ -25,6 +25,8 @@ export const AUDIT_ACTIONS = [
   'shop.theme',
   'shop.update',
   'recovery.regenerate',
+  '2fa.enable',
+  '2fa.disable',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

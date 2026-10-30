@@ -7,6 +7,7 @@ import type { Db } from '../db/client';
 import { shops, users } from '../db/schema';
 import { ApiError } from '../lib/errors';
 import { hashPassword, verifyPassword } from '../security/password';
+import { decryptSecret, verifyTotp } from '../security/totp';
 import {
   attemptKeys,
   clearUserFailures,
@@ -50,6 +51,8 @@ function getDummyHash(pepper: string): Promise<string> {
 
 export type LoginContext = {
   ipHash: string | null;
+  /** TOTP_ENC_KEY, to read two-step login secrets. */
+  totpKey: string;
   /** Throws unless the request carries a valid Turnstile token. */
   verifyHuman: () => Promise<void>;
 };
@@ -78,6 +81,7 @@ export async function login(
       passwordHash: users.passwordHash,
       active: users.active,
       lockedUntil: users.lockedUntil,
+      totpSecretEnc: users.totpSecretEnc,
     })
     .from(users)
     .innerJoin(shops, eq(shops.id, users.shopId))
@@ -118,6 +122,51 @@ export async function login(
       }
     }
     throw INVALID_CREDENTIALS();
+  }
+
+  // Two-step login (Section 7.11): the password was right; now the app code.
+  if (user.totpSecretEnc) {
+    if (!input.totpCode) {
+      throw new ApiError(
+        401,
+        'TOTP_REQUIRED',
+        'Enter the 6-digit code from your authenticator app.',
+      );
+    }
+    const secret = await decryptSecret(user.totpSecretEnc, ctx.totpKey);
+    if (!(await verifyTotp(secret, input.totpCode, now))) {
+      await recordFailure(db, keys, now);
+      await writeAudit(
+        db,
+        user.shopId,
+        {
+          action: 'login.failed',
+          userId: user.id,
+          target: { type: 'user', id: user.id },
+          details: { reason: 'wrong_code' },
+          ipHash: ctx.ipHash,
+        },
+        now,
+      );
+      if (await countAccountFailure(db, user.shopId, user.id, now)) {
+        await writeAudit(
+          db,
+          user.shopId,
+          {
+            action: 'login.locked',
+            userId: user.id,
+            target: { type: 'user', id: user.id },
+            ipHash: ctx.ipHash,
+          },
+          now,
+        );
+      }
+      throw new ApiError(
+        401,
+        'INVALID_TOTP',
+        'That code is not right. Check the time on your phone and try again.',
+      );
+    }
   }
 
   await db.batch([

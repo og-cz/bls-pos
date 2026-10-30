@@ -15,6 +15,7 @@ import {
   Pencil,
   ScrollText,
   ShieldAlert,
+  ShieldCheck,
   Store,
   Tag,
   Upload,
@@ -59,6 +60,8 @@ const ACTIONS: Record<AuditAction, { icon: LucideIcon; text: string; warn?: bool
   'shop.theme': { icon: Palette, text: 'changed the shop colors' },
   'shop.update': { icon: Store, text: 'changed the shop details' },
   'recovery.regenerate': { icon: KeyRound, text: 'made new recovery codes' },
+  '2fa.enable': { icon: ShieldCheck, text: 'turned on two-step login' },
+  '2fa.disable': { icon: ShieldAlert, text: 'turned off two-step login', warn: true },
 };
 
 const timeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });

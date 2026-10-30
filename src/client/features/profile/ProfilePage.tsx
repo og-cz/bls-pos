@@ -11,6 +11,7 @@ import { apiDelete, apiPatch, apiUpload } from '@/lib/api';
 import { compressImage, IMAGE_ACCEPT, MAX_EDGE } from '@/lib/image';
 
 import { PhotoEditor } from '../products/photo/PhotoEditor';
+import { TwoFactorCard } from './TwoFactorCard';
 
 const ROLE_LABEL = { owner: 'Owner', admin: 'Admin', staff: 'Staff' } as const;
 
@@ -133,6 +134,8 @@ export function ProfilePage() {
             ) : null}
           </div>
         </form>
+
+        <TwoFactorCard />
 
         {error ? <FormAlert>{error}</FormAlert> : null}
       </div>

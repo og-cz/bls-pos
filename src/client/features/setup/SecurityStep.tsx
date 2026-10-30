@@ -126,7 +126,7 @@ export function SecurityStep({ onNext, busy }: StepProps) {
       </section>
       {error ? <FormAlert>{error}</FormAlert> : null}
       <p className="text-sm text-muted-foreground">
-        Two-step login with an authenticator app comes in a later update.
+        Want more protection? Turn on two-step login with an authenticator app in My profile.
       </p>
     </StepLayout>
   );

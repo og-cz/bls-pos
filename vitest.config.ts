@@ -12,6 +12,8 @@ export default defineConfig({
           PEPPER: 'test-pepper',
           // Tests mock the siteverify call; this value is never sent anywhere.
           TURNSTILE_SECRET: 'test-turnstile-secret',
+          // 32 zero bytes: a test-only key for two-step login secrets.
+          TOTP_ENC_KEY: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
           TEST_MIGRATIONS: await readD1Migrations(
             fileURLToPath(new URL('./migrations', import.meta.url)),
           ),

@@ -21,7 +21,10 @@ export function LoginPage() {
     shopSlug: lastShopCode(),
     username: '',
     password: '',
+    totpCode: '',
   }));
+  // Two-step login: the server asks for the app code after the password is right.
+  const [needsCode, setNeedsCode] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   // The server asks for Turnstile only after a few failed logins (Section 7.3).
@@ -39,7 +42,12 @@ export function LoginPage() {
   async function onSubmit(e: SyntheticEvent) {
     e.preventDefault();
     setFormError(null);
-    const checked = validate(loginSchema, { ...values, turnstileToken: token ?? undefined });
+    const { totpCode, ...rest } = values;
+    const checked = validate(loginSchema, {
+      ...rest,
+      ...(needsCode ? { totpCode } : {}),
+      turnstileToken: token ?? undefined,
+    });
     if (checked.errors) {
       setErrors(checked.errors);
       focusFirstError(formRef.current, checked.errors);
@@ -61,7 +69,18 @@ export function LoginPage() {
           ? err
           : new ApiClientError(0, 'INTERNAL', 'Something went wrong.');
       if (apiErr.code.startsWith('TURNSTILE_')) setNeedsHuman(true);
-      if (apiErr.code === 'INVALID_CREDENTIALS') setValues((v) => ({ ...v, password: '' }));
+      if (apiErr.code === 'INVALID_CREDENTIALS') {
+        setNeedsCode(false);
+        setValues((v) => ({ ...v, password: '', totpCode: '' }));
+      }
+      if (apiErr.code === 'TOTP_REQUIRED') {
+        // Not an error: the next step.
+        setNeedsCode(true);
+        setToken(null);
+        setTurnstileKey((k) => k + 1);
+        return;
+      }
+      if (apiErr.code === 'INVALID_TOTP') setValues((v) => ({ ...v, totpCode: '' }));
       setFormError(apiErr.message);
       setToken(null);
       setTurnstileKey((k) => k + 1);
@@ -136,6 +155,25 @@ export function LoginPage() {
           maxLength={128}
           required
         />
+
+        {needsCode ? (
+          <TextField
+            label="Code from your authenticator app"
+            name="totpCode"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            autoFocus
+            maxLength={6}
+            className="font-mono tracking-[0.3em]"
+            value={values.totpCode}
+            onChange={(e) => {
+              set('totpCode', e.target.value.replace(/\D/g, ''));
+            }}
+            error={errors.totpCode}
+            hint="Two-step login is on for this account."
+            required
+          />
+        ) : null}
 
         {needsHuman ? <Turnstile key={turnstileKey} onToken={setToken} /> : null}
 

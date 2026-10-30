@@ -47,6 +47,7 @@ authRoutes.post('/login', async (c) => {
   try {
     result = await login(getDb(c.env.DB), c.env.PEPPER, input, {
       ipHash: await clientIpHash(c),
+      totpKey: c.env.TOTP_ENC_KEY,
       verifyHuman: () => verifyHuman(c, input.turnstileToken),
     });
   } catch (err) {

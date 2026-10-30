@@ -1,17 +1,8 @@
 import { useMemo, useState } from 'react';
-import qrcode from 'qrcode-generator';
 import { Check, Copy, Download, Share2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-
-/** The QR modules for a text: true = dark square. */
-function qrModules(text: string): boolean[][] {
-  const qr = qrcode(0, 'M');
-  qr.addData(text);
-  qr.make();
-  const n = qr.getModuleCount();
-  return Array.from({ length: n }, (_, r) => Array.from({ length: n }, (_, c) => qr.isDark(r, c)));
-}
+import { qrModules, qrPath } from '@/lib/qr';
 
 /** A printable PNG: the QR code with the shop name and a short line under it. */
 async function qrPng(modules: boolean[][], shopName: string): Promise<Blob> {
@@ -62,10 +53,7 @@ export function ShareCard({
   const n = modules.length;
   const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
-  // One SVG path for all dark squares: crisp at any size, no HTML injection.
-  const path = modules
-    .flatMap((row, r) => row.map((dark, c) => (dark ? `M${String(c)} ${String(r)}h1v1h-1z` : '')))
-    .join('');
+  const path = qrPath(modules);
 
   return (
     <section className="space-y-4 rounded-xl border bg-card p-4">

@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 
 import { entitlementsFor } from '@shared/entitlements';
+import { disableTotpSchema, enableTotpSchema } from '@shared/schemas/auth';
 import { updateProfileSchema } from '@shared/schemas/profile';
 import { parseTheme } from '@shared/theme';
 
@@ -12,9 +13,16 @@ import type { AuthedEnv } from '../env';
 import { actorOf } from '../lib/actor';
 import { mediaUrl } from '../lib/media';
 import { parseJson } from '../lib/validate';
+import { requireRole } from '../middleware/role';
 import { authed } from '../middleware/tenant';
 import { avatarUrlOf, removeAvatar, updateProfile } from '../services/profile';
 import { recoveryCodesLeft, regenerateRecoveryCodes } from '../services/recovery';
+import {
+  disableTwoFactor,
+  enableTwoFactor,
+  startTwoFactorSetup,
+  twoFactorStatus,
+} from '../services/two-factor';
 
 function parseStoredTheme(json: string) {
   try {
@@ -96,4 +104,38 @@ meRoutes.post('/recovery-codes', async (c) => {
     c.env.PEPPER,
   );
   return c.json({ codes }, 201);
+});
+
+// Two-step login (Section 7.11): status, a new secret to scan, turn on, turn off.
+meRoutes.get('/2fa', async (c) => {
+  return c.json(await twoFactorStatus(getDb(c.env.DB), c.var.shopId, await actorOf(c)));
+});
+
+meRoutes.post('/2fa/setup', requireRole('admin'), async (c) => {
+  return c.json(await startTwoFactorSetup(getDb(c.env.DB), c.var.shopId, await actorOf(c)));
+});
+
+meRoutes.post('/2fa/enable', requireRole('admin'), async (c) => {
+  const input = await parseJson(c, enableTotpSchema);
+  await enableTwoFactor(
+    getDb(c.env.DB),
+    c.var.shopId,
+    await actorOf(c),
+    c.var.auth.sessionId,
+    c.env.TOTP_ENC_KEY,
+    input,
+  );
+  return c.json({ enabled: true });
+});
+
+meRoutes.post('/2fa/disable', async (c) => {
+  const input = await parseJson(c, disableTotpSchema);
+  await disableTwoFactor(
+    getDb(c.env.DB),
+    c.var.shopId,
+    await actorOf(c),
+    c.env.TOTP_ENC_KEY,
+    input,
+  );
+  return c.json({ enabled: false });
 });
