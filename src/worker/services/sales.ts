@@ -1,7 +1,15 @@
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 
 import { hasRole } from '@shared/roles';
-import type { CreateSaleInput, Receipt, VoidSaleInput } from '@shared/schemas/sales';
+import type {
+  CreateSaleInput,
+  Receipt,
+  SaleList,
+  SaleListQuery,
+  SaleSummary,
+  VoidSaleInput,
+} from '@shared/schemas/sales';
+import { addDays, dayStartMs, localDay } from '@shared/time';
 
 import { paymentAdapterFor } from '../adapters/registry';
 import type { Db } from '../db/client';
@@ -370,4 +378,93 @@ export async function voidSale(
   // The sale's day may be in the past: bring its summary up to date now.
   await refreshShopDayAt(db, shopId, sale.createdAt);
   return getReceipt(db, shopId, actor, saleId);
+}
+
+/**
+ * Sales in a range of local days, newest first (Section 6.6 shift view and sales list).
+ * Staff only ever see their own sales for today, whatever they ask for.
+ */
+export async function listSales(
+  db: Db,
+  shopId: string,
+  actor: Actor,
+  query: SaleListQuery,
+  now: number = Date.now(),
+): Promise<SaleList> {
+  const shop = await db
+    .select({ timezone: shops.timezone })
+    .from(shops)
+    .where(eq(shops.id, shopId))
+    .get();
+  const timeZone = shop?.timezone ?? 'Asia/Manila';
+  const today = localDay(now, timeZone);
+  const isAdmin = hasRole(actor.role, 'admin');
+  const from = isAdmin ? (query.from ?? query.to ?? today) : today;
+  const to = isAdmin ? (query.to ?? from) : today;
+  if (from > to) throw new ApiError(400, 'VALIDATION_ERROR', 'From must be on or before To.');
+  const userId = isAdmin ? (query.userId ?? null) : actor.userId;
+
+  const start = dayStartMs(from, timeZone);
+  const end = dayStartMs(addDays(to, 1), timeZone);
+  const filter = `s.shop_id = ?1 AND s.created_at >= ?2 AND s.created_at < ?3
+    AND (?4 IS NULL OR s.user_id = ?4)`;
+  const [page, totals] = await db.$client.batch<Record<string, unknown>>([
+    db.$client
+      .prepare(
+        `SELECT s.id, s.number, s.status, s.created_at, s.total_cents, s.payment_method,
+           s.void_reason, s.user_id, u.display_name,
+           (SELECT coalesce(sum(i.quantity), 0) FROM sale_items i WHERE i.sale_id = s.id) AS items
+         FROM sales s JOIN users u ON u.id = s.user_id AND u.shop_id = s.shop_id
+         WHERE ${filter} AND (?5 IS NULL OR s.number < ?5)
+         ORDER BY s.number DESC LIMIT ?6`,
+      )
+      .bind(shopId, start, end, userId, query.before ?? null, query.limit + 1),
+    db.$client
+      .prepare(
+        `SELECT sum(s.status = 'completed') AS salesCount,
+           coalesce(sum(CASE WHEN s.status = 'completed' THEN s.total_cents END), 0) AS grossCents,
+           sum(s.status = 'voided') AS voidedCount,
+           coalesce(sum(CASE WHEN s.status = 'voided' THEN s.total_cents END), 0) AS voidedCents
+         FROM sales s WHERE ${filter}`,
+      )
+      .bind(shopId, start, end, userId),
+  ]);
+
+  const rows = (page?.results ?? []) as {
+    id: string;
+    number: number;
+    status: SaleSummary['status'];
+    created_at: number;
+    total_cents: number;
+    payment_method: string;
+    void_reason: string | null;
+    user_id: string;
+    display_name: string;
+    items: number;
+  }[];
+  const more = rows.length > query.limit;
+  const list = rows.slice(0, query.limit).map((r): SaleSummary => ({
+    id: r.id,
+    number: r.number,
+    status: r.status,
+    createdAt: r.created_at,
+    totalCents: r.total_cents,
+    paymentMethod: r.payment_method,
+    itemCount: r.items,
+    cashier: { id: r.user_id, displayName: r.display_name },
+    voidReason: r.void_reason,
+  }));
+  const t = (totals?.results[0] ?? {}) as Partial<SaleList['totals']>;
+  return {
+    from,
+    to,
+    sales: list,
+    nextBefore: more ? (list.at(-1)?.number ?? null) : null,
+    totals: {
+      salesCount: t.salesCount ?? 0,
+      grossCents: t.grossCents ?? 0,
+      voidedCount: t.voidedCount ?? 0,
+      voidedCents: t.voidedCents ?? 0,
+    },
+  };
 }

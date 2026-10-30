@@ -1,8 +1,10 @@
+import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Printer } from 'lucide-react';
 
 import { useMe } from '@/app/session';
 import { Button } from '@/components/ui/button';
+import { PAYMENT_LABEL } from '@shared/checkout';
 import { formatCents } from '@shared/money';
 import type { Receipt } from '@shared/schemas/sales';
 
@@ -10,7 +12,6 @@ import type { Receipt } from '@shared/schemas/sales';
 // TODO(tax professional): confirm the exact wording before selling bls POS to shops.
 export const NOT_AN_INVOICE = 'This is not an official receipt or invoice.';
 
-const PAYMENT_LABEL: Record<string, string> = { cash: 'Cash', other_manual: 'Other' };
 const dateTime = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
 /** The receipt itself: plain, narrow, readable on screen and on a receipt printer. */
@@ -94,7 +95,16 @@ function ReceiptBody({
  * only the receipt to the printer (see .print-receipt in globals.css), sized for 58/80 mm
  * receipt printers and fine on A4.
  */
-export function ReceiptView({ receipt, onNewSale }: { receipt: Receipt; onNewSale: () => void }) {
+/** A finished sale. After checkout the second button starts a new sale; elsewhere it's `action`. */
+export function ReceiptView({
+  receipt,
+  onNewSale,
+  action,
+}: {
+  receipt: Receipt;
+  onNewSale?: () => void;
+  action?: ReactNode;
+}) {
   const { shop } = useMe();
   const money = (c: number) => formatCents(c, shop.currency);
   return (
@@ -124,9 +134,13 @@ export function ReceiptView({ receipt, onNewSale }: { receipt: Receipt; onNewSal
           <Printer aria-hidden="true" />
           Print
         </Button>
-        <Button type="button" size="lg" onClick={onNewSale}>
-          New sale
-        </Button>
+        {onNewSale ? (
+          <Button type="button" size="lg" onClick={onNewSale}>
+            New sale
+          </Button>
+        ) : (
+          action
+        )}
       </div>
 
       {/* The printed copy: a direct child of <body>, the only thing shown when printing. */}

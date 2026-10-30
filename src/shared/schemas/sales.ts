@@ -74,3 +74,53 @@ export const voidSaleSchema = z
   .object({ reason: z.string().trim().min(3, 'Say why, in a few words.').max(200) })
   .strict();
 export type VoidSaleInput = z.infer<typeof voidSaleSchema>;
+
+const localDay = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD.');
+
+/**
+ * Listing sales. Admins pick any range and cashier; staff always get their own sales for
+ * today (their shift), whatever they ask for. Paged newest first by sale number.
+ */
+export const saleListQuerySchema = z
+  .object({
+    from: localDay.optional(),
+    to: localDay.optional(),
+    userId: z.string().min(1).max(64).optional(),
+    before: z.coerce.number().int().min(1).optional(),
+    limit: z.coerce.number().int().min(1).max(200).default(50),
+  })
+  .strict()
+  .refine((q) => !q.from || !q.to || q.from <= q.to, {
+    message: 'From must be on or before To.',
+    path: ['to'],
+  })
+  .refine(
+    (q) =>
+      !q.from ||
+      !q.to ||
+      (Date.parse(`${q.to}T00:00:00Z`) - Date.parse(`${q.from}T00:00:00Z`)) / 86_400_000 < 366,
+    { message: 'Pick at most 366 days.', path: ['to'] },
+  );
+export type SaleListQuery = z.infer<typeof saleListQuerySchema>;
+
+export type SaleSummary = {
+  id: string;
+  number: number;
+  status: 'completed' | 'voided';
+  createdAt: number;
+  totalCents: number;
+  paymentMethod: string;
+  itemCount: number;
+  cashier: { id: string; displayName: string };
+  voidReason: string | null;
+};
+
+export type SaleList = {
+  from: string;
+  to: string;
+  sales: SaleSummary[];
+  /** Pass as `before` for the next page; null on the last page. */
+  nextBefore: number | null;
+  /** For the whole range and filter, not just this page. */
+  totals: { salesCount: number; grossCents: number; voidedCount: number; voidedCents: number };
+};

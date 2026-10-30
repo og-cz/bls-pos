@@ -26,3 +26,6 @@ export function applyKey(typed: string, key: string): string {
   // Up to ₱9,999,999.99 typed.
   return next.replace(/^0+(?=\d)/, '').length > 10 ? typed : next;
 }
+
+/** How each payment method reads on receipts, lists and exports. */
+export const PAYMENT_LABEL: Record<string, string> = { cash: 'Cash', other_manual: 'Other' };

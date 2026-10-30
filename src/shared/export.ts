@@ -1,7 +1,7 @@
 // Spreadsheet export (Phase 3.5). Files are built in the browser from the paged API, so a
 // large export never hits the free plan's 10 ms server CPU limit.
 
-export const EXPORT_KINDS = ['products', 'stock', 'movements', 'backup'] as const;
+export const EXPORT_KINDS = ['products', 'stock', 'movements', 'backup', 'sales'] as const;
 export type ExportKind = (typeof EXPORT_KINDS)[number];
 export const EXPORT_FORMATS = ['csv', 'xlsx', 'json'] as const;
 export type ExportFormat = (typeof EXPORT_FORMATS)[number];

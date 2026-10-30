@@ -2,6 +2,7 @@ import {
   Boxes,
   LayoutDashboard,
   Package,
+  ReceiptText,
   ScrollText,
   Settings,
   ShoppingCart,
@@ -32,6 +33,7 @@ export const NAV: NavItem[] = [
   { href: '/inventory', label: 'Inventory', icon: Boxes, minRole: 'staff', tab: true },
   { href: '/products', label: 'Products', icon: Package, minRole: 'admin', tab: true },
   { href: '/staff', label: 'Staff', icon: Users, minRole: 'admin', tab: true },
+  { href: '/sales', label: 'Sales', icon: ReceiptText, minRole: 'staff', tab: false },
   { href: '/activity', label: 'Activity', icon: ScrollText, minRole: 'admin', tab: false },
   {
     href: '/settings',

@@ -20,6 +20,7 @@ const LoginPage = page(() => import('@/features/auth/LoginPage'), 'LoginPage');
 const SignupPage = page(() => import('@/features/auth/SignupPage'), 'SignupPage');
 const RecoverPage = page(() => import('@/features/auth/RecoverPage'), 'RecoverPage');
 const DashboardPage = page(() => import('@/features/dashboard/DashboardPage'), 'DashboardPage');
+const SalesPage = page(() => import('@/features/sales/SalesPage'), 'SalesPage');
 const SellPage = page(() => import('@/features/sell/SellPage'), 'SellPage');
 const InventoryPage = page(() => import('@/features/inventory/InventoryPage'), 'InventoryPage');
 const ProductsPage = page(() => import('@/features/products/ProductsPage'), 'ProductsPage');
@@ -45,6 +46,7 @@ const PUBLIC: Record<string, { title: string; Page: Page }> = {
 const SIGNED_IN: Record<string, Page> = {
   '/': DashboardPage,
   '/sell': SellPage,
+  '/sales': SalesPage,
   '/inventory': InventoryPage,
   '/products': ProductsPage,
   '/staff': StaffPage,
