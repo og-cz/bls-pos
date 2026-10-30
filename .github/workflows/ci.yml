@@ -41,3 +41,35 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+
+  e2e:
+    name: End-to-end (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Local-only, non-secret values (test Turnstile secret, throwaway pepper and key).
+      - run: cp .dev.vars.example .dev.vars
+
+      - run: pnpm db:migrate:local
+
+      - run: pnpm exec playwright install --with-deps chromium
+
+      - run: pnpm test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7
