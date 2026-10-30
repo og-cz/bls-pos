@@ -117,15 +117,17 @@ export function ProductsPage() {
           }
         />
         {isAdmin && !archived ? (
-          <div className="mb-6 flex gap-2">
+          // Phones: Export and Import share a row, Add product gets its own full-width row.
+          <div className="mb-6 flex w-full flex-wrap gap-2 sm:w-auto">
             <ExportMenu />
-            <Button variant="outline" asChild>
+            <Button variant="outline" className="flex-1 sm:flex-none" asChild>
               <Link href="/products/import">
                 <Upload aria-hidden="true" />
                 Import
               </Link>
             </Button>
             <Button
+              className="basis-full sm:basis-auto"
               onClick={() => {
                 setEditing('new');
               }}
@@ -138,8 +140,8 @@ export function ProductsPage() {
       </div>
 
       <div className="mb-4 space-y-3">
-        <div className="flex gap-2">
-          <div className="relative flex-1">
+        <div className="flex flex-wrap gap-2">
+          <div className="relative min-w-48 flex-1">
             <Search
               className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-muted-foreground"
               aria-hidden="true"

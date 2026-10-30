@@ -280,22 +280,24 @@ export function SalesPage() {
                 }}
                 className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
               >
-                <span className="w-14 shrink-0 font-medium tabular">#{s.number}</span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-sm">
-                    {shown?.from === shown?.to
-                      ? time.format(s.createdAt)
-                      : dateTime.format(s.createdAt)}
-                    {' · '}
-                    {s.itemCount} {s.itemCount === 1 ? 'item' : 'items'}
-                    {' · '}
-                    {PAYMENT_LABEL[s.paymentMethod] ?? s.paymentMethod}
-                  </span>
-                  {isAdmin ? (
-                    <span className="block truncate text-xs text-muted-foreground">
-                      {s.cashier.displayName}
+                  <span className="block">
+                    <span className="font-medium tabular">#{s.number}</span>
+                    <span className="ml-2 text-sm text-muted-foreground">
+                      {shown?.from === shown?.to
+                        ? time.format(s.createdAt)
+                        : dateTime.format(s.createdAt)}
                     </span>
-                  ) : null}
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {[
+                      `${String(s.itemCount)} ${s.itemCount === 1 ? 'item' : 'items'}`,
+                      PAYMENT_LABEL[s.paymentMethod] ?? s.paymentMethod,
+                      isAdmin ? s.cashier.displayName : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </span>
                 </span>
                 <span className="text-right">
                   <span

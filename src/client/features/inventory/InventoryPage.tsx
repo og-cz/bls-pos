@@ -125,8 +125,9 @@ export function InventoryPage() {
         </div>
       ) : null}
 
-      <div className="mb-4 flex gap-2">
-        <div className="relative flex-1">
+      {/* On phones the view switcher drops below the search box instead of squeezing it. */}
+      <div className="mb-4 flex flex-wrap gap-2">
+        <div className="relative min-w-48 flex-1">
           <Search
             className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-muted-foreground"
             aria-hidden="true"
@@ -217,7 +218,7 @@ export function InventoryPage() {
                 className={productView === 'compact' ? 'size-10' : 'size-16'}
               />
               <div className="min-w-0 flex-1">
-                <div className="truncate font-medium">{p.name}</div>
+                <div className="line-clamp-2 font-medium break-words">{p.name}</div>
                 {p.sku ? (
                   <div className="truncate font-mono text-xs text-muted-foreground">{p.sku}</div>
                 ) : null}
@@ -225,11 +226,21 @@ export function InventoryPage() {
                   <StockBadge status={p.stockStatus} stock={p.stock} />
                 </div>
               </div>
-              <div className="flex gap-2">
+              {/* Phones: full-width buttons on their own line (list) or icon buttons (compact),
+                  so the product name keeps its room. */}
+              <div
+                className={cn(
+                  'flex gap-2',
+                  productView === 'compact' ? '' : 'basis-full sm:basis-auto',
+                )}
+              >
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-11"
+                  className={cn(
+                    'h-11',
+                    productView === 'compact' ? 'w-11 sm:w-auto' : 'flex-1 sm:flex-none',
+                  )}
                   disabled={p.stock <= 0}
                   onClick={() => {
                     setAction({ kind: 'deduct', product: p });
@@ -237,19 +248,26 @@ export function InventoryPage() {
                   aria-label={`Take out stock of ${p.name}`}
                 >
                   <Minus aria-hidden="true" />
-                  Deduct
+                  <span className={productView === 'compact' ? 'sr-only sm:not-sr-only' : ''}>
+                    Deduct
+                  </span>
                 </Button>
                 {isAdmin ? (
                   <Button
                     size="sm"
-                    className="h-11"
+                    className={cn(
+                      'h-11',
+                      productView === 'compact' ? 'w-11 sm:w-auto' : 'flex-1 sm:flex-none',
+                    )}
                     onClick={() => {
                       setAction({ kind: 'restock', product: p });
                     }}
                     aria-label={`Restock ${p.name}`}
                   >
                     <Plus aria-hidden="true" />
-                    Restock
+                    <span className={productView === 'compact' ? 'sr-only sm:not-sr-only' : ''}>
+                      Restock
+                    </span>
                   </Button>
                 ) : null}
               </div>

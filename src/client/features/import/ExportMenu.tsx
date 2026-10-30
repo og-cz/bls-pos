@@ -200,7 +200,7 @@ export function ExportMenu() {
     <>
       <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild>
-          <Button variant="outline" disabled={busy}>
+          <Button variant="outline" className="flex-1 sm:flex-none" disabled={busy}>
             <Download aria-hidden="true" />
             {busy ? 'Exporting…' : 'Export'}
           </Button>
