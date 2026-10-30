@@ -18,6 +18,7 @@ import { formatCents } from '@shared/money';
 import { hasRole } from '@shared/roles';
 import type { ProductDto } from '@shared/schemas/products';
 
+import { ExportMenu } from '../import/ExportMenu';
 import { ProductForm } from './ProductForm';
 import { searchKey, useCatalog } from './use-catalog';
 
@@ -117,6 +118,7 @@ export function ProductsPage() {
         />
         {isAdmin && !archived ? (
           <div className="mb-6 flex gap-2">
+            <ExportMenu />
             <Button variant="outline" asChild>
               <Link href="/products/import">
                 <Upload aria-hidden="true" />

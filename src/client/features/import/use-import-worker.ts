@@ -59,5 +59,20 @@ export function useImportWorker() {
     [send],
   );
 
-  return { parse, downloadTemplate };
+  /** Builds the file in the worker and saves it (CSV or .xlsx). */
+  const downloadRows = useCallback(
+    async (req: Extract<WorkerRequest, { type: 'export' }>) => {
+      const res = await send(req);
+      if (res.type !== 'template') throw new Error('Could not make the file.');
+      const url = URL.createObjectURL(res.blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = res.filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+    [send],
+  );
+
+  return { parse, downloadTemplate, downloadRows };
 }

@@ -18,6 +18,7 @@ export const AUDIT_ACTIONS = [
   'category.delete',
   'stock.restock',
   'stock.deduct',
+  'data.export',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

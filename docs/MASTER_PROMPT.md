@@ -457,7 +457,7 @@ CREATE TABLE daily_summaries (            -- filled by cron for fast dashboards
 | GET | `/media/:key` | see 7.8 | Served from R2 via Worker |
 | GET | `/audit` | owner/admin | Paginated audit log |
 | POST | `/products/import` | admin | Chunk of 200–500 rows, upsert by SKU, enforces `maxProducts` (Phase 3.5) |
-| GET | `/export/:kind.(csv\|xlsx)` | admin | kind: `products` / `stock` / `movements` / `sales`; streamed (Phase 3.5) |
+| POST | `/audit/exports` | admin | Records an export (kind, format, rows). The file itself is built in the browser from the paged API, because 10 ms of server CPU is too little for big files (Phase 3.5) |
 | GET | `/backup` | owner/admin | Full shop backup download (Phase 3.5) |
 | POST | `/backup/restore` | owner/admin | Restore through the import flow; confirmation + audit log (Phase 3.5) |
 | GET/POST | `/reports/daily-close` | admin | View / close a day; closed days are read-only (Section 7.16) |

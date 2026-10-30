@@ -11,11 +11,13 @@ import {
   TEMPLATE_EXAMPLES,
   type ParseResult,
 } from '@shared/import';
+import { safeRows, type Cell, type ExportFormat } from '@shared/export';
 
 export type WorkerRequest =
   | { type: 'parse-file'; file: File }
   | { type: 'parse-text'; text: string }
-  | { type: 'template'; format: 'csv' | 'xlsx' };
+  | { type: 'template'; format: 'csv' | 'xlsx' }
+  | { type: 'export'; format: ExportFormat; rows: Cell[][]; sheet: string; filename: string };
 
 export type WorkerResponse =
   | { type: 'parsed'; result: ParseResult }
@@ -60,6 +62,23 @@ async function parseFile(file: File): Promise<ParseResult> {
   throw new Error('Use a .csv or .xlsx file, or paste rows from a spreadsheet.');
 }
 
+/** CSV (with BOM, for Excel) or .xlsx, always through the formula-injection guard. */
+function exportFile(format: ExportFormat, rows: Cell[][], sheet: string, filename: string) {
+  const safe = safeRows(rows);
+  if (format === 'csv') {
+    return { blob: new Blob([BOM, Papa.unparse(safe)], { type: 'text/csv' }), filename };
+  }
+  const book = utils.book_new();
+  utils.book_append_sheet(book, utils.aoa_to_sheet(safe), sheet);
+  const data = write(book, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer;
+  return {
+    blob: new Blob([data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    }),
+    filename,
+  };
+}
+
 function template(format: 'csv' | 'xlsx'): { blob: Blob; filename: string } {
   const header = [...IMPORT_COLUMNS];
   const examples = TEMPLATE_EXAMPLES.map((row) => IMPORT_COLUMNS.map((c) => row[c]));
@@ -93,7 +112,9 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
     self.postMessage(msg);
   };
   try {
-    if (req.type === 'template') {
+    if (req.type === 'export') {
+      reply({ type: 'template', ...exportFile(req.format, req.rows, req.sheet, req.filename) });
+    } else if (req.type === 'template') {
       reply({ type: 'template', ...template(req.format) });
     } else if (req.type === 'parse-text') {
       reply({ type: 'parsed', result: parseCsv(req.text) });
