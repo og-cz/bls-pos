@@ -1,5 +1,6 @@
-import { and, desc, eq, lt } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gt, isNull, lt } from 'drizzle-orm';
 
+import type { ChainEntry } from '@shared/audit-chain';
 import type { AuditAction, AuditEntry } from '@shared/audit';
 
 import type { Db } from '../db/client';
@@ -115,5 +116,46 @@ export async function listAudit(
       createdAt: r.createdAt,
     })),
     nextCursor: rows.length > size ? (page.at(-1)?.id ?? null) : null,
+  };
+}
+
+export const CHAIN_PAGE_MAX = 500;
+
+/**
+ * Sealed entries in chain order, every field included, for the browser to check the hash
+ * chain (Section 7.16). Also how many recent entries are not sealed yet.
+ */
+export async function auditChainPage(
+  db: Db,
+  shopId: string,
+  after: number,
+  limit: number,
+): Promise<{ entries: ChainEntry[]; unsealed: number }> {
+  const rows = await db
+    .select({
+      id: auditLog.id,
+      shopId: auditLog.shopId,
+      userId: auditLog.userId,
+      action: auditLog.action,
+      targetType: auditLog.targetType,
+      targetId: auditLog.targetId,
+      detailsJson: auditLog.detailsJson,
+      ipHash: auditLog.ipHash,
+      createdAt: auditLog.createdAt,
+      chainSeq: auditLog.chainSeq,
+      chainHash: auditLog.chainHash,
+    })
+    .from(auditLog)
+    .where(and(eq(auditLog.shopId, shopId), gt(auditLog.chainSeq, after)))
+    .orderBy(asc(auditLog.chainSeq))
+    .limit(limit);
+  const pending = await db
+    .select({ n: count() })
+    .from(auditLog)
+    .where(and(eq(auditLog.shopId, shopId), isNull(auditLog.chainSeq)))
+    .get();
+  return {
+    entries: rows.map((r) => ({ ...r, chainSeq: r.chainSeq ?? 0, chainHash: r.chainHash ?? '' })),
+    unsealed: pending?.n ?? 0,
   };
 }

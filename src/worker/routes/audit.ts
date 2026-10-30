@@ -10,7 +10,13 @@ import { ApiError } from '../lib/errors';
 import { parseJson } from '../lib/validate';
 import { requireRole } from '../middleware/role';
 import { authed } from '../middleware/tenant';
-import { AUDIT_PAGE_MAX, listAudit, writeAudit } from '../services/audit';
+import {
+  AUDIT_PAGE_MAX,
+  auditChainPage,
+  CHAIN_PAGE_MAX,
+  listAudit,
+  writeAudit,
+} from '../services/audit';
 
 export const auditRoutes = new Hono<AuthedEnv>();
 
@@ -23,6 +29,22 @@ const querySchema = z
     limit: z.coerce.number().int().min(1).max(AUDIT_PAGE_MAX).default(50),
   })
   .strict();
+
+// The sealed chain, for checking that nothing was changed or removed (Section 7.16).
+const chainQuerySchema = z
+  .object({
+    after: z.coerce.number().int().min(0).default(0),
+    limit: z.coerce.number().int().min(1).max(CHAIN_PAGE_MAX).default(CHAIN_PAGE_MAX),
+  })
+  .strict();
+
+auditRoutes.get('/chain', async (c) => {
+  const query = chainQuerySchema.safeParse(c.req.query());
+  if (!query.success) throw new ApiError(400, 'VALIDATION_ERROR', 'Invalid paging.');
+  return c.json(
+    await auditChainPage(getDb(c.env.DB), c.var.shopId, query.data.after, query.data.limit),
+  );
+});
 
 auditRoutes.get('/', async (c) => {
   const query = querySchema.safeParse(c.req.query());

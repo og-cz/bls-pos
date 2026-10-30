@@ -5,6 +5,7 @@ import { API_BASE, APP_NAME } from '@shared/app';
 
 import type { AppEnv } from './env';
 import { BACKUP_CRON, runBackups } from './backup';
+import { sealAuditLog } from './audit-seal';
 import { runNightly } from './cron';
 import { ApiError } from './lib/errors';
 import { session } from './middleware/session';
@@ -74,6 +75,10 @@ export default {
   // Nightly daily summaries (wrangler.jsonc "triggers").
   scheduled(controller, env, ctx) {
     // Two triggers (wrangler.jsonc): hourly backups, and the nightly summaries.
-    ctx.waitUntil(controller.cron === BACKUP_CRON ? runBackups(env) : runNightly(env));
+    ctx.waitUntil(
+      controller.cron === BACKUP_CRON
+        ? Promise.all([sealAuditLog(env), runBackups(env)])
+        : runNightly(env),
+    );
   },
 } satisfies ExportedHandler<Env>;

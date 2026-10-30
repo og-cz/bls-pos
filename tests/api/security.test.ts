@@ -30,6 +30,7 @@ const ROUTES: Record<string, Access> = {
   'GET /api/v1/staff': 'admin',
   'POST /api/v1/staff': 'admin',
   'POST /api/v1/staff/:id/deactivate': 'admin',
+  'GET /api/v1/audit/chain': 'admin',
   'GET /api/v1/audit': 'admin',
   'POST /api/v1/audit/exports': 'admin',
   'POST /api/v1/audit/restores': 'admin',

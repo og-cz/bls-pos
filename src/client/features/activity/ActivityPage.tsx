@@ -33,6 +33,8 @@ import { useApiGet } from '@/lib/use-api';
 import { cn } from '@/lib/utils';
 import type { AuditAction, AuditEntry } from '@shared/audit';
 
+import { ChainCheck } from './ChainCheck';
+
 type Page = { entries: AuditEntry[]; nextCursor: string | null };
 
 const ACTIONS: Record<AuditAction, { icon: LucideIcon; text: string; warn?: boolean }> = {
@@ -152,6 +154,7 @@ export function ActivityPage() {
         title="Activity"
         description="Logins, staff changes and other important actions in your shop."
       />
+      <ChainCheck />
       {first.error ? <FormAlert>{first.error}</FormAlert> : null}
       {first.loading && !first.data ? (
         <p role="status" className="text-muted-foreground">

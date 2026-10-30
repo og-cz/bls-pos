@@ -44,6 +44,8 @@ SELECT json_object(
       'name', i.name_snapshot, 'quantity', i.quantity, 'unitPriceCents', i.unit_price_cents,
       'unitCostCents', i.unit_cost_cents)) FROM sale_items i WHERE i.sale_id = s.id)))
     FROM sales s WHERE s.shop_id = ?1 AND s.created_at >= ?3),
+  'auditHead', (SELECT json_object('seq', chain_seq, 'hash', chain_hash) FROM audit_log
+    WHERE shop_id = ?1 AND chain_seq IS NOT NULL ORDER BY chain_seq DESC LIMIT 1),
   'dailyClosings', (SELECT json_group_array(json_object('day', day, 'grossCents', gross_cents,
     'salesCount', sales_count, 'voidedCents', voided_cents,
     'firstSaleNumber', first_sale_number, 'lastSaleNumber', last_sale_number))

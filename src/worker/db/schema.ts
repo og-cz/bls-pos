@@ -139,9 +139,16 @@ export const auditLog = sqliteTable(
     detailsJson: text('details_json'),
     ipHash: text('ip_hash'),
     createdAt: integer('created_at').notNull(),
+    // Tamper evidence (Section 7.16): set when the hourly job seals the entry into the
+    // shop's hash chain. chain_hash = SHA-256(previous chain_hash + this entry).
+    chainSeq: integer('chain_seq'),
+    chainHash: text('chain_hash'),
   },
   // Newest-first listing per shop; ids are UUIDv7 so they sort by time too.
-  (t) => [index('audit_log_shop_id').on(t.shopId, t.id)],
+  (t) => [
+    index('audit_log_shop_id').on(t.shopId, t.id),
+    uniqueIndex('audit_log_shop_chain').on(t.shopId, t.chainSeq),
+  ],
 );
 
 export const categories = sqliteTable(
