@@ -132,3 +132,43 @@ limits: 500 active products, 200 MB of images.
 
 **Notes:** tests now pin the clock to the middle of a 15-minute window, after a
 login rate-limit test failed once when a run crossed a window edge.
+
+## Phase 3.5 — Bulk import, export and backup (2026-10-30)
+
+**Demo:** log in as an owner, open **Products → Import**.
+
+1. Download the Excel or CSV template, or use your own sheet (headers like "Product
+   Name", "Qty" and "Barcode" are understood). Choose the file or paste rows from
+   Google Sheets; it is read in a Web Worker, so the page never freezes.
+2. Every row is checked ("Row 214: price is missing", "SKU is also on row 2"); fix cells
+   in place.
+3. **Import** sends the ready rows in 250-row batches with a progress bar, retries and
+   Stop. A SKU that already exists updates that product; stock in the file only sets
+   opening stock for new products.
+4. **Add photos in bulk:** drop photos named by SKU (`NGK-CR7.jpg`); each is matched,
+   cropped to 4:3, compressed and uploaded in the background.
+5. **Products → Export:** products (re-importable), stock levels or stock movements as
+   Excel or CSV, or a **Full backup (.json)**. **Import → Restore from backup** runs a
+   backup through the same flow after a confirmation.
+
+**Proven by tests (249):** a 5,000-row import in 20 chunks and a full re-import as
+updates; duplicate SKUs in a file; bad rows skipped with reasons; the product limit
+refusing a chunk without writing anything; SKUs never crossing shops; formula-injection
+protection on export; a backup restored into an empty shop gives the same products, and
+restoring twice doesn't duplicate.
+
+**Also in this phase (owner requests):** a photo beside every product, tap to view full
+size; photos in two sizes (full ~100–200 KB, thumbnail ~5–25 KB); Take photo / Add
+photo with a centering guide and an editor (move, zoom, rotate); Settings (theme, text
+size, list/compact/tiles/large tiles, menu side, icons-only menu); hamburger in the side
+menu; Free product limit raised to 5,000; the app is written "bls POS".
+
+**Notes:**
+
+- Exports and backups are built in the browser from the paged API (logged via
+  `POST /audit/exports`), because the free plan gives a request only 10 ms of CPU.
+- Import batches send each list as one JSON value read with `json_each`: about 8 queries
+  per 250 rows. A 5,000-product import uses roughly 10–15% of the 100,000 daily D1 row
+  writes shared by every shop on the deployment.
+- Backups leave out staff accounts on purpose.
+- Live camera capture is untested on a real device so far.

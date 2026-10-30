@@ -9,10 +9,10 @@ For any AI assistant (or person) picking up **bls POS** (formerly POS Fast / Bil
   (the local `origin` still points at the old `fast-pos` URL; GitHub redirects).
 - **Plan:** `docs/MASTER_PROMPT.md` (original name "POS Fast" = Bilis POS). Follow it
   phase by phase, one Conventional Commit per planned item.
-- **Status:** Phases 0–3 done and pushed (see `docs/PROGRESS.md`). **Next: Phase 3.5**
-  (bulk import, export and backup), starting with `feat(import): add CSV/XLSX template
-and Web Worker parser`. Free `maxProducts` is 5,000 (raised from 500, owner's call).
-  SheetJS isn't current on npm; its own CDN tarball needs a pnpm exception.
+- **Status:** Phases 0–3 and 3.5 done and pushed (see `docs/PROGRESS.md`). **Next: Phase 4
+  (Selling)**, starting with `feat(db): add sales and sale_items schema with stock CHECK
+constraint`. Before the sell screen, split client code by route: the main bundle is
+  ~166 KB gzipped against the 200 KB budget.
 - **Security tests:** `tests/api/security.test.ts` lists every API route with its
   minimum role. Add new routes there, or CI fails.
 - **Brand:** name **bls POS** (no tagline, no "(bilis)" — owner's call), accent **Bilis Blue `#1E6FD9`**
