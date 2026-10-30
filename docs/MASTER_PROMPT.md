@@ -158,7 +158,7 @@ export type Plan = 'free' | 'pro' | 'business';
 
 export const ENTITLEMENTS = {
   free: {
-    maxProducts: 500,
+    maxProducts: 5000,   // raised from 500 (2026-10-30) so a 5,000-row import fits
     maxStaff: 5,
     maxImagesMB: 200,
     paymentMethods: ['cash', 'other_manual'],

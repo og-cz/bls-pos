@@ -1,4 +1,4 @@
-import { exports } from 'cloudflare:workers';
+import { env, exports } from 'cloudflare:workers';
 
 export const ORIGIN = 'https://pos.test';
 
@@ -102,4 +102,15 @@ export async function createProductAs(cookie: string, fields: Record<string, unk
   if (res.status !== 201)
     throw new Error(`createProduct failed: ${res.status} ${await res.text()}`);
   return (await res.json<{ product: ProductJson }>()).product;
+}
+
+/** Fills a shop with `count` plain products in one statement (for limit tests). */
+export async function fillProducts(shopId: string, count: number) {
+  await env.DB.prepare(
+    `WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < ?)
+     INSERT INTO products (id, shop_id, name, price_cents, created_at, updated_at)
+     SELECT lower(hex(randomblob(16))), ?, 'Bulk ' || i, 100, 0, 0 FROM n`,
+  )
+    .bind(count, shopId)
+    .run();
 }

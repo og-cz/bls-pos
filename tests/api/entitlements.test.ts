@@ -5,7 +5,7 @@ import { getWithCookie, signUp } from './helpers';
 
 describe('entitlements', () => {
   it('gives Free shops the Free limits and no paid features', () => {
-    expect(entitlementsFor('free')).toMatchObject({ maxStaff: 5, maxProducts: 500 });
+    expect(entitlementsFor('free')).toMatchObject({ maxStaff: 5, maxProducts: 5000 });
     expect(can({ plan: 'free' }, 'emailReceipts')).toBe(false);
     expect(can({ plan: 'free' }, 'multiBranch')).toBe(false);
   });

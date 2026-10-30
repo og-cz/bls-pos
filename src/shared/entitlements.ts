@@ -16,7 +16,8 @@ export type Entitlements = {
 };
 
 const FREE: Entitlements = {
-  maxProducts: 500,
+  // Raised from 500 on 2026-10-30 (owner's call) so a whole catalog fits on day one.
+  maxProducts: 5000,
   maxStaff: 5,
   maxImagesMB: 200,
   paymentMethods: ['cash', 'other_manual'],

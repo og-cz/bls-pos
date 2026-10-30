@@ -1,7 +1,15 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 
-import { addMember, api, createProductAs, getWithCookie, postJson, signUp } from './helpers';
+import {
+  addMember,
+  fillProducts,
+  api,
+  createProductAs,
+  getWithCookie,
+  postJson,
+  signUp,
+} from './helpers';
 
 type Category = { id: string; name: string; sortOrder: number };
 
@@ -127,13 +135,7 @@ describe('product archiving', () => {
     const owner = await signUp();
     const p = await createProductAs(owner.cookie);
     await postJson(`/products/${p.id}/archive`, {}, owner.cookie);
-    const stmt = env.DB.prepare(
-      `INSERT INTO products (id, shop_id, name, price_cents, created_at, updated_at)
-       VALUES (?, ?, 'Bulk', 100, 0, 0)`,
-    );
-    await env.DB.batch(
-      Array.from({ length: 500 }, () => stmt.bind(crypto.randomUUID(), owner.shopId)),
-    );
+    await fillProducts(owner.shopId, 5000);
     const res = await postJson(`/products/${p.id}/unarchive`, {}, owner.cookie);
     expect(res.status).toBe(409);
     expect(await res.json()).toMatchObject({ error: { code: 'PRODUCT_LIMIT_REACHED' } });

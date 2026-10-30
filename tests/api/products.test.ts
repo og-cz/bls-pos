@@ -1,7 +1,15 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 
-import { addMember, api, createProductAs, getWithCookie, postJson, signUp } from './helpers';
+import {
+  addMember,
+  fillProducts,
+  api,
+  createProductAs,
+  getWithCookie,
+  postJson,
+  signUp,
+} from './helpers';
 
 type Product = {
   id: string;
@@ -116,15 +124,9 @@ describe('POST /products', () => {
     });
   });
 
-  it('enforces the Free limit of 500 active products', async () => {
+  it('enforces the Free limit of 5,000 active products', async () => {
     const owner = await signUp();
-    const stmt = env.DB.prepare(
-      `INSERT INTO products (id, shop_id, name, price_cents, created_at, updated_at)
-       VALUES (?, ?, 'Bulk', 100, 0, 0)`,
-    );
-    await env.DB.batch(
-      Array.from({ length: 500 }, () => stmt.bind(crypto.randomUUID(), owner.shopId)),
-    );
+    await fillProducts(owner.shopId, 5000);
     const res = await postJson('/products', { name: 'One more', priceCents: 1 }, owner.cookie);
     expect(res.status).toBe(409);
     expect(await res.json()).toMatchObject({ error: { code: 'PRODUCT_LIMIT_REACHED' } });

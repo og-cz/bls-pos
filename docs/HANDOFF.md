@@ -11,8 +11,7 @@ For any AI assistant (or person) picking up **BLS POS** (formerly POS Fast / Bil
   phase by phase, one Conventional Commit per planned item.
 - **Status:** Phases 0–3 done and pushed (see `docs/PROGRESS.md`). **Next: Phase 3.5**
   (bulk import, export and backup), starting with `feat(import): add CSV/XLSX template
-and Web Worker parser`. Open decision for the owner: Free `maxProducts` is 500, but
-  the Phase 3.5 target is a 5,000-row import (see `docs/ROADMAP.md`, Decisions needed).
+and Web Worker parser`. Free `maxProducts` is 5,000 (raised from 500, owner's call).
   SheetJS isn't current on npm; its own CDN tarball needs a pnpm exception.
 - **Security tests:** `tests/api/security.test.ts` lists every API route with its
   minimum role. Add new routes there, or CI fails.

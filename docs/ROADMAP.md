@@ -29,7 +29,7 @@
 
 ## Decisions needed
 
-- **5,000 products vs. the Free limit:** Phase 3.5 and the search budget target 5,000 products, but Free `maxProducts` is 500. Decide whether to raise the Free limit or test 5,000 rows with a test-only limit.
+- ~~**5,000 products vs. the Free limit**~~ — decided 2026-10-30: Free `maxProducts` raised from 500 to **5,000**.
 
 - ~~**Phase 1:** PBKDF2 iteration count vs. the 10 ms free CPU limit~~ — decided 2026-10-29: 100,000, measured on a real Free account (see `LIMITS.md`).
 - **License:** MIT was chosen as a placeholder. With a Paid edition planned, consider
