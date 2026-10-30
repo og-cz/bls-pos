@@ -257,6 +257,7 @@ export function SellPage() {
               inputMode="search"
               placeholder="Search name or SKU"
               aria-label="Search products by name or SKU"
+              data-tour="sell-search"
               className="pl-10"
               value={query}
               onChange={(e) => {
@@ -317,7 +318,10 @@ export function SellPage() {
           {catalog.products.length > 0 && visible.length === 0 ? (
             <EmptyState icon={SearchX} title="No matching products" />
           ) : null}
-          <div className="grid grid-cols-2 gap-3 min-[480px]:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          <div
+            data-tour="sell-grid"
+            className="grid grid-cols-2 gap-3 min-[480px]:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+          >
             {visible.map((p) => (
               <SellTile
                 key={p.id}
@@ -334,12 +338,19 @@ export function SellPage() {
       </section>
 
       {/* Tablet and PC: the cart stays beside the products. */}
-      <aside className="hidden w-80 shrink-0 border-l bg-card md:block lg:w-96" aria-label="Cart">
+      <aside
+        className="hidden w-80 shrink-0 border-l bg-card md:block lg:w-96"
+        aria-label="Cart"
+        data-tour="sell-cart"
+      >
         {panel}
       </aside>
 
       {/* Phones: a cart bar above the tab bar, opening the full cart. */}
-      <div className="fixed inset-x-0 bottom-16 z-30 border-t bg-card p-3 md:hidden">
+      <div
+        className="fixed inset-x-0 bottom-16 z-30 border-t bg-card p-3 md:hidden"
+        data-tour="sell-cart"
+      >
         <Button
           size="lg"
           className="h-12 w-full justify-between text-base"

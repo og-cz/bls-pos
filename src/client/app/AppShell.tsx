@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Dialog as DialogPrimitive, DropdownMenu } from 'radix-ui';
 import { ChevronDown, LogOut, Menu, X } from 'lucide-react';
 
@@ -9,6 +9,8 @@ import { setPreferences, usePreferences } from '@/lib/preferences';
 import { usePathname } from '@/lib/router';
 import { cn } from '@/lib/utils';
 import { APP_NAME } from '@shared/app';
+import { SETUP_FINISHED } from '@shared/onboarding';
+import { hasRole } from '@shared/roles';
 
 import { NAV_GROUPS, navFor, PROFILE_ITEM, type NavGroup, type NavItem } from './nav';
 import { logout, useMe } from './session';
@@ -27,6 +29,7 @@ function AccountMenu({ extra, bottom }: { extra: NavItem[]; bottom: NavItem[] })
       <DropdownMenu.Trigger
         className="flex h-11 min-w-0 items-center gap-2 rounded-md px-2 text-left outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
         aria-label="Account menu"
+        data-tour="account"
       >
         <Avatar name={user.displayName} url={user.avatarUrl} />
         <span className="hidden min-w-0 sm:block">
@@ -103,6 +106,7 @@ function NavLinks({
         href={item.href}
         onClick={onNavigate}
         aria-current={active ? 'page' : undefined}
+        data-tour={`nav${item.href}`}
         // Icons only when collapsed: the name is still there for screen readers and as a tooltip.
         aria-label={collapsed ? item.label : undefined}
         title={collapsed ? item.label : undefined}
@@ -247,6 +251,26 @@ export function AppShell({ children }: { children: ReactNode }) {
   const collapsed = prefs.menuCollapsed;
   const right = prefs.menuSide === 'right';
 
+  // First visit: a short guided tour, admins on the dashboard, staff on the sell screen.
+  // Its code (driver.js) downloads only when it is needed.
+  const tour =
+    hasRole(user.role, 'admin') && pathname === '/' && shop.onboardingStep >= SETUP_FINISHED
+      ? 'admin'
+      : user.role === 'staff' && pathname === '/sell'
+        ? 'staff'
+        : null;
+  useEffect(() => {
+    if (!tour) return;
+    const timer = setTimeout(() => {
+      void import('@/features/tour/tours').then(({ hasSeenTour, startTour }) => {
+        if (!hasSeenTour(user.id, tour)) startTour(user.id, tour);
+      });
+    }, 800);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [tour, user.id]);
+
   const mainItems = items.filter((i) => !i.bottom);
   const bottomItems = items.filter((i) => i.bottom);
 
@@ -316,6 +340,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 setDrawerOpen(true);
               }}
               aria-label="Menu"
+              data-tour="menu-button"
               aria-expanded={drawerOpen}
               className="-ml-2 flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 md:hidden"
             >
@@ -357,6 +382,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               key={item.href}
               href={item.href}
               aria-current={active ? 'page' : undefined}
+              data-tour={`nav${item.href}`}
               className={cn(
                 'flex h-16 flex-col items-center justify-center gap-1 text-xs font-medium outline-none focus-visible:bg-accent',
                 active ? 'text-primary' : 'text-muted-foreground',
