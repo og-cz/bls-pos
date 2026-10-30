@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 
 import { ApiClientError, apiGet } from '@/lib/api';
 import { navigate } from '@/lib/router';
+import { applyShopTheme } from '@/lib/shop-theme';
 
 import { MeContext, type Me } from './session';
 
@@ -21,6 +22,14 @@ export function SessionGate({ children }: { children: ReactNode }) {
         }
       });
   }, []);
+
+  // The shop's colors while signed in; login and signup keep the bls look.
+  useEffect(() => {
+    applyShopTheme(me?.shop.theme ?? null);
+    return () => {
+      applyShopTheme(null);
+    };
+  }, [me]);
 
   if (error) {
     return (

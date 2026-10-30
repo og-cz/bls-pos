@@ -2,11 +2,20 @@ import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 
 import { entitlementsFor } from '@shared/entitlements';
+import { parseTheme } from '@shared/theme';
 
 import { getDb } from '../db/client';
 import { shops } from '../db/schema';
 import type { AuthedEnv } from '../env';
 import { authed } from '../middleware/tenant';
+
+function parseStoredTheme(json: string) {
+  try {
+    return parseTheme(JSON.parse(json));
+  } catch {
+    return parseTheme(null);
+  }
+}
 
 export const meRoutes = new Hono<AuthedEnv>();
 
@@ -34,7 +43,7 @@ meRoutes.get('/', async (c) => {
   const { themeJson, ...rest } = shop;
   return c.json({
     user: { id: userId, username, displayName, role },
-    shop: { ...rest, theme: JSON.parse(themeJson) as unknown },
+    shop: { ...rest, theme: parseStoredTheme(themeJson) },
     entitlements: entitlementsFor(rest.plan),
   });
 });

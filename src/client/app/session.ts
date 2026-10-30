@@ -4,10 +4,18 @@ import { apiPost } from '@/lib/api';
 import { navigate } from '@/lib/router';
 import type { Entitlements } from '@shared/entitlements';
 import type { Role } from '@shared/roles';
+import type { Theme } from '@shared/theme';
 
 export type Me = {
   user: { id: string; username: string; displayName: string; role: Role };
-  shop: { id: string; slug: string; name: string; plan: string; currency: string };
+  shop: {
+    id: string;
+    slug: string;
+    name: string;
+    plan: string;
+    currency: string;
+    theme: Theme;
+  };
   entitlements: Entitlements;
 };
 

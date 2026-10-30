@@ -1,3 +1,5 @@
+import { DEFAULT_THEME, PRESETS, type Theme } from './theme';
+
 export const BUSINESS_TYPES = [
   'cafe',
   'retail',
@@ -8,27 +10,17 @@ export const BUSINESS_TYPES = [
 ] as const;
 export type BusinessType = (typeof BUSINESS_TYPES)[number];
 
-/**
- * Starting theme per business type (master prompt §6.3 presets). Shops change it later in
- * Branding; the full ThemeSchema arrives in Phase 6.
- */
-const PRESET_BY_TYPE: Record<BusinessType, { presetId: string; brand: string }> = {
-  cafe: { presetId: 'cafe-mocha', brand: '#8B5E3C' },
-  retail: { presetId: 'ocean-retail', brand: '#1E6FD9' },
-  sari_sari: { presetId: 'fresh-market', brand: '#2E9E5B' },
-  salon: { presetId: 'salon-blush', brand: '#C2577A' },
-  food_stall: { presetId: 'sunset-food', brand: '#F06A27' },
-  other: { presetId: 'ocean-retail', brand: '#1E6FD9' },
+/** Starting theme per business type (Section 6.3 presets); changed later in Branding. */
+const PRESET_BY_TYPE: Record<BusinessType, (typeof PRESETS)[number]['id']> = {
+  cafe: 'cafe-mocha',
+  retail: 'ocean-retail',
+  sari_sari: 'fresh-market',
+  salon: 'salon-blush',
+  food_stall: 'sunset-food',
+  other: 'ocean-retail',
 };
 
-export function defaultTheme(type: BusinessType) {
-  const preset = PRESET_BY_TYPE[type];
-  return {
-    brand: preset.brand,
-    mode: 'system',
-    font: 'inter',
-    radius: 'soft',
-    coverOverlay: 0.35,
-    presetId: preset.presetId,
-  } as const;
+export function defaultTheme(type: BusinessType): Theme {
+  const preset = PRESETS.find((p) => p.id === PRESET_BY_TYPE[type]) ?? PRESETS[2];
+  return { ...DEFAULT_THEME, brand: preset.brand, mode: preset.mode, presetId: preset.id };
 }
