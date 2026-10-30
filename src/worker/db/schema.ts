@@ -238,7 +238,75 @@ export const stockMovements = sqliteTable(
   ],
 );
 
+export const SALE_STATUSES = ['completed', 'voided'] as const;
+
+// Sales are never deleted, only voided (Section 4). Numbers are sequential per shop and
+// never reused; a voided sale keeps its number (Section 7.16).
+export const sales = sqliteTable(
+  'sales',
+  {
+    id: text('id').primaryKey(),
+    shopId: text('shop_id').notNull(),
+    number: integer('number').notNull(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id),
+    subtotalCents: integer('subtotal_cents').notNull(),
+    discountCents: integer('discount_cents').notNull().default(0),
+    totalCents: integer('total_cents').notNull(),
+    // 'cash' | 'other_manual' in Free; more in Paid.
+    paymentMethod: text('payment_method').notNull(),
+    paymentReference: text('payment_reference'),
+    cashReceivedCents: integer('cash_received_cents'),
+    changeCents: integer('change_cents'),
+    // Stops a retried or offline-synced sale from being recorded twice.
+    idempotencyKey: text('idempotency_key').notNull(),
+    status: text('status', { enum: SALE_STATUSES }).notNull().default('completed'),
+    voidedBy: text('voided_by'),
+    voidedAt: integer('voided_at'),
+    voidReason: text('void_reason'),
+    createdAt: integer('created_at').notNull(),
+    // Time on the device, for sales made offline.
+    clientCreatedAt: integer('client_created_at'),
+  },
+  (t) => [
+    unique('sales_shop_idempotency').on(t.shopId, t.idempotencyKey),
+    unique('sales_shop_number').on(t.shopId, t.number),
+    index('sales_shop_created').on(t.shopId, t.createdAt),
+    index('sales_shop_user_created').on(t.shopId, t.userId, t.createdAt),
+    check('sales_status', sql`${t.status} IN ('completed','voided')`),
+    check(
+      'sales_amounts',
+      sql`${t.subtotalCents} >= 0 AND ${t.discountCents} >= 0 AND ${t.totalCents} >= 0 AND ${t.discountCents} <= ${t.subtotalCents}`,
+    ),
+  ],
+);
+
+export const saleItems = sqliteTable(
+  'sale_items',
+  {
+    id: text('id').primaryKey(),
+    saleId: text('sale_id')
+      .notNull()
+      .references(() => sales.id),
+    shopId: text('shop_id').notNull(),
+    productId: text('product_id').notNull(),
+    // Name and prices at the time of sale, from the server, never from the client.
+    nameSnapshot: text('name_snapshot').notNull(),
+    unitPriceCents: integer('unit_price_cents').notNull(),
+    unitCostCents: integer('unit_cost_cents'),
+    quantity: integer('quantity').notNull(),
+    lineTotalCents: integer('line_total_cents').notNull(),
+  },
+  (t) => [
+    index('sale_items_sale_id').on(t.saleId),
+    index('sale_items_shop_product').on(t.shopId, t.productId),
+    check('sale_items_quantity', sql`${t.quantity} > 0`),
+  ],
+);
+
 export type Shop = typeof shops.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type Product = typeof products.$inferSelect;
+export type Sale = typeof sales.$inferSelect;
