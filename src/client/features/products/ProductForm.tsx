@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type SyntheticEvent } from 'react';
-import { Archive, ArchiveRestore, ImagePlus, Plus } from 'lucide-react';
+import { Archive, ArchiveRestore, Camera, ImagePlus, ImageUp, Plus } from 'lucide-react';
 
 import { FormAlert, SelectField, TextField } from '@/components/field';
 import { Button } from '@/components/ui/button';
+import { Dialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ApiClientError, apiPatch, apiPost, apiUpload } from '@/lib/api';
 import { focusFirstError, validate, withoutError, type FieldErrors } from '@/lib/form';
@@ -14,6 +15,9 @@ import {
   updateProductSchema,
   type ProductDto,
 } from '@shared/schemas/products';
+
+import { CameraCapture } from './photo/CameraCapture';
+import { PhotoEditor } from './photo/PhotoEditor';
 
 type Props = {
   /** The product to edit, or null to add a new one. */
@@ -74,12 +78,17 @@ export function ProductForm({ product, categories: initialCategories, onSaved }:
     if (errors[field]) setErrors((errs) => withoutError(errs, field));
   }
 
-  async function pickPhoto(file: File | undefined) {
-    if (!file) return;
+  // Taking or picking a photo opens the camera or the editor; Done in the editor comes here.
+  const [photoStep, setPhotoStep] = useState<
+    { step: 'camera' } | { step: 'edit'; source: Blob } | null
+  >(null);
+
+  async function applyPhoto(edited: Blob) {
+    setPhotoStep(null);
     setFormError(null);
     setBusy('Preparing photo…');
     try {
-      const prepared = await prepareProductPhoto(file);
+      const prepared = await prepareProductPhoto(edited);
       setPhoto(prepared);
       setPreview(URL.createObjectURL(prepared.full));
     } catch (err) {
@@ -173,6 +182,38 @@ export function ProductForm({ product, categories: initialCategories, onSaved }:
     }
   }
 
+  const photoPanel = (
+    <Dialog
+      open={photoStep !== null}
+      onOpenChange={(open) => {
+        if (!open) setPhotoStep(null);
+      }}
+      title={photoStep?.step === 'camera' ? 'Take a photo' : 'Adjust photo'}
+    >
+      {photoStep?.step === 'camera' ? (
+        <CameraCapture
+          onCaptured={(blob) => {
+            setPhotoStep({ step: 'edit', source: blob });
+          }}
+          onFallback={(file) => {
+            setPhotoStep({ step: 'edit', source: file });
+          }}
+          onCancel={() => {
+            setPhotoStep(null);
+          }}
+        />
+      ) : photoStep?.step === 'edit' ? (
+        <PhotoEditor
+          source={photoStep.source}
+          onDone={(blob) => void applyPhoto(blob)}
+          onCancel={() => {
+            setPhotoStep(null);
+          }}
+        />
+      ) : null}
+    </Dialog>
+  );
+
   return (
     <form ref={formRef} onSubmit={(e) => void onSubmit(e)} noValidate className="space-y-5">
       {formError ? <FormAlert>{formError}</FormAlert> : null}
@@ -185,15 +226,32 @@ export function ProductForm({ product, categories: initialCategories, onSaved }:
             <ImagePlus className="size-7" aria-hidden="true" />
           </span>
         )}
-        <label className="inline-flex h-11 cursor-pointer items-center rounded-md border px-4 text-sm font-medium hover:bg-accent focus-within:ring-[3px] focus-within:ring-ring/50">
-          {preview ? 'Change photo' : 'Add photo'}
-          <input
-            type="file"
-            accept={IMAGE_ACCEPT}
-            className="sr-only"
-            onChange={(e) => void pickPhoto(e.target.files?.[0])}
-          />
-        </label>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setPhotoStep({ step: 'camera' });
+            }}
+          >
+            <Camera aria-hidden="true" />
+            Take photo
+          </Button>
+          <label className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-md border bg-card px-4 text-sm font-medium hover:bg-accent focus-within:ring-[3px] focus-within:ring-ring/50">
+            <ImageUp className="size-4" aria-hidden="true" />
+            {preview ? 'Change photo' : 'Add photo'}
+            <input
+              type="file"
+              accept={IMAGE_ACCEPT}
+              className="sr-only"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) setPhotoStep({ step: 'edit', source: file });
+                e.target.value = '';
+              }}
+            />
+          </label>
+        </div>
       </div>
 
       <TextField
@@ -384,6 +442,7 @@ export function ProductForm({ product, categories: initialCategories, onSaved }:
           {busy ?? (editing ? 'Save changes' : 'Add product')}
         </Button>
       </div>
+      {photoPanel}
     </form>
   );
 }

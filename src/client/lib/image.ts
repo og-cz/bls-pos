@@ -81,7 +81,7 @@ async function encodeUnder(canvas: HTMLCanvasElement, type: string, maxBytes: nu
  * A product photo in two sizes, same format: `full` for the tap-to-view screen (up to
  * 1600 px, about 200 KB at most) and `thumb` for lists (320 px, about 15–25 KB).
  */
-export async function prepareProductPhoto(file: File): Promise<{ full: Blob; thumb: Blob }> {
+export async function prepareProductPhoto(file: Blob): Promise<{ full: Blob; thumb: Blob }> {
   const bitmap = await readImage(file);
   try {
     const type = (await canWriteWebp()) ? 'image/webp' : 'image/jpeg';
