@@ -24,6 +24,7 @@ import type { Receipt } from '@shared/schemas/sales';
 import { searchKey, useCatalog } from '../products/use-catalog';
 import { CartPanel } from './CartPanel';
 import { Checkout } from './Checkout';
+import { ReceiptView } from './ReceiptView';
 
 function Chip({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
   return (
@@ -289,19 +290,12 @@ export function SellPage() {
         title={lastSale ? `Sale #${String(lastSale.number)}` : 'Sale'}
       >
         {lastSale ? (
-          <div className="space-y-4 text-center">
-            <p className="text-sm text-muted-foreground">Change</p>
-            <p className="text-4xl font-bold tabular">{money(lastSale.changeCents ?? 0)}</p>
-            <Button
-              size="lg"
-              className="h-14 w-full text-lg"
-              onClick={() => {
-                setLastSale(null);
-              }}
-            >
-              New sale
-            </Button>
-          </div>
+          <ReceiptView
+            receipt={lastSale}
+            onNewSale={() => {
+              setLastSale(null);
+            }}
+          />
         ) : null}
       </Dialog>
       <Dialog open={cartOpen} onOpenChange={setCartOpen} title="Cart">

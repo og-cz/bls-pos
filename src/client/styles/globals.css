@@ -111,3 +111,29 @@
     }
   }
 }
+
+/*
+ * Receipt printing (Phase 4): when a receipt is open, printing shows only the receipt,
+ * black on white, sized to the paper (58/80 mm receipt printers or A4).
+ */
+.print-receipt {
+  display: none;
+}
+@media print {
+  @page {
+    margin: 4mm;
+  }
+  body:has(> .print-receipt) > *:not(.print-receipt) {
+    display: none !important;
+  }
+  body:has(> .print-receipt) {
+    background: #fff !important;
+  }
+  .print-receipt {
+    display: block;
+    color: #000;
+  }
+  .print-receipt .receipt {
+    max-width: 72mm;
+  }
+}
