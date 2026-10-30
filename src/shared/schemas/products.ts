@@ -104,4 +104,6 @@ export type ProductDto = {
   archived: boolean;
   createdAt: number;
   updatedAt: number;
+  /** Served by the API to signed-in members of the shop; null when there's no photo. */
+  imageUrl: string | null;
 };

@@ -1,0 +1,285 @@
+import { useDeferredValue, useMemo, useState, type ReactNode } from 'react';
+import { ImageOff, Package, Search, SearchX } from 'lucide-react';
+
+import { useMe } from '@/app/session';
+import { EmptyState, PageHeader } from '@/components/empty-state';
+import { FormAlert } from '@/components/field';
+import { StockBadge } from '@/components/stock-badge';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
+import { formatCents } from '@shared/money';
+import { hasRole } from '@shared/roles';
+import type { ProductDto } from '@shared/schemas/products';
+
+import { searchKey, useCatalog } from './use-catalog';
+
+type StockFilter = 'all' | 'low';
+
+function Chip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={cn(
+        'h-9 shrink-0 rounded-full border px-4 text-sm font-medium whitespace-nowrap outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
+        active
+          ? 'border-primary bg-primary text-primary-foreground'
+          : 'bg-background text-foreground hover:bg-accent',
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Thumb({ product }: { product: ProductDto }) {
+  return product.imageUrl ? (
+    <img
+      src={product.imageUrl}
+      alt=""
+      loading="lazy"
+      className="size-12 shrink-0 rounded-lg bg-muted object-cover"
+    />
+  ) : (
+    <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+      <ImageOff className="size-5" aria-hidden="true" />
+    </span>
+  );
+}
+
+/** Products (Section 6.5): table on PC, cards on phone, searched on the device. */
+export function ProductsPage() {
+  const { user, shop } = useMe();
+  const isAdmin = hasRole(user.role, 'admin');
+  const [archived, setArchived] = useState(false);
+  const catalog = useCatalog(archived);
+  const [query, setQuery] = useState('');
+  const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [stockFilter, setStockFilter] = useState<StockFilter>('all');
+  const deferredQuery = useDeferredValue(query);
+
+  const categoryName = useMemo(
+    () => new Map(catalog.categories.map((c) => [c.id, c.name])),
+    [catalog.categories],
+  );
+  const indexed = useMemo(
+    () =>
+      catalog.products.map((p) => ({
+        product: p,
+        name: searchKey(p.name),
+        sku: p.sku ? searchKey(p.sku) : '',
+      })),
+    [catalog.products],
+  );
+
+  const visible = useMemo(() => {
+    const q = searchKey(deferredQuery.trim());
+    return indexed
+      .filter(({ product, name, sku }) => {
+        if (categoryId && product.categoryId !== categoryId) return false;
+        if (
+          stockFilter === 'low' &&
+          product.stockStatus !== 'low' &&
+          product.stockStatus !== 'out'
+        ) {
+          return false;
+        }
+        return !q || name.includes(q) || sku.startsWith(q);
+      })
+      .map((i) => i.product);
+  }, [indexed, deferredQuery, categoryId, stockFilter]);
+
+  const lowCount = catalog.products.filter(
+    (p) => p.stockStatus === 'low' || p.stockStatus === 'out',
+  ).length;
+  const money = (cents: number) => formatCents(cents, shop.currency);
+  const filtered = query !== '' || categoryId !== null || stockFilter !== 'all';
+
+  return (
+    <>
+      <PageHeader
+        title={archived ? 'Archived products' : 'Products'}
+        description={
+          catalog.loading && catalog.products.length === 0
+            ? undefined
+            : `${catalog.products.length.toLocaleString()} ${archived ? 'archived' : 'products'}`
+        }
+      />
+
+      <div className="mb-4 space-y-3">
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <Input
+            type="search"
+            inputMode="search"
+            placeholder="Search name or SKU"
+            aria-label="Search products by name or SKU"
+            className="pl-10"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+            }}
+          />
+        </div>
+        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0">
+          <Chip
+            active={categoryId === null}
+            onClick={() => {
+              setCategoryId(null);
+            }}
+          >
+            All
+          </Chip>
+          {catalog.categories.map((c) => (
+            <Chip
+              key={c.id}
+              active={categoryId === c.id}
+              onClick={() => {
+                setCategoryId(categoryId === c.id ? null : c.id);
+              }}
+            >
+              {c.name}
+            </Chip>
+          ))}
+          {!archived ? (
+            <Chip
+              active={stockFilter === 'low'}
+              onClick={() => {
+                setStockFilter(stockFilter === 'low' ? 'all' : 'low');
+              }}
+            >
+              Low stock{lowCount ? ` (${lowCount.toLocaleString()})` : ''}
+            </Chip>
+          ) : null}
+          {isAdmin ? (
+            <Chip
+              active={archived}
+              onClick={() => {
+                setArchived(!archived);
+                setStockFilter('all');
+              }}
+            >
+              Archived
+            </Chip>
+          ) : null}
+        </div>
+      </div>
+
+      {catalog.error ? <FormAlert>{catalog.error}</FormAlert> : null}
+      {catalog.loading && catalog.products.length === 0 ? (
+        <p role="status" className="text-muted-foreground">
+          Loading products…
+        </p>
+      ) : null}
+
+      {!catalog.loading && catalog.products.length === 0 && !catalog.error ? (
+        <EmptyState icon={Package} title={archived ? 'Nothing archived' : 'No products yet'}>
+          {archived
+            ? 'Products you archive show up here, and can be restored.'
+            : 'Add your first product to start selling.'}
+        </EmptyState>
+      ) : null}
+
+      {catalog.products.length > 0 && visible.length === 0 ? (
+        <EmptyState icon={SearchX} title="No matching products">
+          {filtered ? 'Try a different search or filter.' : null}
+        </EmptyState>
+      ) : null}
+
+      {visible.length > 0 ? (
+        <>
+          {/* Phone: cards */}
+          <ul className="space-y-2 md:hidden">
+            {visible.map((p) => (
+              <li key={p.id} className="flex items-center gap-3 rounded-xl border bg-card p-3">
+                <Thumb product={p} />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-medium">{p.name}</div>
+                  <div className="truncate text-sm text-muted-foreground">
+                    {[p.categoryId ? categoryName.get(p.categoryId) : null, p.sku]
+                      .filter(Boolean)
+                      .join(' · ') || 'No category'}
+                  </div>
+                  <div className="mt-1">
+                    <StockBadge status={p.stockStatus} stock={p.stock} />
+                  </div>
+                </div>
+                <div className="text-right font-semibold tabular">{money(p.priceCents)}</div>
+              </li>
+            ))}
+          </ul>
+
+          {/* Tablet and PC: table */}
+          <div className="hidden overflow-hidden rounded-xl border bg-card md:block">
+            <table className="w-full text-sm">
+              <thead className="border-b bg-muted/50 text-left text-muted-foreground">
+                <tr>
+                  <th scope="col" className="px-4 py-3 font-medium">
+                    Product
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-medium">
+                    Category
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-right font-medium">
+                    Price
+                  </th>
+                  {isAdmin ? (
+                    <th scope="col" className="px-4 py-3 text-right font-medium">
+                      Cost
+                    </th>
+                  ) : null}
+                  <th scope="col" className="px-4 py-3 font-medium">
+                    Stock
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {visible.map((p) => (
+                  <tr key={p.id}>
+                    <td className="px-4 py-2">
+                      <div className="flex items-center gap-3">
+                        <Thumb product={p} />
+                        <div className="min-w-0">
+                          <div className="font-medium">{p.name}</div>
+                          {p.sku ? (
+                            <div className="font-mono text-xs text-muted-foreground">{p.sku}</div>
+                          ) : null}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-2 text-muted-foreground">
+                      {p.categoryId ? categoryName.get(p.categoryId) : '—'}
+                    </td>
+                    <td className="px-4 py-2 text-right font-medium tabular">
+                      {money(p.priceCents)}
+                    </td>
+                    {isAdmin ? (
+                      <td className="px-4 py-2 text-right text-muted-foreground tabular">
+                        {p.costCents == null ? '—' : money(p.costCents)}
+                      </td>
+                    ) : null}
+                    <td className="px-4 py-2">
+                      <StockBadge status={p.stockStatus} stock={p.stock} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      ) : null}
+    </>
+  );
+}

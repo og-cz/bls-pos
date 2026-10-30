@@ -22,6 +22,7 @@ meRoutes.get('/', async (c) => {
       name: shops.name,
       businessType: shops.businessType,
       plan: shops.plan,
+      currency: shops.currency,
       themeJson: shops.themeJson,
       onboardingStep: shops.onboardingStep,
     })

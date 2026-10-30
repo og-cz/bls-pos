@@ -7,7 +7,7 @@ import type { Role } from '@shared/roles';
 
 export type Me = {
   user: { id: string; username: string; displayName: string; role: Role };
-  shop: { id: string; slug: string; name: string; plan: string };
+  shop: { id: string; slug: string; name: string; plan: string; currency: string };
   entitlements: Entitlements;
 };
 

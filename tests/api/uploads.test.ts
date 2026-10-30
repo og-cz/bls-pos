@@ -41,6 +41,9 @@ describe('POST /uploads/:kind', () => {
       .bind(p.id)
       .first<{ image_key: string }>();
     expect(row?.image_key).toBe(key);
+
+    const got = await api(`/products/${p.id}`, { headers: { cookie: owner.cookie } });
+    expect(await got.json()).toMatchObject({ product: { imageUrl: url } });
   });
 
   it('accepts JPEG and WebP for the logo and cover', async () => {
