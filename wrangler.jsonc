@@ -28,6 +28,7 @@
   "ratelimits": [
     { "name": "PUBLIC_LIMITER", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } },
   ],
-  // Nightly daily summaries at 16:10 UTC = 00:10 in Manila (src/worker/cron.ts).
-  "triggers": { "crons": ["10 16 * * *"] },
+  // Nightly daily summaries at 16:10 UTC = 00:10 in Manila (src/worker/cron.ts), and hourly
+  // backups at :25, each shop in its own hour (src/worker/backup.ts).
+  "triggers": { "crons": ["10 16 * * *", "25 * * * *"] },
 }

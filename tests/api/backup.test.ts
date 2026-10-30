@@ -1,81 +1,93 @@
+import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 
-import { BACKUP_FORMAT, backupToImport, type Backup } from '../../src/shared/backup';
-import { checkRows } from '../../src/shared/import-validate';
-import { addMember, getWithCookie, postJson, signUp } from './helpers';
+import { addDays, localDay } from '../../src/shared/time';
+import { BACKUP_HOUR_SQL, BACKUP_KEEP_DAYS, backupKey, runBackups } from '../../src/worker/backup';
+import { addMember, api, createProductAs, postJson, signUp } from './helpers';
 
-const backup: Backup = {
-  format: BACKUP_FORMAT,
-  version: 1,
-  exportedAt: '2026-10-30T00:00:00.000Z',
-  shop: { name: 'Moto Shop', slug: 'moto', currency: 'PHP' },
-  categories: ['Engine'],
-  products: [
-    {
-      name: 'Spark plug',
-      sku: 'SP-1',
-      category: 'Engine',
-      priceCents: 12_050,
-      costCents: 8_000,
-      trackStock: true,
-      stock: 40,
-      lowStockThreshold: 5,
-      archived: false,
-    },
-    {
-      name: 'Labor',
-      sku: null,
-      category: null,
-      priceCents: 30_000,
-      costCents: null,
-      trackStock: false,
-      stock: 0,
-      lowStockThreshold: 5,
-      archived: false,
-    },
-    {
-      name: 'Old part',
-      sku: 'OLD',
-      category: null,
-      priceCents: 100,
-      costCents: null,
-      trackStock: true,
-      stock: 1,
-      lowStockThreshold: 5,
-      archived: true,
-    },
-  ],
-  movements: [],
-};
+async function hourOf(shopId: string) {
+  const row = await env.DB.prepare(`SELECT ${BACKUP_HOUR_SQL} AS h FROM shops WHERE id = ?`)
+    .bind(shopId)
+    .first<{ h: number }>();
+  return row?.h ?? -1;
+}
 
-describe('backupToImport', () => {
-  it('turns products into import rows that pass the same checks, skipping archived ones', () => {
-    const { result } = backupToImport(JSON.parse(JSON.stringify(backup)));
-    expect(result.rows.map((r) => r.values.name)).toEqual(['Spark plug', 'Labor']);
-    expect(result.rows[0]?.values).toMatchObject({ price: '120.50', cost: '80.00', stock: '40' });
-    const checked = checkRows(result.rows);
-    expect(checked.every((r) => r.check.ok)).toBe(true);
-    expect(checked[0]?.check).toMatchObject({ ok: true, product: { priceCents: 12_050 } });
-    expect(checked[1]?.check).toMatchObject({ ok: true, product: { trackStock: false } });
-  });
+/** A moment today (UTC) at the given hour. */
+function atHour(hour: number) {
+  const d = new Date();
+  d.setUTCHours(hour, 25, 0, 0);
+  return d.getTime();
+}
 
-  it('refuses files that are not backups, or from a newer version', () => {
-    expect(() => backupToImport({ hello: 1 })).toThrow("isn't a bls POS backup");
-    expect(() => backupToImport({ ...backup, version: 99 })).toThrow('newer version');
-  });
-});
-
-describe('POST /audit/restores', () => {
-  it('records a restore in the activity log, for admins and the owner only', async () => {
+describe('nightly backups', () => {
+  it("saves the shop's data to a private R2 path, without secrets", async () => {
     const owner = await signUp();
-    expect((await postJson('/audit/restores', { products: 2 }, owner.cookie)).status).toBe(200);
-    const audit = await (
-      await getWithCookie('/audit', owner.cookie)
-    ).json<{
-      entries: { action: string; details: unknown }[];
-    }>();
-    expect(audit.entries[0]).toMatchObject({ action: 'data.restore', details: { products: 2 } });
-    const staff = await addMember(owner, 'staff');
-    expect((await postJson('/audit/restores', { products: 2 }, staff.cookie)).status).toBe(403);
+    await addMember(owner, 'staff');
+    const p = await createProductAs(owner.cookie, {
+      name: 'Brake Pad',
+      priceCents: 65_000,
+      costCents: 42_000,
+      stock: 5,
+    });
+    await postJson(
+      '/sales',
+      {
+        idempotencyKey: crypto.randomUUID().replace(/-/g, ''),
+        paymentMethod: 'cash',
+        items: [{ productId: p.id, quantity: 2 }],
+      },
+      owner.cookie,
+    );
+
+    const now = atHour(await hourOf(owner.shopId));
+    expect(await runBackups(env, now)).toBeGreaterThanOrEqual(1);
+
+    const day = localDay(now, 'Asia/Manila');
+    const obj = await env.MEDIA.get(backupKey(owner.shopId, day));
+    expect(obj?.httpMetadata?.contentType).toBe('application/json');
+    const text = (await obj?.text()) ?? '';
+    const doc = JSON.parse(text) as {
+      shop: { slug: string };
+      products: { name: string; costCents: number; stock: number }[];
+      staff: unknown[];
+      sales: { lines: { quantity: number }[] }[];
+    };
+    expect(doc.shop.slug).toBe(owner.body.shopSlug);
+    expect(doc.products).toEqual([
+      expect.objectContaining({ name: 'Brake Pad', costCents: 42_000, stock: 3 }),
+    ]);
+    expect(doc.staff).toHaveLength(2);
+    expect(doc.sales[0]?.lines[0]?.quantity).toBe(2);
+    expect(text).not.toMatch(/password|pbkdf2|totp|token/i);
+
+    // Never reachable through the media route, even by the shop itself.
+    const res = await api(`/media/${backupKey(owner.shopId, day)}`, {
+      headers: { cookie: owner.cookie },
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it(`keeps ${String(BACKUP_KEEP_DAYS)} days`, async () => {
+    const owner = await signUp();
+    const now = atHour(await hourOf(owner.shopId));
+    const day = localDay(now, 'Asia/Manila');
+    const old = backupKey(owner.shopId, addDays(day, -BACKUP_KEEP_DAYS));
+    const recent = backupKey(owner.shopId, addDays(day, -3));
+    await env.MEDIA.put(old, '{}');
+    await env.MEDIA.put(recent, '{}');
+    await runBackups(env, now);
+    expect(await env.MEDIA.head(old)).toBeNull();
+    expect(await env.MEDIA.head(recent)).not.toBeNull();
+  });
+
+  it('each run only takes its own hour of shops', async () => {
+    const owner = await signUp();
+    const hour = await hourOf(owner.shopId);
+    const other = (hour + 1) % 24;
+    const now = atHour(other);
+    await runBackups(env, now);
+    expect(await env.MEDIA.head(backupKey(owner.shopId, localDay(now, 'Asia/Manila')))).toBeNull();
+    expect(hour).toBeGreaterThanOrEqual(0);
+    expect(hour).toBeLessThan(24);
   });
 });

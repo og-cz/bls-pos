@@ -4,6 +4,7 @@ import { bodyLimit } from 'hono/body-limit';
 import { API_BASE, APP_NAME } from '@shared/app';
 
 import type { AppEnv } from './env';
+import { BACKUP_CRON, runBackups } from './backup';
 import { runNightly } from './cron';
 import { ApiError } from './lib/errors';
 import { session } from './middleware/session';
@@ -71,7 +72,8 @@ app.onError((err, c) => {
 export default {
   fetch: app.fetch,
   // Nightly daily summaries (wrangler.jsonc "triggers").
-  scheduled(_controller, env, ctx) {
-    ctx.waitUntil(runNightly(env));
+  scheduled(controller, env, ctx) {
+    // Two triggers (wrangler.jsonc): hourly backups, and the nightly summaries.
+    ctx.waitUntil(controller.cron === BACKUP_CRON ? runBackups(env) : runNightly(env));
   },
 } satisfies ExportedHandler<Env>;
