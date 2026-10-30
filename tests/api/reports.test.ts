@@ -1,7 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 
-import type { IncomeReport } from '../../src/shared/schemas/reports';
+import type { IncomeReport, StaffSales, TopProduct } from '../../src/shared/schemas/reports';
 import type { Receipt } from '../../src/shared/schemas/sales';
 import { addDays, dayStartMs, localDay } from '../../src/shared/time';
 import { runNightly } from '../../src/worker/cron';
@@ -112,5 +112,84 @@ describe('income report', () => {
     expect((await income(owner.cookie, '2025-01-01', '2026-10-01')).status).toBe(400);
     expect((await income(owner.cookie, '2026-10-01', '2026-10-02', 'year')).status).toBe(400);
     expect((await income(owner.cookie, 'yesterday', '2026-10-02')).status).toBe(400);
+  });
+});
+
+describe('top products and sales by staff', () => {
+  it('ranks best sellers by revenue or quantity, skipping voided sales', async () => {
+    const owner = await signUp();
+    const oil = await createProductAs(owner.cookie, {
+      name: 'Oil',
+      priceCents: 30_000,
+      costCents: 20_000,
+      stock: 99,
+    });
+    const bolt = await createProductAs(owner.cookie, { name: 'Bolt', priceCents: 500, stock: 99 });
+    await sellOn(owner.cookie, oil.id, 2, '2026-10-10');
+    await sellOn(owner.cookie, bolt.id, 10, '2026-10-11');
+    const v = await sellOn(owner.cookie, bolt.id, 50, '2026-10-11');
+    await postJson(`/sales/${v.id}/void`, { reason: 'Mistake' }, owner.cookie);
+    await sellOn(owner.cookie, bolt.id, 5, '2026-10-20'); // outside the range
+
+    const get = async (sort: string) =>
+      (
+        await (
+          await getWithCookie(
+            `/reports/top-products?from=2026-10-01&to=2026-10-15&sort=${sort}`,
+            owner.cookie,
+          )
+        ).json<{ products: TopProduct[] }>()
+      ).products;
+
+    expect(await get('revenue')).toEqual([
+      { productId: oil.id, name: 'Oil', quantity: 2, revenueCents: 60_000, profitCents: 20_000 },
+      { productId: bolt.id, name: 'Bolt', quantity: 10, revenueCents: 5_000, profitCents: 5_000 },
+    ]);
+    expect((await get('quantity')).map((p) => p.name)).toEqual(['Bolt', 'Oil']);
+  });
+
+  it('totals each cashier, with their voids', async () => {
+    const owner = await signUp();
+    const staff = await addMember(owner, 'staff');
+    const p = await createProductAs(owner.cookie, { priceCents: 1_000, stock: 99 });
+    await sellOn(staff.cookie, p.id, 1, '2026-10-10');
+    await sellOn(staff.cookie, p.id, 2, '2026-10-10');
+    const v = await sellOn(staff.cookie, p.id, 1, '2026-10-10');
+    await postJson(`/sales/${v.id}/void`, { reason: 'Mistake' }, owner.cookie);
+    await sellOn(owner.cookie, p.id, 1, '2026-10-10');
+    await postJson(`/staff/${staff.id}/deactivate`, {}, owner.cookie);
+
+    const res = await getWithCookie(
+      '/reports/by-staff?from=2026-10-10&to=2026-10-10',
+      owner.cookie,
+    );
+    const { staff: rows } = await res.json<{ staff: StaffSales[] }>();
+    expect(rows).toEqual([
+      expect.objectContaining({
+        userId: staff.id,
+        active: false,
+        salesCount: 2,
+        grossCents: 3_000,
+        voidedCount: 1,
+        voidedCents: 1_000,
+      }),
+      expect.objectContaining({
+        userId: owner.userId,
+        active: true,
+        salesCount: 1,
+        grossCents: 1_000,
+      }),
+    ]);
+  });
+
+  it('checks limits', async () => {
+    const owner = await signUp();
+    const bad = await getWithCookie(
+      '/reports/top-products?from=2026-10-01&to=2026-10-02&limit=500',
+      owner.cookie,
+    );
+    expect(bad.status).toBe(400);
+    const noRange = await getWithCookie('/reports/by-staff', owner.cookie);
+    expect(noRange.status).toBe(400);
   });
 });

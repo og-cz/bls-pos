@@ -6,6 +6,10 @@ import type {
   IncomeReport,
   IncomeTotals,
   ReportGroup,
+  ReportRange,
+  StaffSales,
+  TopProduct,
+  TopProductsQuery,
 } from '@shared/schemas/reports';
 import { addDays, dayStartMs, daysBetween, localDay } from '@shared/time';
 
@@ -150,4 +154,77 @@ export async function incomeReport(
     buckets: [...buckets.values()],
     totals: withProfit(sum),
   };
+}
+
+/** The UTC window of a range of local days: [start of `from`, start of the day after `to`). */
+async function rangeWindow(db: Db, shopId: string, range: ReportRange) {
+  const timeZone = await shopTimeZone(db, shopId);
+  return {
+    start: dayStartMs(range.from, timeZone),
+    end: dayStartMs(addDays(range.to, 1), timeZone),
+  };
+}
+
+/**
+ * Best sellers in a range, from completed sales. Uses the product's current name, or the
+ * name on the sale line if the product was deleted. Two queries.
+ */
+export async function topProducts(
+  db: Db,
+  shopId: string,
+  query: TopProductsQuery,
+): Promise<TopProduct[]> {
+  const { start, end } = await rangeWindow(db, shopId, query);
+  const order =
+    query.sort === 'quantity' ? 'quantity DESC, revenue DESC' : 'revenue DESC, quantity DESC';
+  const { results } = await db.$client
+    .prepare(
+      `SELECT i.product_id AS productId,
+         coalesce(p.name, max(i.name_snapshot)) AS name,
+         sum(i.quantity) AS quantity,
+         sum(i.line_total_cents) AS revenue,
+         sum(i.line_total_cents - coalesce(i.unit_cost_cents, 0) * i.quantity) AS profit
+       FROM sales s
+       JOIN sale_items i ON i.sale_id = s.id
+       LEFT JOIN products p ON p.id = i.product_id AND p.shop_id = s.shop_id
+       WHERE s.shop_id = ?1 AND s.status = 'completed'
+         AND s.created_at >= ?2 AND s.created_at < ?3
+       GROUP BY i.product_id
+       ORDER BY ${order}
+       LIMIT ?4`,
+    )
+    .bind(shopId, start, end, query.limit)
+    .all<{ productId: string; name: string; quantity: number; revenue: number; profit: number }>();
+  return results.map((r) => ({
+    productId: r.productId,
+    name: r.name,
+    quantity: r.quantity,
+    revenueCents: r.revenue,
+    profitCents: r.profit,
+  }));
+}
+
+/** Sales and voids per cashier in a range, including people who were deactivated since. */
+export async function salesByStaff(
+  db: Db,
+  shopId: string,
+  range: ReportRange,
+): Promise<StaffSales[]> {
+  const { start, end } = await rangeWindow(db, shopId, range);
+  const { results } = await db.$client
+    .prepare(
+      `SELECT u.id AS userId, u.display_name AS displayName, u.username, u.active,
+         sum(s.status = 'completed') AS salesCount,
+         coalesce(sum(CASE WHEN s.status = 'completed' THEN s.total_cents END), 0) AS grossCents,
+         sum(s.status = 'voided') AS voidedCount,
+         coalesce(sum(CASE WHEN s.status = 'voided' THEN s.total_cents END), 0) AS voidedCents
+       FROM sales s
+       JOIN users u ON u.id = s.user_id AND u.shop_id = s.shop_id
+       WHERE s.shop_id = ?1 AND s.created_at >= ?2 AND s.created_at < ?3
+       GROUP BY u.id
+       ORDER BY grossCents DESC`,
+    )
+    .bind(shopId, start, end)
+    .all<Omit<StaffSales, 'active'> & { active: number }>();
+  return results.map((r) => ({ ...r, active: r.active === 1 }));
 }

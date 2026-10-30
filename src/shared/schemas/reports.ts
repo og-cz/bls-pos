@@ -24,7 +24,37 @@ export const incomeQuerySchema = z.intersection(
   z.object({ group: z.enum(REPORT_GROUPS).default('day') }),
 );
 
+export const TOP_PRODUCT_SORTS = ['revenue', 'quantity'] as const;
+
+export const topProductsQuerySchema = z.intersection(
+  reportRangeSchema,
+  z.object({
+    sort: z.enum(TOP_PRODUCT_SORTS).default('revenue'),
+    limit: z.coerce.number().int().min(1).max(50).default(10),
+  }),
+);
+
 export type ReportRange = z.infer<typeof reportRangeSchema>;
+export type TopProductsQuery = z.infer<typeof topProductsQuerySchema>;
+
+export type TopProduct = {
+  productId: string;
+  name: string;
+  quantity: number;
+  revenueCents: number;
+  profitCents: number;
+};
+
+export type StaffSales = {
+  userId: string;
+  displayName: string;
+  username: string;
+  active: boolean;
+  salesCount: number;
+  grossCents: number;
+  voidedCount: number;
+  voidedCents: number;
+};
 export type IncomeQuery = z.infer<typeof incomeQuerySchema>;
 
 export type IncomeTotals = {

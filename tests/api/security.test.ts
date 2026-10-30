@@ -42,6 +42,8 @@ const ROUTES: Record<string, Access> = {
   'GET /api/v1/sales/:id': 'staff',
   'POST /api/v1/sales/:id/void': 'admin',
   'GET /api/v1/reports/income': 'admin',
+  'GET /api/v1/reports/top-products': 'admin',
+  'GET /api/v1/reports/by-staff': 'admin',
 };
 
 type Shop = Awaited<ReturnType<typeof signUp>>;
