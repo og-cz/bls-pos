@@ -23,6 +23,7 @@ export const AUDIT_ACTIONS = [
   'sale.void',
   'day.close',
   'shop.theme',
+  'shop.update',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

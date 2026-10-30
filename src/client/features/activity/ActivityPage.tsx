@@ -57,6 +57,7 @@ const ACTIONS: Record<AuditAction, { icon: LucideIcon; text: string; warn?: bool
   'sale.void': { icon: Ban, text: 'voided sale' },
   'day.close': { icon: CalendarCheck, text: 'closed the day' },
   'shop.theme': { icon: Palette, text: 'changed the shop colors' },
+  'shop.update': { icon: Store, text: 'changed the shop details' },
 };
 
 const timeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });

@@ -1,5 +1,6 @@
 import {
   Boxes,
+  Globe,
   LayoutDashboard,
   Package,
   Palette,
@@ -92,6 +93,14 @@ export const NAV: NavItem[] = [
     group: 'stock',
   },
   { href: '/staff', label: 'Staff', icon: Users, minRole: 'admin', tab: true, group: 'shop' },
+  {
+    href: '/shop-page',
+    label: 'Shop page',
+    icon: Globe,
+    minRole: 'admin',
+    tab: false,
+    group: 'shop',
+  },
   {
     href: '/branding',
     label: 'Branding',

@@ -31,6 +31,10 @@ const SettingsPage = page(() => import('@/features/settings/SettingsPage'), 'Set
 const StorefrontPage = lazy(async () => ({
   default: (await import('@/features/storefront/StorefrontPage')).StorefrontPage,
 }));
+const ShopPageSettings = page(
+  () => import('@/features/storefront/ShopPageSettings'),
+  'ShopPageSettings',
+);
 const ProfilePage = page(() => import('@/features/profile/ProfilePage'), 'ProfilePage');
 const BrandingPage = page(() => import('@/features/branding/BrandingPage'), 'BrandingPage');
 
@@ -60,6 +64,7 @@ const SIGNED_IN: Record<string, Page> = {
   '/settings': SettingsPage,
   '/branding': BrandingPage,
   '/profile': ProfilePage,
+  '/shop-page': ShopPageSettings,
 };
 
 /** Signed-in screens. A screen the role can't use sends the user to their home screen. */

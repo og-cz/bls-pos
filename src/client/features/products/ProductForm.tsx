@@ -33,6 +33,7 @@ type Values = {
   sku: string;
   categoryId: string;
   trackStock: boolean;
+  showOnStorefront: boolean;
   stock: string;
   lowStockThreshold: string;
 };
@@ -45,6 +46,7 @@ function initialValues(p: ProductDto | null): Values {
     sku: p?.sku ?? '',
     categoryId: p?.categoryId ?? '',
     trackStock: p?.trackStock ?? true,
+    showOnStorefront: p?.showOnStorefront ?? true,
     stock: '',
     lowStockThreshold: String(p?.lowStockThreshold ?? 5),
   };
@@ -126,6 +128,7 @@ export function ProductForm({ product, categories: initialCategories, onSaved }:
       sku: values.sku,
       categoryId: values.categoryId || null,
       trackStock: values.trackStock,
+      showOnStorefront: values.showOnStorefront,
       lowStockThreshold: wholeNumber(values.lowStockThreshold),
     };
     if (!editing && values.trackStock)
@@ -419,6 +422,23 @@ export function ProductForm({ product, categories: initialCategories, onSaved }:
           </div>
         ) : null}
       </fieldset>
+
+      <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm">
+        <input
+          type="checkbox"
+          className="mt-0.5 size-5 shrink-0 accent-primary"
+          checked={values.showOnStorefront}
+          onChange={(e) => {
+            set('showOnStorefront', e.target.checked);
+          }}
+        />
+        <span>
+          Show on your shop page
+          <span className="block text-muted-foreground">
+            When your public shop page is on. Cost and exact stock are never shown.
+          </span>
+        </span>
+      </label>
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-between">
         {editing ? (

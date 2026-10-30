@@ -1,8 +1,18 @@
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 
+import type { ShopSettings } from '../../src/shared/schemas/shop';
 import type { Storefront } from '../../src/shared/schemas/storefront';
-import { addMember, api, createProductAs, signUp } from './helpers';
+import { isValidSlug } from '../../src/shared/slug';
+import {
+  addMember,
+  api,
+  createProductAs,
+  getWithCookie,
+  postJson,
+  signUp,
+  signupBody,
+} from './helpers';
 
 // A 1×1 PNG.
 const png = Uint8Array.from(
@@ -108,5 +118,64 @@ describe('public shop page', () => {
     const other = await signUp();
     await setPage(other.shopId, true);
     expect((await api(`/public/s/${other.body.shopSlug}/media/${logo.key}`)).status).toBe(404);
+  });
+});
+
+describe('shop page settings', () => {
+  const patchShop = (cookie: string, body: unknown) =>
+    api('/shop', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json', cookie },
+      body: JSON.stringify(body),
+    });
+
+  it('admins turn the page on and choose what it shows; it is logged', async () => {
+    const owner = await signUp();
+    const admin = await addMember(owner, 'admin');
+    const res = await patchShop(admin.cookie, {
+      storefrontEnabled: true,
+      storefrontShowPrices: false,
+      bio: 'Line one' + String.fromCharCode(10) + 'Line two',
+    });
+    expect(res.status).toBe(200);
+    const { shop } = await res.json<{ shop: ShopSettings }>();
+    expect(shop).toMatchObject({
+      storefrontEnabled: true,
+      storefrontShowPrices: false,
+      bio: 'Line one' + String.fromCharCode(10) + 'Line two',
+    });
+    expect((await page(owner.body.shopSlug)).status).toBe(200);
+
+    const log = await env.DB.prepare(
+      "SELECT details_json AS d FROM audit_log WHERE shop_id = ? AND action = 'shop.update'",
+    )
+      .bind(owner.shopId)
+      .first<{ d: string }>();
+    expect(JSON.parse(log?.d ?? '{}')).toMatchObject({ storefrontEnabled: true });
+
+    await patchShop(owner.cookie, { storefrontEnabled: false });
+    expect((await page(owner.body.shopSlug)).status).toBe(404);
+  });
+
+  it('staff can read but not change; bad values are refused', async () => {
+    const owner = await signUp();
+    const staff = await addMember(owner, 'staff');
+    expect((await getWithCookie('/shop', staff.cookie)).status).toBe(200);
+    expect((await patchShop(staff.cookie, { storefrontEnabled: true })).status).toBe(403);
+    expect((await patchShop(owner.cookie, { bio: 'x'.repeat(301) })).status).toBe(400);
+    expect(
+      (await patchShop(owner.cookie, { bio: 'bad' + String.fromCharCode(7) + 'bell' })).status,
+    ).toBe(400);
+    expect((await patchShop(owner.cookie, { slug: 'new-code' })).status).toBe(400);
+    expect((await patchShop(owner.cookie, { plan: 'paid' })).status).toBe(400);
+  });
+
+  it('reserved codes cannot be used for a new shop', async () => {
+    for (const slug of ['admin', 'api', 'login', 'shop', 'gcash', 'storefront', 'bls-pos']) {
+      expect(isValidSlug(slug)).toBe(false);
+    }
+    expect(isValidSlug('kape-ni-juan')).toBe(true);
+    const res = await postJson('/auth/signup', signupBody({ shopSlug: 'storefront' }));
+    expect(res.status).toBe(400);
   });
 });
