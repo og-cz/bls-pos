@@ -2,6 +2,7 @@ import { createContext, use } from 'react';
 
 import { apiPost } from '@/lib/api';
 import { navigate } from '@/lib/router';
+import type { BusinessType } from '@shared/business';
 import type { Entitlements } from '@shared/entitlements';
 import type { Role } from '@shared/roles';
 import type { Theme } from '@shared/theme';
@@ -20,6 +21,8 @@ export type Me = {
     name: string;
     plan: string;
     currency: string;
+    businessType: BusinessType;
+    onboardingStep: number;
     theme: Theme;
     logoUrl: string | null;
     coverUrl: string | null;

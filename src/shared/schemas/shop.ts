@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { BUSINESS_TYPES, type BusinessType } from '../business';
+import { SETUP_FINISHED } from '../onboarding';
 import { plainText } from './common';
 
 export const BIO_MAX = 300;
@@ -8,6 +10,7 @@ export const BIO_MAX = 300;
 export const shopSettingsSchema = z
   .object({
     name: plainText(80).optional(),
+    businessType: z.enum(BUSINESS_TYPES).optional(),
     // Plain text; line breaks allowed, other control characters not.
     bio: z
       .string()
@@ -25,9 +28,14 @@ export const shopSettingsSchema = z
   .strict();
 export type ShopSettingsInput = z.infer<typeof shopSettingsSchema>;
 
+export const onboardingSchema = z
+  .object({ step: z.number().int().min(0).max(SETUP_FINISHED) })
+  .strict();
+
 export type ShopSettings = {
   slug: string;
   name: string;
+  businessType: BusinessType;
   bio: string | null;
   storefrontEnabled: boolean;
   storefrontShowPrices: boolean;

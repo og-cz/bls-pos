@@ -95,7 +95,7 @@ export function SignupPage() {
           shopSlug={created.shop.slug}
           username={created.user.username}
           onDone={() => {
-            navigate('/', { replace: true });
+            navigate('/setup', { replace: true });
           }}
         />
       </AuthLayout>

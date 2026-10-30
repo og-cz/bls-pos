@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, type ComponentType, type LazyExoticComponent
 
 import { navigate, usePathname } from '@/lib/router';
 import { APP_NAME } from '@shared/app';
+import { SETUP_FINISHED } from '@shared/onboarding';
 import { hasRole } from '@shared/roles';
 
 import { AppShell } from './AppShell';
@@ -35,6 +36,7 @@ const ShopPageSettings = page(
   () => import('@/features/storefront/ShopPageSettings'),
   'ShopPageSettings',
 );
+const SetupWizard = page(() => import('@/features/setup/SetupWizard'), 'SetupWizard');
 const ProfilePage = page(() => import('@/features/profile/ProfilePage'), 'ProfilePage');
 const BrandingPage = page(() => import('@/features/branding/BrandingPage'), 'BrandingPage');
 
@@ -69,16 +71,31 @@ const SIGNED_IN: Record<string, Page> = {
 
 /** Signed-in screens. A screen the role can't use sends the user to their home screen. */
 function SignedInRoutes({ pathname }: { pathname: string }) {
-  const { user } = useMe();
+  const { user, shop } = useMe();
+  // A new owner lands in setup until it is finished or skipped (Section 8.1).
+  const setupPending = user.role === 'owner' && shop.onboardingStep < SETUP_FINISHED;
+  const inSetup = pathname === '/setup' && hasRole(user.role, 'admin');
   const item = NAV.find((i) => i.href === pathname);
   const Page = SIGNED_IN[pathname];
   const allowed = Boolean(item && Page && hasRole(user.role, item.minRole));
 
   useEffect(() => {
-    if (!allowed) navigate(homeFor(user.role), { replace: true });
+    if (inSetup) {
+      document.title = `Set up your shop · ${APP_NAME}`;
+      return;
+    }
+    if (pathname === '/' && setupPending) navigate('/setup', { replace: true });
+    else if (!allowed) navigate(homeFor(user.role), { replace: true });
     else if (item) document.title = `${item.label} · ${APP_NAME}`;
-  }, [allowed, item, user.role]);
+  }, [allowed, inSetup, item, pathname, setupPending, user.role]);
 
+  if (inSetup) {
+    return (
+      <Suspense fallback={<Loading />}>
+        <SetupWizard />
+      </Suspense>
+    );
+  }
   if (!allowed || !Page) return null;
   return (
     <AppShell>

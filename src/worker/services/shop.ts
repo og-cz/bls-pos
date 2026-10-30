@@ -75,6 +75,7 @@ export async function removeShopImage(
 const settingsColumns = {
   slug: shops.slug,
   name: shops.name,
+  businessType: shops.businessType,
   bio: shops.bio,
   storefrontEnabled: shops.storefrontEnabled,
   storefrontShowPrices: shops.storefrontShowPrices,
@@ -116,4 +117,9 @@ export async function updateShopSettings(
     ]);
   }
   return getShopSettings(db, shopId);
+}
+
+/** Where the setup wizard resumes (Section 8.1). Not logged: it is only progress. */
+export async function setOnboardingStep(db: Db, shopId: string, step: number): Promise<void> {
+  await db.update(shops).set({ onboardingStep: step }).where(eq(shops.id, shopId));
 }

@@ -13,8 +13,9 @@ import { dominantColors } from '@/lib/logo-colors';
 import { cn } from '@/lib/utils';
 import { formatCents } from '@shared/money';
 import { LookSettings } from './LookSettings';
+import { PresetGrid } from './PresetGrid';
 import { ShopImages } from './ShopImages';
-import { DEFAULT_THEME, HEX, PRESETS, resolvedColors, type Theme } from '@shared/theme';
+import { DEFAULT_THEME, HEX, resolvedColors, type Theme } from '@shared/theme';
 
 type Tab = 'presets' | 'wheel' | 'logo';
 
@@ -222,38 +223,7 @@ export function BrandingPage() {
           {tab === 'logo' && shop.logoUrl ? (
             <LogoColors url={shop.logoUrl} current={draft.brand} onPick={pick} />
           ) : tab === 'presets' ? (
-            <div
-              role="radiogroup"
-              aria-label="Presets"
-              className="grid grid-cols-2 gap-2 sm:grid-cols-4"
-            >
-              {PRESETS.map((p) => {
-                const active = draft.presetId === p.id;
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={active}
-                    onClick={() => {
-                      pick(p.brand, p.id);
-                    }}
-                    className={cn(
-                      'flex items-center gap-3 rounded-lg border p-3 text-left text-sm outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
-                      active ? 'border-primary bg-primary/10' : 'hover:bg-accent',
-                    )}
-                  >
-                    <span
-                      className="flex size-8 shrink-0 items-center justify-center rounded-full text-white"
-                      style={{ background: p.brand }}
-                    >
-                      {active ? <Check className="size-4" aria-hidden="true" /> : null}
-                    </span>
-                    <span className="font-medium">{p.name}</span>
-                  </button>
-                );
-              })}
-            </div>
+            <PresetGrid value={draft.presetId} onPick={pick} />
           ) : (
             <div className="space-y-3">
               <HexColorPicker

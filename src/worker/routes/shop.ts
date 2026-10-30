@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 
-import { shopSettingsSchema } from '@shared/schemas/shop';
+import { onboardingSchema, shopSettingsSchema } from '@shared/schemas/shop';
 import { themeSchema } from '@shared/theme';
 
 import { R2Storage } from '../adapters/storage/r2';
@@ -13,6 +13,7 @@ import { authed } from '../middleware/tenant';
 import {
   getShopSettings,
   removeShopImage,
+  setOnboardingStep,
   updateShopSettings,
   updateTheme,
 } from '../services/shop';
@@ -29,6 +30,12 @@ shopRoutes.patch('/', requireRole('admin'), async (c) => {
   const input = await parseJson(c, shopSettingsSchema);
   const shop = await updateShopSettings(getDb(c.env.DB), c.var.shopId, await actorOf(c), input);
   return c.json({ shop });
+});
+
+shopRoutes.patch('/onboarding', requireRole('admin'), async (c) => {
+  const { step } = await parseJson(c, onboardingSchema);
+  await setOnboardingStep(getDb(c.env.DB), c.var.shopId, step);
+  return c.json({ step });
 });
 
 // Branding is for admins and the owner (Section 6.4).
