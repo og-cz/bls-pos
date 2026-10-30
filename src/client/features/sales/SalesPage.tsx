@@ -18,6 +18,7 @@ import type { Receipt, SaleList, SaleSummary } from '@shared/schemas/sales';
 import { useImportWorker } from '../import/use-import-worker';
 import { ReceiptView } from '../sell/ReceiptView';
 import { DailyClose } from './DailyClose';
+import { DeviceQueue } from './DeviceQueue';
 
 const time = new Intl.DateTimeFormat(undefined, { timeStyle: 'short' });
 const dateTime = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
@@ -223,6 +224,8 @@ export function SalesPage() {
           </Button>
         </div>
       ) : null}
+
+      <DeviceQueue />
 
       {isAdmin && shown && shown.from === shown.to ? (
         <DailyClose

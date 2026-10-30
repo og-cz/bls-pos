@@ -7,6 +7,7 @@ import { BrandLogo } from '@/components/brand-logo';
 import { Link } from '@/components/link';
 import { setPreferences, usePreferences } from '@/lib/preferences';
 import { usePathname } from '@/lib/router';
+import { useBackgroundSync } from '@/lib/sync';
 import { cn } from '@/lib/utils';
 import { APP_NAME } from '@shared/app';
 import { SETUP_FINISHED } from '@shared/onboarding';
@@ -250,6 +251,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const menuOnly = items.filter((i) => !i.tab && !i.bottom);
   const collapsed = prefs.menuCollapsed;
   const right = prefs.menuSide === 'right';
+  useBackgroundSync(user.id);
 
   // First visit: a short guided tour, admins on the dashboard, staff on the sell screen.
   // Its code (driver.js) downloads only when it is needed.
