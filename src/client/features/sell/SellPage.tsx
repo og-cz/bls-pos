@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { ImageOff, Search, SearchX, ShoppingCart } from 'lucide-react';
 
 import { useMe } from '@/app/session';
@@ -20,6 +20,7 @@ import {
 import { formatCents } from '@shared/money';
 import type { ProductDto } from '@shared/schemas/products';
 import type { Receipt } from '@shared/schemas/sales';
+import { createScanReader, findBySku } from '@shared/scan';
 
 import { searchKey, useCatalog } from '../products/use-catalog';
 import { CartPanel } from './CartPanel';
@@ -149,6 +150,79 @@ export function SellPage() {
   }, [indexed, deferred, categoryId]);
 
   const { items, subtotalCents } = cartTotals(cart, byId);
+
+  // Short confirmation after a scan or Enter ("Added Spark plug").
+  const [notice, setNotice] = useState<{ text: string; ok: boolean } | null>(null);
+  const noticeTimer = useRef<number | undefined>(undefined);
+  function announce(text: string, ok: boolean) {
+    window.clearTimeout(noticeTimer.current);
+    setNotice({ text, ok });
+    noticeTimer.current = window.setTimeout(() => {
+      setNotice(null);
+    }, 2500);
+  }
+
+  function addProduct(p: ProductDto) {
+    if (quantityOf(cart, p.id) >= maxQuantity(p)) {
+      announce(
+        maxQuantity(p) === 0 ? `${p.name} is sold out` : `No more ${p.name} in stock`,
+        false,
+      );
+      return;
+    }
+    setCart((c) => addOne(c, p));
+    announce(`Added ${p.name}`, true);
+  }
+
+  /** A scanned or typed SKU / barcode. */
+  function addByCode(code: string) {
+    const p = findBySku(catalog.products, code);
+    if (p) addProduct(p);
+    else announce(`No product with code ${code.trim()}`, false);
+  }
+
+  // Search box: Enter adds the exact SKU, or the only product left in the results.
+  function onSearchKey(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const exact = findBySku(catalog.products, query);
+    const only = visible.length === 1 ? visible[0] : undefined;
+    const p = exact ?? only;
+    if (p) {
+      addProduct(p);
+      setQuery('');
+    } else if (query.trim()) {
+      announce(`No product with code ${query.trim()}`, false);
+    }
+  }
+
+  // Barcode scanners type fast and end with Enter. Read scans from anywhere on the screen
+  // (not while typing in a field or a dialog is open), and swallow the scanner's Enter so
+  // it doesn't also press a focused tile.
+  const scanTarget = useRef(addByCode);
+  useEffect(() => {
+    scanTarget.current = addByCode;
+  });
+  const dialogOpen = cartOpen || checkingOut || lastSale !== null;
+  useEffect(() => {
+    if (dialogOpen) return;
+    const read = createScanReader();
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (el && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName))) {
+        return;
+      }
+      const code = read(e.key, e.timeStamp);
+      if (code) {
+        e.preventDefault();
+        scanTarget.current(code);
+      }
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => {
+      window.removeEventListener('keydown', onKey, true);
+    };
+  }, [dialogOpen]);
   const panel = (
     <CartPanel
       cart={cart}
@@ -188,8 +262,23 @@ export function SellPage() {
               onChange={(e) => {
                 setQuery(e.target.value);
               }}
+              onKeyDown={onSearchKey}
+              autoComplete="off"
             />
           </div>
+          {notice ? (
+            <p
+              role="status"
+              className={cn(
+                'rounded-md px-3 py-1.5 text-sm font-medium',
+                notice.ok
+                  ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                  : 'bg-destructive/10 text-destructive',
+              )}
+            >
+              {notice.text}
+            </p>
+          ) : null}
           {catalog.categories.length ? (
             <div className="-mx-4 flex gap-2 overflow-x-auto px-4 md:-mx-6 md:px-6">
               <Chip
