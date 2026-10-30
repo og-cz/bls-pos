@@ -10,3 +10,21 @@ export interface StorageAdapter {
   /** Total bytes stored under a prefix, e.g. one shop's images (for maxImagesMB). */
   usedBytes(prefix: string): Promise<number>;
 }
+
+/** 'cash' and 'other_manual' in Free; online methods (GCash, Maya, cards) arrive in Paid. */
+export type PaymentMethodId = string;
+
+export interface PaymentAdapter {
+  id: PaymentMethodId;
+  label: string;
+  /**
+   * Free methods are recorded as paid at once. Paid editions may return 'pending' with a
+   * provider reference to confirm later.
+   */
+  createPayment(input: {
+    saleId: string;
+    amountCents: number;
+    currency: string;
+    reference?: string | undefined;
+  }): Promise<{ status: 'paid' | 'pending'; reference?: string | undefined }>;
+}

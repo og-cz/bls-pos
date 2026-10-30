@@ -1,9 +1,9 @@
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 
-import { entitlementsFor } from '@shared/entitlements';
 import { hasRole } from '@shared/roles';
 import type { CreateSaleInput, Receipt } from '@shared/schemas/sales';
 
+import { paymentAdapterFor } from '../adapters/registry';
 import type { Db } from '../db/client';
 import { isUniqueViolation } from '../db/errors';
 import { newId } from '../db/id';
@@ -41,9 +41,13 @@ export async function createSale(
   const existing = await findByKey(db, shopId, actor, input.idempotencyKey);
   if (existing) return { receipt: existing, replayed: true };
 
-  const shop = await db.select({ plan: shops.plan }).from(shops).where(eq(shops.id, shopId)).get();
-  const { paymentMethods } = entitlementsFor(shop?.plan ?? 'free');
-  if (!paymentMethods.includes(input.paymentMethod)) {
+  const shop = await db
+    .select({ plan: shops.plan, currency: shops.currency })
+    .from(shops)
+    .where(eq(shops.id, shopId))
+    .get();
+  const payment = paymentAdapterFor(shop?.plan ?? 'free', input.paymentMethod);
+  if (!payment) {
     throw new ApiError(400, 'VALIDATION_ERROR', "That payment method isn't available.", {
       paymentMethod: 'Not available.',
     });
@@ -108,6 +112,12 @@ export async function createSale(
   }
 
   const saleId = newId(now);
+  const paid = await payment.createPayment({
+    saleId,
+    amountCents: totalCents,
+    currency: shop?.currency ?? 'PHP',
+    reference: input.paymentReference,
+  });
   const tracked = priced.filter((l) => l.product.trackStock);
   try {
     await db.batch([
@@ -122,7 +132,7 @@ export async function createSale(
         discountCents,
         totalCents,
         paymentMethod: input.paymentMethod,
-        paymentReference: input.paymentReference ?? null,
+        paymentReference: paid.reference ?? null,
         cashReceivedCents,
         changeCents,
         idempotencyKey: input.idempotencyKey,
