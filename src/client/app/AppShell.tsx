@@ -18,7 +18,8 @@ function isActive(item: NavItem, pathname: string) {
   return item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
 }
 
-function AccountMenu({ extra }: { extra: NavItem[] }) {
+/** The profile menu: screens not in the tab bar, then Settings and Log out. */
+function AccountMenu({ extra, bottom }: { extra: NavItem[]; bottom: NavItem[] }) {
   const { user } = useMe();
   return (
     <DropdownMenu.Root>
@@ -48,7 +49,7 @@ function AccountMenu({ extra }: { extra: NavItem[] }) {
             </div>
           </div>
           <DropdownMenu.Separator className="my-1 h-px bg-border" />
-          {extra.map((item) => (
+          {[...extra, ...bottom].map((item) => (
             <DropdownMenu.Item key={item.href} asChild>
               <Link
                 href={item.href}
@@ -59,6 +60,7 @@ function AccountMenu({ extra }: { extra: NavItem[] }) {
               </Link>
             </DropdownMenu.Item>
           ))}
+          <DropdownMenu.Separator className="my-1 h-px bg-border" />
           <DropdownMenu.Item
             onSelect={() => void logout()}
             className="flex min-h-11 cursor-pointer items-center gap-2 rounded-md px-3 text-sm outline-none data-[highlighted]:bg-accent"
@@ -290,7 +292,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
             </div>
           </div>
-          <AccountMenu extra={menuOnly} />
+          <AccountMenu extra={menuOnly} bottom={items.filter((i) => i.bottom)} />
         </header>
 
         {/* Bottom padding keeps content clear of the phone tab bar. */}
