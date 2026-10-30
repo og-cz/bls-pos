@@ -241,3 +241,72 @@ describe('GET /sales/:id', () => {
     expect((await getWithCookie(`/sales/${receipt.id}`, other.cookie)).status).toBe(404);
   });
 });
+
+describe('idempotency', () => {
+  it('the same key twice returns the first sale: one sale, stock taken once', async () => {
+    const owner = await signUp();
+    const p = await createProductAs(owner.cookie, { priceCents: 1_000, stock: 5 });
+    const body = { idempotencyKey: 'retry-key-123', items: [{ productId: p.id, quantity: 2 }] };
+    const first = await sell(owner.cookie, body);
+    const again = await sell(owner.cookie, body);
+    expect(first.status).toBe(201);
+    expect(again.status).toBe(200);
+    const a = await first.json<{ receipt: Receipt; replayed: boolean }>();
+    const b = await again.json<{ receipt: Receipt; replayed: boolean }>();
+    expect(b.replayed).toBe(true);
+    expect(b.receipt).toEqual(a.receipt);
+    expect(await saleCount(owner.shopId)).toBe(1);
+    expect(await stockOf(p.id)).toBe(3);
+  });
+
+  it('a replay returns the original even if the cart sent the second time differs', async () => {
+    const owner = await signUp();
+    const p = await createProductAs(owner.cookie, { priceCents: 1_000, stock: 5 });
+    const k = 'same-key-456';
+    await sell(owner.cookie, { idempotencyKey: k, items: [{ productId: p.id, quantity: 1 }] });
+    const again = await sell(owner.cookie, {
+      idempotencyKey: k,
+      items: [{ productId: p.id, quantity: 4 }],
+    });
+    expect((await again.json<{ receipt: Receipt }>()).receipt.lines[0]?.quantity).toBe(1);
+    expect(await stockOf(p.id)).toBe(4);
+  });
+
+  it('two copies arriving at the same moment still make one sale', async () => {
+    const owner = await signUp();
+    const p = await createProductAs(owner.cookie, { priceCents: 1_000, stock: 5 });
+    const body = { idempotencyKey: 'burst-key-789', items: [{ productId: p.id, quantity: 1 }] };
+    const results = await Promise.all([
+      sell(owner.cookie, body),
+      sell(owner.cookie, body),
+      sell(owner.cookie, body),
+    ]);
+    expect(results.every((r) => r.status === 200 || r.status === 201)).toBe(true);
+    expect(results.filter((r) => r.status === 201)).toHaveLength(1);
+    expect(await saleCount(owner.shopId)).toBe(1);
+    expect(await stockOf(p.id)).toBe(4);
+  });
+
+  it("keys are per shop, and another cashier's key is refused", async () => {
+    const a = await signUp();
+    const b = await signUp();
+    const pa = await createProductAs(a.cookie, { stock: 5 });
+    const pb = await createProductAs(b.cookie, { stock: 5 });
+    const k = 'shared-key-000';
+    expect(
+      (await sell(a.cookie, { idempotencyKey: k, items: [{ productId: pa.id, quantity: 1 }] }))
+        .status,
+    ).toBe(201);
+    expect(
+      (await sell(b.cookie, { idempotencyKey: k, items: [{ productId: pb.id, quantity: 1 }] }))
+        .status,
+    ).toBe(201);
+
+    const staff = await addMember(a, 'staff');
+    const res = await sell(staff.cookie, {
+      idempotencyKey: k,
+      items: [{ productId: pa.id, quantity: 1 }],
+    });
+    expect(res.status).toBe(409);
+  });
+});

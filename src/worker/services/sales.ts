@@ -35,7 +35,12 @@ export async function createSale(
   actor: Actor,
   input: CreateSaleInput,
   now: number = Date.now(),
-): Promise<Receipt> {
+): Promise<{ receipt: Receipt; replayed: boolean }> {
+  // Step 1: the same key again (a retry, or an offline sale synced twice) returns the
+  // sale already recorded instead of making a second one.
+  const existing = await findByKey(db, shopId, actor, input.idempotencyKey);
+  if (existing) return { receipt: existing, replayed: true };
+
   const shop = await db.select({ plan: shops.plan }).from(shops).where(eq(shops.id, shopId)).get();
   const { paymentMethods } = entitlementsFor(shop?.plan ?? 'free');
   if (!paymentMethods.includes(input.paymentMethod)) {
@@ -162,13 +167,35 @@ export async function createSale(
     ]);
   } catch (err) {
     if (isCheckViolation(err)) throw await stockError(db, shopId, tracked);
+    // Two copies of the same sale arriving at once: the other one won; return it.
     if (isUniqueViolation(err, 'sales.idempotency_key')) {
-      throw new ApiError(409, 'DUPLICATE_SALE', 'This sale was already recorded.');
+      const winner = await findByKey(db, shopId, actor, input.idempotencyKey);
+      if (winner) return { receipt: winner, replayed: true };
     }
     throw err;
   }
 
-  return getReceipt(db, shopId, actor, saleId);
+  return { receipt: await getReceipt(db, shopId, actor, saleId), replayed: false };
+}
+
+/** The sale already recorded with this key in this shop, if any. */
+async function findByKey(
+  db: Db,
+  shopId: string,
+  actor: Actor,
+  idempotencyKey: string,
+): Promise<Receipt | null> {
+  const found = await db
+    .select({ id: sales.id, userId: sales.userId })
+    .from(sales)
+    .where(and(eq(sales.shopId, shopId), eq(sales.idempotencyKey, idempotencyKey)))
+    .get();
+  if (!found) return null;
+  // Keys are random per sale; someone else's key is never a retry of yours.
+  if (found.userId !== actor.userId) {
+    throw new ApiError(409, 'DUPLICATE_SALE', 'This sale key was already used.');
+  }
+  return getReceipt(db, shopId, actor, found.id);
 }
 
 /** 409 STOCK_INSUFFICIENT naming the products that ran short (Section 5.3 step 6). */

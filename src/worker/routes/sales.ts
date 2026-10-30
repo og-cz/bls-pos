@@ -16,8 +16,14 @@ saleRoutes.use(...authed);
 
 saleRoutes.post('/', async (c) => {
   const input = await parseJson(c, createSaleSchema);
-  const receipt = await createSale(getDb(c.env.DB), c.var.shopId, await actorOf(c), input);
-  return c.json({ receipt }, 201);
+  const { receipt, replayed } = await createSale(
+    getDb(c.env.DB),
+    c.var.shopId,
+    await actorOf(c),
+    input,
+  );
+  // 200 for a replay of a sale already recorded, 201 for a new one.
+  return c.json({ receipt, replayed }, replayed ? 200 : 201);
 });
 
 saleRoutes.get('/:id', async (c) => {
