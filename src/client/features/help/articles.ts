@@ -136,9 +136,14 @@ It then opens full screen from its own icon.
     summary: 'What happens when the connection drops.',
     minRole: 'staff',
     body: `
-bls POS needs internet to record sales right now, so stock and sale numbers are always correct across every phone and PC in the shop.
+Keep selling when the internet drops. Open bls POS while online at least once on the phone or PC, so it has your product list.
 
-Selling while offline, with sales sent automatically when the connection returns, is coming in an update. Until then, if the connection drops, write sales down and enter them when it is back.
+- The header shows **Offline**. Sell as usual: the receipt says the sale number comes when you are back online.
+- Sales are kept on this device and sent by themselves when the connection returns, oldest first. Sending twice never records a sale twice.
+- If one can't be recorded (for example another till sold the last item meanwhile), it shows under **Sales → On this device → Needs review**. Try it again, or the owner or an admin can discard it. Nothing is dropped without someone deciding.
+- Logging out removes sales that were not sent yet, so connect first. bls POS warns you.
+
+Prices and stock while offline are from the last time the list loaded.
 `,
   },
   {

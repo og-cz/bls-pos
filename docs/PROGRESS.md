@@ -305,3 +305,34 @@ the kind of shop, come once, and removal deletes unsold samples but archives sol
 it can show once more on a new phone. Two-step login (2FA) is mentioned in setup as
 coming later; it is not built yet. There is no staff password reset yet: the FAQ says to
 deactivate and re-add.
+
+## Phase 8 — PWA and offline (2026-10-31)
+
+**Demo:** on a deployed (HTTPS) copy, open bls POS on a phone: **Install app** (Android)
+or **Share → Add to Home Screen** (iPhone). It opens full screen with the bls icon.
+
+1. Load **Sell** once online, then turn on airplane mode.
+2. The header shows **Offline**; Sell says prices and stock are as of the last load.
+3. Ring up a sale: the receipt says the number comes when back online, and stock counts
+   down on the screen. The header shows "Offline · 1 unsent".
+4. Turn the internet back on: the sale is sent by itself, gets its number, and shows on
+   the dashboard. **Sales → On this device** lists anything still waiting or refused.
+
+**How it works:** `public/sw.js` caches the app shell and built files (network first for
+pages) and product photos already seen; it never caches API data. The app keeps its own
+copy of the signed-in session and the product list (no costs) in IndexedDB, refreshed
+on every online load. Offline sales go into an IndexedDB queue with their idempotency
+key and `clientCreatedAt`; `src/shared/offline-sync.ts` sends them oldest first, stops
+when still offline or signed out, and moves refused sales to **Needs review** (retry, or
+an admin discards with a confirmation). Logout clears all offline data, after warning
+about unsent sales. Icons are generated from `public/logo.svg` with `pnpm icons`.
+
+**Proven by tests (357):** oldest first; a sale whose answer was lost is never recorded
+twice; an out-of-stock sale goes to review while the others still send; a still-offline
+or signed-out device keeps its sales in order; synced sales show in the income report.
+
+**Notes:** the manifest uses the bls name and icon for every shop (a per-shop manifest
+would need a signed-in route; the header and colors still follow the shop). A synced
+sale counts on the day it reached the server; the device time is kept as
+`client_created_at`. The service worker runs only in production builds, so offline
+start-up is untested until the first deploy.
