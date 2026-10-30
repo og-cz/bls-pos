@@ -2,6 +2,7 @@ import { useRef, useState, type SyntheticEvent } from 'react';
 import { Check, Copy, UserPlus, Users } from 'lucide-react';
 
 import { useMe } from '@/app/session';
+import { Avatar } from '@/components/avatar';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { EmptyState, PageHeader } from '@/components/empty-state';
 import { FormAlert, SelectField, TextField } from '@/components/field';
@@ -296,15 +297,11 @@ export function StaffPage() {
           <ul className="divide-y rounded-xl border bg-card">
             {members.map((m) => (
               <li key={m.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-                <span
-                  className={cn(
-                    'flex size-10 shrink-0 items-center justify-center rounded-full font-semibold',
-                    m.active ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
-                  )}
-                  aria-hidden="true"
-                >
-                  {m.displayName.slice(0, 1).toUpperCase()}
-                </span>
+                <Avatar
+                  name={m.displayName}
+                  url={m.avatarUrl}
+                  className={cn('size-10 text-base', !m.active && 'opacity-50 grayscale')}
+                />
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">
                     {m.displayName}

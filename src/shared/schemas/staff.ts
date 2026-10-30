@@ -24,4 +24,5 @@ export type StaffMember = {
   role: 'owner' | AssignableRole;
   active: boolean;
   createdAt: number;
+  avatarUrl: string | null;
 };

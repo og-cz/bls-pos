@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { Dialog as DialogPrimitive, DropdownMenu } from 'radix-ui';
 import { ChevronDown, LogOut, Menu, X } from 'lucide-react';
 
+import { Avatar } from '@/components/avatar';
 import { BrandLogo } from '@/components/brand-logo';
 import { Link } from '@/components/link';
 import { setPreferences, usePreferences } from '@/lib/preferences';
@@ -9,7 +10,7 @@ import { usePathname } from '@/lib/router';
 import { cn } from '@/lib/utils';
 import { APP_NAME } from '@shared/app';
 
-import { NAV_GROUPS, navFor, type NavGroup, type NavItem } from './nav';
+import { NAV_GROUPS, navFor, PROFILE_ITEM, type NavGroup, type NavItem } from './nav';
 import { logout, useMe } from './session';
 
 const ROLE_LABEL = { owner: 'Owner', admin: 'Admin', staff: 'Staff' } as const;
@@ -27,9 +28,7 @@ function AccountMenu({ extra, bottom }: { extra: NavItem[]; bottom: NavItem[] })
         className="flex h-11 min-w-0 items-center gap-2 rounded-md px-2 text-left outline-none hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50"
         aria-label="Account menu"
       >
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-          {user.displayName.slice(0, 1).toUpperCase()}
-        </span>
+        <Avatar name={user.displayName} url={user.avatarUrl} />
         <span className="hidden min-w-0 sm:block">
           <span className="block truncate text-sm font-medium">{user.displayName}</span>
           <span className="block text-xs text-muted-foreground">{ROLE_LABEL[user.role]}</span>
@@ -49,7 +48,7 @@ function AccountMenu({ extra, bottom }: { extra: NavItem[]; bottom: NavItem[] })
             </div>
           </div>
           <DropdownMenu.Separator className="my-1 h-px bg-border" />
-          {[...extra, ...bottom].map((item) => (
+          {[PROFILE_ITEM, ...extra, ...bottom].map((item) => (
             <DropdownMenu.Item key={item.href} asChild>
               <Link
                 href={item.href}

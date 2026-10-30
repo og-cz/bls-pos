@@ -10,6 +10,7 @@ import { newId } from '../db/id';
 import { sessions, shops, users } from '../db/schema';
 import type { Actor } from '../lib/actor';
 import { ApiError } from '../lib/errors';
+import { mediaUrl } from '../lib/media';
 import { newTemporaryPassword } from '../security/codes';
 import { hashPassword } from '../security/password';
 import { auditInsert } from './audit';
@@ -21,11 +22,12 @@ const memberColumns = {
   role: users.role,
   active: users.active,
   createdAt: users.createdAt,
+  avatarKey: users.avatarKey,
 };
 
 /** Everyone in the shop, owner first, then admins, then staff. Never password data. */
 export async function listMembers(db: Db, shopId: string): Promise<StaffMember[]> {
-  return db
+  const rows = await db
     .select(memberColumns)
     .from(users)
     .where(eq(users.shopId, shopId))
@@ -33,6 +35,10 @@ export async function listMembers(db: Db, shopId: string): Promise<StaffMember[]
       sql`CASE ${users.role} WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END`,
       asc(users.displayName),
     );
+  return rows.map(({ avatarKey, ...m }) => ({
+    ...m,
+    avatarUrl: avatarKey ? mediaUrl(avatarKey) : null,
+  }));
 }
 
 /**
@@ -90,12 +96,18 @@ export async function createStaff(
     role: input.role,
     active: true,
     createdAt: now,
+    avatarUrl: null,
   };
 
   try {
     await db.batch([
       db.insert(users).values({
-        ...member,
+        id: member.id,
+        username: member.username,
+        displayName: member.displayName,
+        role: member.role,
+        active: member.active,
+        createdAt: member.createdAt,
         shopId,
         passwordHash: await hashPassword(temporaryPassword, pepper),
       }),
@@ -180,5 +192,6 @@ export async function deactivateMember(
       now,
     ),
   ]);
-  return { ...target, active: false };
+  const { avatarKey, ...rest } = target;
+  return { ...rest, active: false, avatarUrl: avatarKey ? mediaUrl(avatarKey) : null };
 }

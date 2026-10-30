@@ -2,13 +2,18 @@ import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 
 import { entitlementsFor } from '@shared/entitlements';
+import { updateProfileSchema } from '@shared/schemas/profile';
 import { parseTheme } from '@shared/theme';
 
+import { R2Storage } from '../adapters/storage/r2';
 import { getDb } from '../db/client';
 import { shops } from '../db/schema';
 import type { AuthedEnv } from '../env';
+import { actorOf } from '../lib/actor';
 import { mediaUrl } from '../lib/media';
+import { parseJson } from '../lib/validate';
 import { authed } from '../middleware/tenant';
+import { avatarUrlOf, removeAvatar, updateProfile } from '../services/profile';
 
 function parseStoredTheme(json: string) {
   try {
@@ -25,7 +30,9 @@ meRoutes.use(...authed);
 meRoutes.get('/', async (c) => {
   const { shopId } = c.var;
   const { userId, role, username, displayName } = c.var.auth;
-  const shop = await getDb(c.env.DB)
+  const db = getDb(c.env.DB);
+  const actor = await actorOf(c);
+  const shop = await db
     .select({
       id: shops.id,
       slug: shops.slug,
@@ -45,7 +52,13 @@ meRoutes.get('/', async (c) => {
   if (!shop) return c.json({ error: { code: 'NOT_FOUND', message: 'Shop not found' } }, 404);
   const { themeJson, logoKey, coverKey, ...rest } = shop;
   return c.json({
-    user: { id: userId, username, displayName, role },
+    user: {
+      id: userId,
+      username,
+      displayName,
+      role,
+      avatarUrl: await avatarUrlOf(db, shopId, actor),
+    },
     shop: {
       ...rest,
       theme: parseStoredTheme(themeJson),
@@ -54,4 +67,16 @@ meRoutes.get('/', async (c) => {
     },
     entitlements: entitlementsFor(rest.plan),
   });
+});
+
+// Everyone edits their own profile: display name and photo (the photo is uploaded at
+// POST /uploads/avatar).
+meRoutes.patch('/', async (c) => {
+  const input = await parseJson(c, updateProfileSchema);
+  return c.json(await updateProfile(getDb(c.env.DB), c.var.shopId, await actorOf(c), input));
+});
+
+meRoutes.delete('/avatar', async (c) => {
+  await removeAvatar(getDb(c.env.DB), c.var.shopId, new R2Storage(c.env.MEDIA), await actorOf(c));
+  return c.json({ ok: true });
 });

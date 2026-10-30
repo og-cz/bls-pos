@@ -7,7 +7,13 @@ import type { Role } from '@shared/roles';
 import type { Theme } from '@shared/theme';
 
 export type Me = {
-  user: { id: string; username: string; displayName: string; role: Role };
+  user: {
+    id: string;
+    username: string;
+    displayName: string;
+    role: Role;
+    avatarUrl: string | null;
+  };
   shop: {
     id: string;
     slug: string;

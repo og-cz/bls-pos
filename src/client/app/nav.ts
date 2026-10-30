@@ -8,6 +8,7 @@ import {
   Settings,
   ShoppingCart,
   Upload,
+  UserRound,
   Users,
   type LucideIcon,
 } from 'lucide-react';
@@ -37,6 +38,16 @@ export const NAV_GROUPS = {
   shop: 'Shop',
 } as const;
 export type NavGroup = keyof typeof NAV_GROUPS;
+
+/** Your own profile: at the top of the account menu for everyone. */
+export const PROFILE_ITEM: NavItem = {
+  href: '/profile',
+  label: 'My profile',
+  icon: UserRound,
+  minRole: 'staff',
+  tab: false,
+  hidden: true,
+};
 
 export const NAV: NavItem[] = [
   // Listed in this order, under their group's heading; the phone tab bar takes the `tab` ones.
@@ -113,6 +124,7 @@ export const NAV: NavItem[] = [
     tab: false,
     hidden: true,
   },
+  PROFILE_ITEM,
 ];
 
 export function navFor(role: Role): NavItem[] {
