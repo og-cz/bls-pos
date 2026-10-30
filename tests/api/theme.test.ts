@@ -14,7 +14,8 @@ import {
   themeCss,
   themeSchema,
 } from '../../src/shared/theme';
-import { getWithCookie, signUp } from './helpers';
+import { env } from 'cloudflare:workers';
+import { addMember, api, getWithCookie, signUp } from './helpers';
 
 describe('theme schema', () => {
   it('accepts a valid theme and fills defaults', () => {
@@ -128,5 +129,54 @@ describe('contrast guard', () => {
         expect(contrastRatio(r.color, r.foreground)).toBeGreaterThanOrEqual(4.5);
       }
     }
+  });
+});
+
+describe('PATCH /shop/theme', () => {
+  const patch = (cookie: string, body: unknown) =>
+    api('/shop/theme', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json', cookie },
+      body: JSON.stringify(body),
+    });
+
+  it('admins save a theme; it comes back in /me and is logged', async () => {
+    const owner = await signUp();
+    const admin = await addMember(owner, 'admin');
+    const res = await patch(admin.cookie, { brand: '#F06A27', presetId: 'sunset-food' });
+    expect(res.status).toBe(200);
+    const me = await (
+      await getWithCookie('/me', owner.cookie)
+    ).json<{
+      shop: { theme: { brand: string; mode: string } };
+    }>();
+    expect(me.shop.theme).toMatchObject({ brand: '#F06A27', mode: 'system' });
+    const log = await env.DB.prepare(
+      "SELECT details_json AS d FROM audit_log WHERE shop_id = ? AND action = 'shop.theme'",
+    )
+      .bind(owner.shopId)
+      .first<{ d: string }>();
+    expect(JSON.parse(log?.d ?? '{}')).toMatchObject({ from: '#8B5E3C', to: '#F06A27' });
+  });
+
+  it('staff cannot, and bad or extra values are refused', async () => {
+    const owner = await signUp();
+    const staff = await addMember(owner, 'staff');
+    expect((await patch(staff.cookie, { brand: '#F06A27' })).status).toBe(403);
+    expect((await patch(owner.cookie, { brand: 'red' })).status).toBe(400);
+    expect(
+      (await patch(owner.cookie, { brand: '#F06A27', css: 'body{display:none}' })).status,
+    ).toBe(400);
+    expect((await patch(owner.cookie, { brand: '#F06A27', font: 'comic-sans' })).status).toBe(400);
+  });
+
+  it('only changes this shop', async () => {
+    const a = await signUp();
+    const b = await signUp();
+    await patch(a.cookie, { brand: '#2E9E5B' });
+    const me = await (
+      await getWithCookie('/me', b.cookie)
+    ).json<{ shop: { theme: { brand: string } } }>();
+    expect(me.shop.theme.brand).toBe('#8B5E3C'); // the cafe default
   });
 });

@@ -11,6 +11,7 @@ import {
   Package,
   PackageMinus,
   PackagePlus,
+  Palette,
   Pencil,
   ScrollText,
   ShieldAlert,
@@ -55,6 +56,7 @@ const ACTIONS: Record<AuditAction, { icon: LucideIcon; text: string; warn?: bool
   'data.restore': { icon: ArchiveRestore, text: 'restored a backup' },
   'sale.void': { icon: Ban, text: 'voided sale' },
   'day.close': { icon: CalendarCheck, text: 'closed the day' },
+  'shop.theme': { icon: Palette, text: 'changed the shop colors' },
 };
 
 const timeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });

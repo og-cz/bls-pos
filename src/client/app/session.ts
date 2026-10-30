@@ -20,12 +20,20 @@ export type Me = {
 };
 
 export const MeContext = createContext<Me | null>(null);
+export const UpdateMeContext = createContext<((update: (me: Me) => Me) => void) | null>(null);
 
 /** The signed-in user. Only use inside <SessionGate>. */
 export function useMe(): Me {
   const me = use(MeContext);
   if (!me) throw new Error('useMe() outside <SessionGate>');
   return me;
+}
+
+/** Updates the signed-in session after a change (e.g. the shop's theme was saved). */
+export function useUpdateMe(): (update: (me: Me) => Me) => void {
+  const update = use(UpdateMeContext);
+  if (!update) throw new Error('useUpdateMe() outside <SessionGate>');
+  return update;
 }
 
 export async function logout() {

@@ -1,15 +1,18 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 
 import { ApiClientError, apiGet } from '@/lib/api';
 import { navigate } from '@/lib/router';
 import { applyShopTheme } from '@/lib/shop-theme';
 
-import { MeContext, type Me } from './session';
+import { MeContext, UpdateMeContext, type Me } from './session';
 
 /** Loads /me once; sends signed-out visitors to the login page. */
 export function SessionGate({ children }: { children: ReactNode }) {
   const [me, setMe] = useState<Me | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const update = useCallback((fn: (me: Me) => Me) => {
+    setMe((current) => (current ? fn(current) : current));
+  }, []);
 
   useEffect(() => {
     apiGet<Me>('/me')
@@ -49,5 +52,9 @@ export function SessionGate({ children }: { children: ReactNode }) {
       </main>
     );
   }
-  return <MeContext value={me}>{children}</MeContext>;
+  return (
+    <UpdateMeContext value={update}>
+      <MeContext value={me}>{children}</MeContext>
+    </UpdateMeContext>
+  );
 }

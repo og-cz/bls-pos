@@ -22,6 +22,7 @@ export const AUDIT_ACTIONS = [
   'data.restore',
   'sale.void',
   'day.close',
+  'shop.theme',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

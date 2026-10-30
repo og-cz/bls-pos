@@ -28,6 +28,7 @@ const StaffPage = page(() => import('@/features/staff/StaffPage'), 'StaffPage');
 const ActivityPage = page(() => import('@/features/activity/ActivityPage'), 'ActivityPage');
 const ImportPage = page(() => import('@/features/import/ImportPage'), 'ImportPage');
 const SettingsPage = page(() => import('@/features/settings/SettingsPage'), 'SettingsPage');
+const BrandingPage = page(() => import('@/features/branding/BrandingPage'), 'BrandingPage');
 
 function Loading() {
   return (
@@ -53,6 +54,7 @@ const SIGNED_IN: Record<string, Page> = {
   '/activity': ActivityPage,
   '/products/import': ImportPage,
   '/settings': SettingsPage,
+  '/branding': BrandingPage,
 };
 
 /** Signed-in screens. A screen the role can't use sends the user to their home screen. */

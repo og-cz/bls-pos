@@ -16,6 +16,7 @@ import { meRoutes } from './routes/me';
 import { productRoutes } from './routes/products';
 import { reportRoutes } from './routes/reports';
 import { saleRoutes } from './routes/sales';
+import { shopRoutes } from './routes/shop';
 import { mediaRoutes, uploadRoutes } from './routes/uploads';
 import { staffRoutes } from './routes/staff';
 
@@ -46,6 +47,7 @@ app.route('/products', productRoutes);
 app.route('/categories', categoryRoutes);
 app.route('/inventory', inventoryRoutes);
 app.route('/sales', saleRoutes);
+app.route('/shop', shopRoutes);
 app.route('/reports', reportRoutes);
 app.route('/uploads', uploadRoutes);
 app.route('/media', mediaRoutes);
