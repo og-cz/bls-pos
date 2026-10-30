@@ -29,6 +29,10 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # Known-vulnerable dependencies (high or critical) fail the build.
+      - name: Dependency audit
+        run: pnpm audit --audit-level high
+
       - name: Check generated Worker types are up to date
         run: pnpm exec wrangler types --check
 

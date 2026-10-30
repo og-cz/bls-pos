@@ -1,0 +1,22 @@
+# Weekly dependency updates (Section 7.10). Grouped so a week's updates come as one PR
+# per ecosystem; security fixes still arrive on their own as soon as they are published.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Manila
+    open-pull-requests-limit: 5
+    groups:
+      dev-tools:
+        dependency-type: development
+      app:
+        dependency-type: production
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Manila

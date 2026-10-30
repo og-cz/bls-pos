@@ -1,3 +1,7 @@
 allowBuilds:
   esbuild: true
   workerd: true
+
+# Dev tooling only (miniflare): patched for GHSA-qrxm-fqhp-jwvm and related advisories.
+overrides:
+  undici: ^7.30.1

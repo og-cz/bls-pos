@@ -73,7 +73,8 @@ Please do not open a public issue. Email the maintainer (see the GitHub profile 
 
 - [x] `.dev.vars` git-ignored
 - [ ] `PEPPER`, `TURNSTILE_SECRET`, `TOTP_ENC_KEY` via `wrangler secret put` only
-- [ ] GitHub secret scanning + Dependabot enabled
+- [x] Dependabot updates (`.github/dependabot.yml`) and a CI dependency audit (`pnpm audit --audit-level high`)
+- [ ] Owner: turn on **Settings → Code security → Secret scanning** and **Push protection** in GitHub (a repository setting, not a file)
 
 ### 7.11 Two-factor authentication
 
