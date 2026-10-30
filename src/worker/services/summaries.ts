@@ -6,6 +6,18 @@ import type { Db } from '../db/client';
 import { shops } from '../db/schema';
 
 /**
+ * The four summary numbers for a set of sales `s`: completed count, completed total, voided
+ * total and the cost of what was sold (cost recorded on each sale line at the time).
+ */
+export const SUMMARY_COLUMNS = `
+  sum(s.status = 'completed') AS sales_count,
+  coalesce(sum(CASE WHEN s.status = 'completed' THEN s.total_cents END), 0) AS gross_cents,
+  coalesce(sum(CASE WHEN s.status = 'voided' THEN s.total_cents END), 0) AS voided_cents,
+  coalesce(sum(CASE WHEN s.status = 'completed' THEN
+    (SELECT coalesce(sum(coalesce(i.unit_cost_cents, 0) * i.quantity), 0)
+     FROM sale_items i WHERE i.sale_id = s.id) END), 0) AS cost_cents`;
+
+/**
  * SQL that (re)computes the summary of one local day for every shop matched by `scope`:
  * completed sales count and total, voided total, and the cost of what was sold. The work
  * runs inside D1, so it costs the Worker almost no CPU. Safe to run any number of times.
@@ -25,13 +37,7 @@ export function summaryStatement(
   return db.$client
     .prepare(
       `INSERT INTO daily_summaries (shop_id, day, sales_count, gross_cents, voided_cents, cost_cents)
-       SELECT s.shop_id, ?1,
-         sum(s.status = 'completed'),
-         coalesce(sum(CASE WHEN s.status = 'completed' THEN s.total_cents END), 0),
-         coalesce(sum(CASE WHEN s.status = 'voided' THEN s.total_cents END), 0),
-         coalesce(sum(CASE WHEN s.status = 'completed' THEN
-           (SELECT coalesce(sum(coalesce(i.unit_cost_cents, 0) * i.quantity), 0)
-            FROM sale_items i WHERE i.sale_id = s.id) END), 0)
+       SELECT s.shop_id, ?1, ${SUMMARY_COLUMNS}
        FROM sales s
        WHERE ${shopFilter} AND s.created_at >= ?2 AND s.created_at < ?3
        GROUP BY s.shop_id
