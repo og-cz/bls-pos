@@ -1,11 +1,14 @@
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, desc, eq, gt, isNull, ne } from 'drizzle-orm';
 
+import { deviceLabel } from '@shared/device';
 import type { Role } from '@shared/roles';
 
 import type { Db } from '../db/client';
 import { newId } from '../db/id';
 import { sessions, shops, users } from '../db/schema';
+import type { Actor } from '../lib/actor';
 import { newToken, sha256Hex } from '../security/tokens';
+import { auditInsert } from './audit';
 
 // Section 7.2.
 export const SESSION_ABSOLUTE_MS = 30 * 24 * 60 * 60 * 1000;
@@ -124,4 +127,101 @@ export async function revokeUserSessions(
     .where(
       and(eq(sessions.userId, userId), eq(sessions.shopId, shopId), isNull(sessions.revokedAt)),
     );
+}
+
+export type SessionInfo = {
+  id: string;
+  device: string;
+  createdAt: number;
+  lastSeenAt: number;
+  current: boolean;
+};
+
+/** Where this person is signed in right now (Section 7.2), newest activity first. */
+export async function listMySessions(
+  db: Db,
+  shopId: string,
+  actor: Actor,
+  currentSessionId: string,
+  now: number = Date.now(),
+): Promise<SessionInfo[]> {
+  const rows = await db
+    .select({
+      id: sessions.id,
+      userAgent: sessions.userAgent,
+      createdAt: sessions.createdAt,
+      lastSeenAt: sessions.lastSeenAt,
+    })
+    .from(sessions)
+    .where(
+      and(
+        eq(sessions.userId, actor.userId),
+        eq(sessions.shopId, shopId),
+        isNull(sessions.revokedAt),
+        gt(sessions.expiresAt, now),
+      ),
+    )
+    .orderBy(desc(sessions.lastSeenAt));
+  return rows.map((r) => ({
+    id: r.id,
+    device: deviceLabel(r.userAgent),
+    createdAt: r.createdAt,
+    lastSeenAt: r.lastSeenAt,
+    current: r.id === currentSessionId,
+  }));
+}
+
+/** Logs out one of this person's own devices. */
+export async function revokeMySession(
+  db: Db,
+  shopId: string,
+  actor: Actor,
+  sessionId: string,
+  now: number = Date.now(),
+): Promise<void> {
+  await db
+    .update(sessions)
+    .set({ revokedAt: now })
+    .where(
+      and(
+        eq(sessions.id, sessionId),
+        eq(sessions.userId, actor.userId),
+        eq(sessions.shopId, shopId),
+        isNull(sessions.revokedAt),
+      ),
+    );
+}
+
+/** "Log out all other devices": everything but the one asking. Logged. */
+export async function revokeMyOtherSessions(
+  db: Db,
+  shopId: string,
+  actor: Actor,
+  currentSessionId: string,
+  now: number = Date.now(),
+): Promise<void> {
+  await db.batch([
+    db
+      .update(sessions)
+      .set({ revokedAt: now })
+      .where(
+        and(
+          eq(sessions.userId, actor.userId),
+          eq(sessions.shopId, shopId),
+          ne(sessions.id, currentSessionId),
+          isNull(sessions.revokedAt),
+        ),
+      ),
+    auditInsert(
+      db,
+      shopId,
+      {
+        action: 'sessions.revoke',
+        userId: actor.userId,
+        target: { type: 'user', id: actor.userId },
+        ipHash: actor.ipHash,
+      },
+      now,
+    ),
+  ]);
 }

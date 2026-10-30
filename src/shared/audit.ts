@@ -27,6 +27,7 @@ export const AUDIT_ACTIONS = [
   'recovery.regenerate',
   '2fa.enable',
   '2fa.disable',
+  'sessions.revoke',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

@@ -17,6 +17,7 @@ import { requireRole } from '../middleware/role';
 import { authed } from '../middleware/tenant';
 import { avatarUrlOf, removeAvatar, updateProfile } from '../services/profile';
 import { recoveryCodesLeft, regenerateRecoveryCodes } from '../services/recovery';
+import { listMySessions, revokeMyOtherSessions, revokeMySession } from '../services/sessions';
 import {
   disableTwoFactor,
   enableTwoFactor,
@@ -138,4 +139,30 @@ meRoutes.post('/2fa/disable', async (c) => {
     input,
   );
   return c.json({ enabled: false });
+});
+
+// Where you are signed in (Section 7.2): list, log out one, log out all the others.
+meRoutes.get('/sessions', async (c) => {
+  const list = await listMySessions(
+    getDb(c.env.DB),
+    c.var.shopId,
+    await actorOf(c),
+    c.var.auth.sessionId,
+  );
+  return c.json({ sessions: list });
+});
+
+meRoutes.delete('/sessions/:id', async (c) => {
+  await revokeMySession(getDb(c.env.DB), c.var.shopId, await actorOf(c), c.req.param('id'));
+  return c.json({ ok: true });
+});
+
+meRoutes.post('/sessions/revoke-others', async (c) => {
+  await revokeMyOtherSessions(
+    getDb(c.env.DB),
+    c.var.shopId,
+    await actorOf(c),
+    c.var.auth.sessionId,
+  );
+  return c.json({ ok: true });
 });

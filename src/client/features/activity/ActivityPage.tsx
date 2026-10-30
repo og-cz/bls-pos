@@ -7,6 +7,7 @@ import {
   Download,
   KeyRound,
   Lock,
+  LogOut,
   LogIn,
   Package,
   PackageMinus,
@@ -62,6 +63,7 @@ const ACTIONS: Record<AuditAction, { icon: LucideIcon; text: string; warn?: bool
   'recovery.regenerate': { icon: KeyRound, text: 'made new recovery codes' },
   '2fa.enable': { icon: ShieldCheck, text: 'turned on two-step login' },
   '2fa.disable': { icon: ShieldAlert, text: 'turned off two-step login', warn: true },
+  'sessions.revoke': { icon: LogOut, text: 'logged out their other devices' },
 };
 
 const timeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
