@@ -14,6 +14,7 @@ import {
 } from '@shared/import';
 import { checkRows, type CheckedRow } from '@shared/import-validate';
 
+import { BulkPhotos } from './BulkPhotos';
 import { ImportReview } from './ImportReview';
 import { ImportRunner } from './ImportRunner';
 import { useImportWorker } from './use-import-worker';
@@ -191,6 +192,15 @@ export function ImportPage() {
             <ImportRunner key={loads} rows={checked} />
           </section>
         ) : null}
+
+        <section className="space-y-3 rounded-xl border bg-card p-5">
+          <h2 className="font-semibold">Add photos in bulk</h2>
+          <p className="text-sm text-muted-foreground">
+            Name each photo after the product&apos;s SKU. Photos are cropped to the usual shape,
+            made smaller on this device, and uploaded in the background.
+          </p>
+          <BulkPhotos />
+        </section>
       </div>
     </>
   );

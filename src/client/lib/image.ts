@@ -81,8 +81,13 @@ async function encodeUnder(canvas: HTMLCanvasElement, type: string, maxBytes: nu
  * A product photo in two sizes, same format: `full` for the tap-to-view screen (up to
  * 1600 px, about 200 KB at most) and `thumb` for lists (320 px, about 15–25 KB).
  */
-export async function prepareProductPhoto(file: Blob): Promise<{ full: Blob; thumb: Blob }> {
-  const bitmap = await readImage(file);
+export async function prepareProductPhoto(
+  file: Blob,
+  options: { cropAspect?: number } = {},
+): Promise<{ full: Blob; thumb: Blob }> {
+  const original = await readImage(file);
+  // Bulk uploads skip the editor, so they are centre-cropped to the same shape here.
+  const bitmap = options.cropAspect ? await centerCrop(original, options.cropAspect) : original;
   try {
     const type = (await canWriteWebp()) ? 'image/webp' : 'image/jpeg';
     let fullCanvas = scaleTo(bitmap, MAX_EDGE.product);
@@ -100,7 +105,21 @@ export async function prepareProductPhoto(file: Blob): Promise<{ full: Blob; thu
     return { full, thumb };
   } finally {
     bitmap.close();
+    original.close();
   }
+}
+
+/** The largest centred area of the given width:height shape. */
+async function centerCrop(source: ImageBitmap, aspect: number): Promise<ImageBitmap> {
+  const w = Math.min(source.width, source.height * aspect);
+  const h = w / aspect;
+  return createImageBitmap(
+    source,
+    Math.round((source.width - w) / 2),
+    Math.round((source.height - h) / 2),
+    Math.round(w),
+    Math.round(h),
+  );
 }
 
 /** Logos, covers and avatars: one size, WebP (or JPEG). */

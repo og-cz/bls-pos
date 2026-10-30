@@ -143,3 +143,43 @@ export function rowsFromGrid(grid: readonly (readonly unknown[])[]): ParseResult
     truncated: rows.length > MAX_IMPORT_ROWS,
   };
 }
+
+/** "NGK-CR7.jpg" → "NGK-CR7"; also drops copy suffixes like "NGK-CR7 (1).jpg". */
+export function skuFromFileName(fileName: string): string {
+  return fileName
+    .replace(/\.[a-z0-9]+$/i, '')
+    .replace(/\s*\(\d+\)$/, '')
+    .trim();
+}
+
+export type PhotoMatch<T> = { file: T; sku: string; productId: string | null };
+
+/**
+ * Pairs photo files with products by SKU, ignoring case (bulk photo upload). Files with
+ * no matching product get productId null; when two files name the same SKU, the first wins.
+ */
+export function matchPhotosToSkus<T extends { name: string }>(
+  files: readonly T[],
+  products: readonly { id: string; sku: string | null }[],
+): { matched: PhotoMatch<T>[]; unmatched: PhotoMatch<T>[]; duplicates: T[] } {
+  const bySku = new Map<string, string>();
+  for (const p of products) if (p.sku) bySku.set(p.sku.toUpperCase(), p.id);
+  const seen = new Set<string>();
+  const matched: PhotoMatch<T>[] = [];
+  const unmatched: PhotoMatch<T>[] = [];
+  const duplicates: T[] = [];
+  for (const file of files) {
+    const sku = skuFromFileName(file.name);
+    const key = sku.toUpperCase();
+    const productId = bySku.get(key) ?? null;
+    if (!productId) {
+      unmatched.push({ file, sku, productId: null });
+    } else if (seen.has(key)) {
+      duplicates.push(file);
+    } else {
+      seen.add(key);
+      matched.push({ file, sku, productId });
+    }
+  }
+  return { matched, unmatched, duplicates };
+}
