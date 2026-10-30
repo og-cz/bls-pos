@@ -15,7 +15,7 @@ export default tseslint.config(
       ecmaVersion: 2023,
       globals: { ...globals.es2023 },
       parserOptions: {
-        projectService: { allowDefaultProject: ['*.js'] },
+        projectService: { allowDefaultProject: ['*.js', 'scripts/*.mjs'] },
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -45,8 +45,11 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.js'],
+    files: ['**/*.js', 'scripts/**/*.mjs'],
     ...tseslint.configs.disableTypeChecked,
   },
+  // The service worker runs in its own global scope; scripts run in Node.
+  { files: ['public/sw.js'], languageOptions: { globals: { ...globals.serviceworker } } },
+  { files: ['scripts/**/*.mjs'], languageOptions: { globals: { ...globals.node } } },
   prettier,
 );

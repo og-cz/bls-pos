@@ -11,6 +11,14 @@ applyPreferences();
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing #root element');
 
+// Installable app and offline start-up (Section 10). Not in development, where it would
+// serve stale files while editing.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    void navigator.serviceWorker.register('/sw.js');
+  });
+}
+
 createRoot(root).render(
   <StrictMode>
     <App />
