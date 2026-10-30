@@ -161,14 +161,21 @@ function MenuDrawer({
           </div>
           <nav aria-label="Menu" className="flex-1 space-y-1 overflow-y-auto p-3">
             <NavLinks
-              items={items}
+              items={items.filter((i) => !i.bottom)}
               pathname={pathname}
               onNavigate={() => {
                 onOpenChange(false);
               }}
             />
           </nav>
-          <div className="border-t p-3">
+          <div className="space-y-1 border-t p-3">
+            <NavLinks
+              items={items.filter((i) => i.bottom)}
+              pathname={pathname}
+              onNavigate={() => {
+                onOpenChange(false);
+              }}
+            />
             <button
               type="button"
               onClick={() => void logout()}
@@ -185,9 +192,10 @@ function MenuDrawer({
 }
 
 /**
- * Signed-in layout (Section 6.1): a side menu on tablets and PCs, a bottom tab bar on
- * phones, and a hamburger button that collapses the side menu (PC) or opens the full menu
- * (phone). Menu items follow the user's role; the server enforces the same rules.
+ * Signed-in layout (Section 6.1): a side menu on tablets and PCs (its hamburger button
+ * collapses it to icons; Settings sits at the bottom below a divider), and on phones a
+ * bottom tab bar plus a hamburger in the header that opens the full menu. Menu items
+ * follow the user's role; the server enforces the same rules.
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const { user, shop } = useMe();
@@ -196,17 +204,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const items = navFor(user.role);
   const tabs = items.filter((i) => i.tab);
-  const menuOnly = items.filter((i) => !i.tab);
+  const menuOnly = items.filter((i) => !i.tab && !i.bottom);
   const collapsed = prefs.menuCollapsed;
   const right = prefs.menuSide === 'right';
 
-  function toggleMenu() {
-    if (window.matchMedia('(min-width: 768px)').matches) {
-      setPreferences({ menuCollapsed: !collapsed });
-    } else {
-      setDrawerOpen(true);
-    }
-  }
+  const mainItems = items.filter((i) => !i.bottom);
+  const bottomItems = items.filter((i) => i.bottom);
 
   return (
     <div
@@ -228,24 +231,54 @@ export function AppShell({ children }: { children: ReactNode }) {
           right ? 'order-2 border-l' : 'border-r',
         )}
       >
-        <div className={cn('flex items-center gap-2 py-5', collapsed ? 'justify-center' : 'px-5')}>
-          <BrandLogo decorative className="size-8" />
-          {collapsed ? null : <span className="font-semibold tracking-tight">{APP_NAME}</span>}
+        <div
+          className={cn(
+            'flex h-16 items-center gap-2',
+            collapsed ? 'justify-center' : 'justify-between pr-2 pl-5',
+          )}
+        >
+          {/* Logo and name on the left, the hamburger at the right end. */}
+          {collapsed ? null : (
+            <div className="flex min-w-0 items-center gap-2">
+              <BrandLogo decorative className="size-7" />
+              <span className="truncate font-semibold tracking-tight">{APP_NAME}</span>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              setPreferences({ menuCollapsed: !collapsed });
+            }}
+            aria-label={collapsed ? 'Show menu names' : 'Show icons only'}
+            aria-expanded={!collapsed}
+            className="flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+          >
+            <Menu className="size-5" aria-hidden="true" />
+          </button>
         </div>
-        <nav aria-label="Main" className={cn('flex-1 space-y-1', collapsed ? 'px-2' : 'px-3')}>
-          <NavLinks items={items} pathname={pathname} collapsed={collapsed} />
+        <nav
+          aria-label="Main"
+          className={cn('flex-1 space-y-1 overflow-y-auto', collapsed ? 'px-2' : 'px-3')}
+        >
+          <NavLinks items={mainItems} pathname={pathname} collapsed={collapsed} />
         </nav>
+        <div className={cn('space-y-1 border-t py-3', collapsed ? 'px-2' : 'px-3')}>
+          <NavLinks items={bottomItems} pathname={pathname} collapsed={collapsed} />
+        </div>
       </aside>
 
       <div className="flex min-w-0 flex-col">
         <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b bg-background/95 px-4 backdrop-blur md:h-16 md:px-6">
           <div className="flex min-w-0 items-center gap-2">
+            {/* Phones only: PCs and tablets have the button in the side menu. */}
             <button
               type="button"
-              onClick={toggleMenu}
+              onClick={() => {
+                setDrawerOpen(true);
+              }}
               aria-label="Menu"
-              aria-expanded={drawerOpen || undefined}
-              className="-ml-2 flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              aria-expanded={drawerOpen}
+              className="-ml-2 flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 md:hidden"
             >
               <Menu className="size-5" aria-hidden="true" />
             </button>

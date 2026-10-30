@@ -22,6 +22,8 @@ export type NavItem = {
   tab: boolean;
   /** A screen reached from another screen, not listed in any menu. */
   hidden?: true;
+  /** Listed at the bottom of the menu, below a divider (e.g. Settings). */
+  bottom?: true;
 };
 
 export const NAV: NavItem[] = [
@@ -31,7 +33,14 @@ export const NAV: NavItem[] = [
   { href: '/products', label: 'Products', icon: Package, minRole: 'admin', tab: true },
   { href: '/staff', label: 'Staff', icon: Users, minRole: 'admin', tab: true },
   { href: '/activity', label: 'Activity', icon: ScrollText, minRole: 'admin', tab: false },
-  { href: '/settings', label: 'Settings', icon: Settings, minRole: 'staff', tab: false },
+  {
+    href: '/settings',
+    label: 'Settings',
+    icon: Settings,
+    minRole: 'staff',
+    tab: false,
+    bottom: true,
+  },
   {
     href: '/products/import',
     label: 'Import products',
