@@ -9,10 +9,10 @@ For any AI assistant (or person) picking up **bls POS** (formerly POS Fast / Bil
   (the local `origin` still points at the old `fast-pos` URL; GitHub redirects).
 - **Plan:** `docs/MASTER_PROMPT.md` (original name "POS Fast" = Bilis POS). Follow it
   phase by phase, one Conventional Commit per planned item.
-- **Status:** Phases 0–3 and 3.5 done and pushed (see `docs/PROGRESS.md`). **Next: Phase 4
-  (Selling)**, starting with `feat(db): add sales and sale_items schema with stock CHECK
-constraint`. Before the sell screen, split client code by route: the main bundle is
-  ~166 KB gzipped against the 200 KB budget.
+- **Status:** Phases 0–4 (and 3.5) done and pushed (see `docs/PROGRESS.md`). **Next: Phase 5
+  (Dashboard and reports)**, starting with `feat(reports): add daily summary cron in shop
+timezone`. Not deployed yet: the owner chose to keep building first (Cloudflare account
+  on this PC: audioguyyy@gmail.com; a Turnstile widget is needed before deploying).
 - **Security tests:** `tests/api/security.test.ts` lists every API route with its
   minimum role. Add new routes there, or CI fails.
 - **Brand:** name **bls POS** (no tagline, no "(bilis)" — owner's call), accent **Bilis Blue `#1E6FD9`**

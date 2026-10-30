@@ -172,3 +172,33 @@ menu; Free product limit raised to 5,000; the app is written "bls POS".
   writes shared by every shop on the deployment.
 - Backups leave out staff accounts on purpose.
 - Live camera capture is untested on a real device so far.
+
+## Phase 4 — Selling (2026-10-30)
+
+**Demo:** log in (staff land on **Sell**).
+
+1. Tap photo tiles to add (one tap = one); search by name or SKU, or use category chips.
+   A USB/Bluetooth barcode scanner works from anywhere on the screen; Enter in the
+   search box adds the exact SKU or the only match.
+2. The cart sits beside the grid on PC/tablet and opens from a bar on phones; − / +,
+   remove, clear. Items can't exceed stock.
+3. **Charge ₱X** → Cash (quick amounts: Exact, next round amount, ₱500, ₱1,000; keypad;
+   large change) or Other (manual, with a reference like a GCash number).
+4. **Complete sale** → change in large type and the receipt (shop, number, date,
+   cashier, lines, totals, payment, "not an official receipt or invoice"), with **Print**
+   (receipt only, 58/80 mm or A4) and **New sale**.
+5. Admins can void a sale with a reason (`POST /sales/:id/void`); the screen for it comes
+   with the dashboard in Phase 5.
+
+**Proven by tests (290):** prices only from the database (client prices, totals or shop
+refused); one D1 batch per sale; overselling refused with the product named and nothing
+left behind (no sale, movement or number used); two tills on the last item → one sale;
+five tills at once → numbers 1–5, no gaps; the same idempotency key (retry, or three
+copies at once) → one sale, stock taken once; voids restock exactly once, even two at
+once, and the item can be sold again; receipts keep the price paid after a price change
+and never show cost; deactivated cashiers can't sell.
+
+**Notes:** each screen is now its own download (main bundle 100 KB gzipped, was 166 KB).
+Payment methods go through `PaymentAdapter` (cash, other_manual) so Paid methods plug in
+later. The receipt's "not an official receipt or invoice" wording is a placeholder for a
+tax professional to confirm (Section 7.16).
