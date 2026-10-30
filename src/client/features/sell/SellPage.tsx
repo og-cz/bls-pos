@@ -267,6 +267,13 @@ export function SellPage() {
               autoComplete="off"
             />
           </div>
+          {catalog.offlineSince !== null ? (
+            <p role="status" className="rounded-md bg-amber-500/10 px-3 py-1.5 text-sm">
+              Offline. Prices and stock as of{' '}
+              {new Date(catalog.offlineSince).toLocaleTimeString([], { timeStyle: 'short' })}; sales
+              are saved and sent later.
+            </p>
+          ) : null}
           {notice ? (
             <p
               role="status"

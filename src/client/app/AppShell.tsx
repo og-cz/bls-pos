@@ -4,6 +4,7 @@ import { ChevronDown, LogOut, Menu, X } from 'lucide-react';
 
 import { Avatar } from '@/components/avatar';
 import { BrandLogo } from '@/components/brand-logo';
+import { ConnectionStatus } from '@/components/connection-status';
 import { Link } from '@/components/link';
 import { setPreferences, usePreferences } from '@/lib/preferences';
 import { usePathname } from '@/lib/router';
@@ -356,7 +357,10 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
             </div>
           </div>
-          <AccountMenu extra={menuOnly} bottom={items.filter((i) => i.bottom)} />
+          <div className="flex shrink-0 items-center gap-2">
+            <ConnectionStatus />
+            <AccountMenu extra={menuOnly} bottom={items.filter((i) => i.bottom)} />
+          </div>
         </header>
 
         {/* Bottom padding keeps content clear of the phone tab bar. */}
