@@ -5,21 +5,39 @@ import { PageHeader } from '@/components/empty-state';
 import { FormAlert } from '@/components/field';
 import { Link } from '@/components/link';
 import { Button } from '@/components/ui/button';
-import { COLUMN_HELP, IMPORT_COLUMNS, MAX_IMPORT_ROWS, type ParseResult } from '@shared/import';
+import {
+  COLUMN_HELP,
+  IMPORT_COLUMNS,
+  MAX_IMPORT_ROWS,
+  type ImportColumn,
+  type ParseResult,
+} from '@shared/import';
+import { checkRows, type CheckedRow } from '@shared/import-validate';
 
+import { ImportReview } from './ImportReview';
 import { useImportWorker } from './use-import-worker';
-
-const PREVIEW_ROWS = 20;
 
 /** Bulk product import, step 1: get the rows in (Phase 3.5). */
 export function ImportPage() {
   const { parse, downloadTemplate } = useImportWorker();
   const [result, setResult] = useState<ParseResult | null>(null);
+  const [checked, setChecked] = useState<CheckedRow[]>([]);
+  // Each file gets a fresh review (filters and page reset).
+  const [loads, setLoads] = useState(0);
   const [source, setSource] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [pasting, setPasting] = useState(false);
   const [pasted, setPasted] = useState('');
+
+  /** A fixed cell is checked again with the whole file (a SKU may now clash or not). */
+  function editCell(line: number, column: ImportColumn, value: string) {
+    setChecked((rows) =>
+      checkRows(
+        rows.map((r) => (r.line === line ? { line, values: { ...r.values, [column]: value } } : r)),
+      ),
+    );
+  }
 
   async function load(input: File | string, label: string) {
     setError(null);
@@ -27,6 +45,8 @@ export function ImportPage() {
     try {
       const parsed = await parse(input);
       setResult(parsed);
+      setChecked(checkRows(parsed.rows));
+      setLoads((n) => n + 1);
       setSource(label);
       setPasting(false);
     } catch (err) {
@@ -154,40 +174,8 @@ export function ImportPage() {
               Columns found: {result.columns.join(', ') || 'none'}
               {result.ignored.length ? ` · Ignored: ${result.ignored.join(', ')}` : ''}
             </p>
-            {result.rows.length ? (
-              <div className="overflow-x-auto rounded-lg border">
-                <table className="w-full text-sm">
-                  <thead className="bg-muted/50 text-left text-muted-foreground">
-                    <tr>
-                      <th scope="col" className="px-3 py-2 font-medium">
-                        Row
-                      </th>
-                      {result.columns.map((c) => (
-                        <th key={c} scope="col" className="px-3 py-2 font-medium whitespace-nowrap">
-                          {c}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {result.rows.slice(0, PREVIEW_ROWS).map((r) => (
-                      <tr key={r.line}>
-                        <td className="px-3 py-2 text-muted-foreground tabular">{r.line}</td>
-                        {result.columns.map((c) => (
-                          <td key={c} className="px-3 py-2 whitespace-nowrap">
-                            {r.values[c]}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : null}
-            {result.rows.length > PREVIEW_ROWS ? (
-              <p className="text-sm text-muted-foreground">
-                Showing the first {PREVIEW_ROWS} of {result.rows.length.toLocaleString()} rows.
-              </p>
+            {result.missing.length === 0 && checked.length ? (
+              <ImportReview key={loads} rows={checked} columns={result.columns} onEdit={editCell} />
             ) : null}
           </section>
         ) : null}
