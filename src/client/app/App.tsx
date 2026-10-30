@@ -36,6 +36,7 @@ const ShopPageSettings = page(
   () => import('@/features/storefront/ShopPageSettings'),
   'ShopPageSettings',
 );
+const HelpPage = page(() => import('@/features/help/HelpPage'), 'HelpPage');
 const SetupWizard = page(() => import('@/features/setup/SetupWizard'), 'SetupWizard');
 const ProfilePage = page(() => import('@/features/profile/ProfilePage'), 'ProfilePage');
 const BrandingPage = page(() => import('@/features/branding/BrandingPage'), 'BrandingPage');
@@ -66,6 +67,7 @@ const SIGNED_IN: Record<string, Page> = {
   '/settings': SettingsPage,
   '/branding': BrandingPage,
   '/profile': ProfilePage,
+  '/help': HelpPage,
   '/shop-page': ShopPageSettings,
 };
 

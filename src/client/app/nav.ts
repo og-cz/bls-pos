@@ -2,6 +2,7 @@ import {
   Boxes,
   Globe,
   LayoutDashboard,
+  LifeBuoy,
   Package,
   Palette,
   ReceiptText,
@@ -117,6 +118,7 @@ export const NAV: NavItem[] = [
     tab: false,
     group: 'shop',
   },
+  { href: '/help', label: 'Help', icon: LifeBuoy, minRole: 'staff', tab: false, bottom: true },
   {
     href: '/settings',
     label: 'Settings',
