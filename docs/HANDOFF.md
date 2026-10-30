@@ -1,17 +1,18 @@
 # Handoff — read this first
 
-For any AI assistant (or person) picking up **bls POS** (formerly POS Fast / Bilis POS). Updated 2026-10-29.
+For any AI assistant (or person) picking up **bls POS** (formerly POS Fast / Bilis POS). Updated 2026-10-30.
 
 ## Where things are
 
 - **Repo:** `C:\Users\ogrla\Desktop\fast-pos` (folder still has the old name) → GitHub
   `og-cz/bilis-pos`. Push with `git push https://github.com/og-cz/bilis-pos.git main`
-  (the local `origin` still points at the old `fast-pos` URL; GitHub redirects).
+  (the local `origin` still points at the old `fast-pos` URL; GitHub redirects). GitHub
+  now reports the repo moved to `og-cz/bls-pos`; the URL above still works through the
+  redirect, so switch only when the owner says so.
 - **Plan:** `docs/MASTER_PROMPT.md` (original name "POS Fast" = Bilis POS). Follow it
   phase by phase, one Conventional Commit per planned item.
-- **Status:** Phases 0–4 (and 3.5) done and pushed (see `docs/PROGRESS.md`). **Next: Phase 5
-  (Dashboard and reports)**, starting with `feat(reports): add daily summary cron in shop
-timezone`. Not deployed yet: the owner chose to keep building first (Cloudflare account
+- **Status:** Phases 0–5 (and 3.5) done and pushed (see `docs/PROGRESS.md`). **Next: Phase 6
+  (Branding and storefront).** Not deployed yet: the owner chose to keep building first (Cloudflare account
   on this PC: audioguyyy@gmail.com; a Turnstile widget is needed before deploying).
 - **Security tests:** `tests/api/security.test.ts` lists every API route with its
   minimum role. Add new routes there, or CI fails.

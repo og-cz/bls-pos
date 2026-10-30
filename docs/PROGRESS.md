@@ -202,3 +202,40 @@ and never show cost; deactivated cashiers can't sell.
 Payment methods go through `PaymentAdapter` (cash, other_manual) so Paid methods plug in
 later. The receipt's "not an official receipt or invoice" wording is a placeholder for a
 tax professional to confirm (Section 7.16).
+
+## Phase 5 — Dashboard and reports (2026-10-30)
+
+**Demo:** log in as the owner or an admin (you land on the **Dashboard**).
+
+1. **Dashboard:** a stock alert (links to Inventory), then today's sales, transactions,
+   average sale and gross profit, each with yesterday's figure. Below: sales per day for
+   7 or 30 days (hover or tap a bar; **Show as table** for exact numbers), top 5
+   products with photos, and sales by staff (deactivated people still listed).
+2. **Sales** (menu): pick From/To days, open any sale to reprint or **Void** it with a
+   reason, **Export CSV** (logged in Activity; spreadsheet formulas are neutralised).
+   Staff see **My sales today**: only their own sales for their shift.
+3. **Daily close** (Sales, one day picked): the Z-reading — sale number range, completed
+   sales by payment method, voids, total — with **Print**. **Close day** saves it for
+   good: after that the day's sales can't be voided, and if it's today, no more sales
+   can be rung up until midnight.
+
+**How it works:** days are counted in the shop's timezone (Asia/Manila by default, any
+IANA zone including DST). A Cron Trigger at 00:10 Manila (`10 16 * * *` UTC) writes
+`daily_summaries` for yesterday and the day before; reports read those for older days
+and count today, yesterday and any missed day straight from the sales (one query, each
+day's window passed as JSON). A void refreshes its day's summary at once. The dashboard
+is one request of about 8 queries. Daily closings are locked by database triggers
+(migration 0007): no new sales or voids inside a closed day, and no edits or deletes of
+a closing — even with direct SQL.
+
+**Proven by tests (315):** Manila day boundary at 16:00 UTC; another timezone gets its
+own days; the nightly run is repeatable; voids update an old day at once; income by
+day, Monday-start week and month with empty periods kept; stored, live and missed days
+add up exactly; top products skip voided sales; cashier totals include voids;
+staff can't see others' sales or other days; paging; Z-reading totals, payment
+breakdown and number range; closed day refuses voids, second close, new sales and SQL
+edits; only admins close, never a future day; every report is tenant-scoped and
+admin-only.
+
+**Notes:** reports are admin-only because they show cost and profit. The chart is plain
+HTML/CSS (no chart library; the dashboard screen is 4 KB gzipped).

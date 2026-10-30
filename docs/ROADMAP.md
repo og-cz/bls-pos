@@ -16,7 +16,7 @@
 | 3     | Products and inventory                                          | Done                                                 |
 | 3.5   | Bulk import, export and backup                                  | Done                                                 |
 | 4     | Selling                                                         | Done                                                 |
-| 5     | Dashboard and reports                                           | Not started                                          |
+| 5     | Dashboard and reports                                           | Done                                                 |
 | 6     | Branding and storefront                                         | Not started                                          |
 | 7     | Onboarding and help                                             | Not started                                          |
 | 8     | PWA and offline                                                 | Not started                                          |
