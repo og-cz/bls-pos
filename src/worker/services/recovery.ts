@@ -4,9 +4,11 @@ import type { RecoverInput } from '@shared/schemas/auth';
 
 import type { Db } from '../db/client';
 import { recoveryCodes, sessions, shops, users } from '../db/schema';
+import { newId } from '../db/id';
+import type { Actor } from '../lib/actor';
 import { ApiError } from '../lib/errors';
 import { hashPassword } from '../security/password';
-import { hashRecoveryCode } from '../security/recovery-codes';
+import { hashRecoveryCode, newRecoveryCode, RECOVERY_CODE_COUNT } from '../security/recovery-codes';
 import { TooManyAttemptsError } from './login';
 import {
   attemptKeys,
@@ -122,4 +124,66 @@ export async function recoverAccount(
     .get();
 
   return { userId: owner.id, shopId: owner.shopId, remainingCodes: remaining?.n ?? 0 };
+}
+
+function ownerOnly(actor: Actor) {
+  if (actor.role !== 'owner') {
+    throw new ApiError(403, 'FORBIDDEN', 'Only the owner has recovery codes.');
+  }
+}
+
+/** How many of the owner's recovery codes are still unused. */
+export async function recoveryCodesLeft(db: Db, shopId: string, actor: Actor): Promise<number> {
+  ownerOnly(actor);
+  const row = await db
+    .select({ n: count() })
+    .from(recoveryCodes)
+    .innerJoin(users, eq(users.id, recoveryCodes.userId))
+    .where(
+      and(
+        eq(recoveryCodes.userId, actor.userId),
+        eq(users.shopId, shopId),
+        isNull(recoveryCodes.usedAt),
+      ),
+    )
+    .get();
+  return row?.n ?? 0;
+}
+
+/**
+ * A fresh set of recovery codes for the owner (Section 7.12), e.g. when the old ones were
+ * lost or used up. The old codes stop working at once. Shown once; only hashes are kept.
+ */
+export async function regenerateRecoveryCodes(
+  db: Db,
+  shopId: string,
+  actor: Actor,
+  pepper: string,
+  now: number = Date.now(),
+): Promise<string[]> {
+  ownerOnly(actor);
+  const codes = Array.from({ length: RECOVERY_CODE_COUNT }, newRecoveryCode);
+  const rows = await Promise.all(
+    codes.map(async (code) => ({
+      id: newId(now),
+      userId: actor.userId,
+      codeHash: await hashRecoveryCode(code, pepper),
+    })),
+  );
+  await db.batch([
+    db.delete(recoveryCodes).where(eq(recoveryCodes.userId, actor.userId)),
+    db.insert(recoveryCodes).values(rows),
+    auditInsert(
+      db,
+      shopId,
+      {
+        action: 'recovery.regenerate',
+        userId: actor.userId,
+        target: { type: 'user', id: actor.userId },
+        ipHash: actor.ipHash,
+      },
+      now,
+    ),
+  ]);
+  return codes;
 }

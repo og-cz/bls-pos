@@ -16,6 +16,8 @@ const ROUTES: Record<string, Access> = {
   'POST /api/v1/auth/recover': 'public',
   'POST /api/v1/auth/logout': 'staff',
   'PATCH /api/v1/me': 'staff',
+  'GET /api/v1/me/recovery-codes': 'owner',
+  'POST /api/v1/me/recovery-codes': 'owner',
   'DELETE /api/v1/me/avatar': 'staff',
   'GET /api/v1/me': 'staff',
   'GET /api/v1/staff': 'admin',

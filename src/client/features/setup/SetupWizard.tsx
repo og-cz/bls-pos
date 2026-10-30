@@ -9,8 +9,12 @@ import { apiPatch } from '@/lib/api';
 import { navigate } from '@/lib/router';
 import { SETUP_FINISHED, SETUP_STEPS } from '@shared/onboarding';
 
+import { DoneStep } from './DoneStep';
 import { LookStep } from './LookStep';
-import { StepLayout, type StepProps } from './StepLayout';
+import { ProductsStep } from './ProductsStep';
+import { SecurityStep } from './SecurityStep';
+import type { StepProps } from './StepLayout';
+import { TeamStep } from './TeamStep';
 import { WelcomeStep } from './WelcomeStep';
 
 /**
@@ -24,10 +28,10 @@ export function SetupWizard() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function goTo(next: number) {
+  async function goTo(next: number, finishAt = '/') {
     await apiPatch('/shop/onboarding', { step: next });
     updateMe((me) => ({ ...me, shop: { ...me.shop, onboardingStep: next } }));
-    if (next >= SETUP_FINISHED) navigate('/', { replace: true });
+    if (next >= SETUP_FINISHED) navigate(finishAt, { replace: true });
     window.scrollTo(0, 0);
   }
 
@@ -84,18 +88,23 @@ export function SetupWizard() {
         ) : null}
         {current === 'welcome' ? <WelcomeStep {...props} /> : null}
         {current === 'look' ? <LookStep {...props} /> : null}
-        {current !== 'welcome' && current !== 'look' ? (
-          <StepLayout
-            title="Almost there"
-            description="The rest of setup is coming soon."
-            next={() => {
-              void goTo(SETUP_FINISHED);
-            }}
-            nextLabel="Go to my shop"
+        {current === 'products' ? <ProductsStep {...props} /> : null}
+        {current === 'team' ? <TeamStep {...props} /> : null}
+        {current === 'security' ? <SecurityStep {...props} /> : null}
+        {current === 'done' ? (
+          <DoneStep
             busy={busy}
-          >
-            {null}
-          </StepLayout>
+            onFinish={(path) => {
+              setBusy(true);
+              goTo(SETUP_FINISHED, path)
+                .catch((err: unknown) => {
+                  setError(err instanceof Error ? err.message : 'Something went wrong.');
+                })
+                .finally(() => {
+                  setBusy(false);
+                });
+            }}
+          />
         ) : null}
       </main>
     </div>

@@ -14,6 +14,7 @@ import { mediaUrl } from '../lib/media';
 import { parseJson } from '../lib/validate';
 import { authed } from '../middleware/tenant';
 import { avatarUrlOf, removeAvatar, updateProfile } from '../services/profile';
+import { recoveryCodesLeft, regenerateRecoveryCodes } from '../services/recovery';
 
 function parseStoredTheme(json: string) {
   try {
@@ -79,4 +80,20 @@ meRoutes.patch('/', async (c) => {
 meRoutes.delete('/avatar', async (c) => {
   await removeAvatar(getDb(c.env.DB), c.var.shopId, new R2Storage(c.env.MEDIA), await actorOf(c));
   return c.json({ ok: true });
+});
+
+// The owner's recovery codes (Section 7.12): how many are left, and a new set.
+meRoutes.get('/recovery-codes', async (c) => {
+  const left = await recoveryCodesLeft(getDb(c.env.DB), c.var.shopId, await actorOf(c));
+  return c.json({ remaining: left });
+});
+
+meRoutes.post('/recovery-codes', async (c) => {
+  const codes = await regenerateRecoveryCodes(
+    getDb(c.env.DB),
+    c.var.shopId,
+    await actorOf(c),
+    c.env.PEPPER,
+  );
+  return c.json({ codes }, 201);
 });

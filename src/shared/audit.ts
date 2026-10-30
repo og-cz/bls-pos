@@ -24,6 +24,7 @@ export const AUDIT_ACTIONS = [
   'day.close',
   'shop.theme',
   'shop.update',
+  'recovery.regenerate',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
