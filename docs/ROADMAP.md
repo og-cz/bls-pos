@@ -18,7 +18,7 @@
 | 4     | Selling                                                         | Done                                                 |
 | 5     | Dashboard and reports                                           | Done                                                 |
 | 6     | Branding and storefront                                         | Done                                                 |
-| 7     | Onboarding and help                                             | Not started                                          |
+| 7     | Onboarding and help                                             | Done                                                 |
 | 8     | PWA and offline                                                 | Not started                                          |
 | 9     | Security hardening                                              | Not started                                          |
 | 10    | Polish and launch                                               | Not started                                          |

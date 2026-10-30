@@ -276,3 +276,32 @@ same; another shop's page can't reach this shop's images; reserved shop codes re
 
 **Notes:** the cover's edge cache is a 60-second max-age rather than an explicit purge.
 Not checked on a real phone yet: camera crop for avatars, and the share sheet.
+
+## Phase 7 — Onboarding and help (2026-10-31)
+
+**Demo:** sign up a new shop. After saving the recovery codes you land in **setup**:
+
+1. **Welcome:** shop name and kind (a new kind brings its suggested colors).
+2. **Make it yours:** a preset, logo and cover photo (all skippable).
+3. **First products:** up to three quick rows (name, price, optional stock), or **Add
+   sample products** for your kind of shop. Remove samples later from Products.
+4. **Your team:** the shop code, a printable login card for staff, add staff inline.
+5. **Keep your shop safe:** confirm the recovery codes are saved (required), or make a
+   new set; the old codes stop working.
+6. **Ready:** "Make your first test sale" opens Sell.
+
+Setup resumes where it was left (`onboarding_step`); **Skip setup** is always there.
+Then a **guided tour** points at each part of the menu (owners/admins on the dashboard;
+staff on Sell: search, tap to add, cart and Charge, Deduct). **Help** (bottom of the
+menu and the account menu) has ten short articles, search, and "Take the tour again".
+`docs/DEPLOY.md` explains free self-hosting on Cloudflare step by step.
+
+**Proven by tests (351):** setup steps stay in range and only admins can move them;
+recovery codes: 10 new ones, the old ones refused, logged, owner only; samples follow
+the kind of shop, come once, and removal deletes unsold samples but archives sold ones
+(their sales intact) without touching real products.
+
+**Notes:** the tour's "seen" flag is kept per person on each device (localStorage), so
+it can show once more on a new phone. Two-step login (2FA) is mentioned in setup as
+coming later; it is not built yet. There is no staff password reset yet: the FAQ says to
+deactivate and re-add.
