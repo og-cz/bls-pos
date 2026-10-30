@@ -20,6 +20,7 @@ export const AUDIT_ACTIONS = [
   'stock.deduct',
   'data.export',
   'data.restore',
+  'sale.void',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

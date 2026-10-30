@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   Archive,
+  Ban,
   Download,
   ArchiveRestore,
   KeyRound,
@@ -51,6 +52,7 @@ const ACTIONS: Record<AuditAction, { icon: LucideIcon; text: string; warn?: bool
   'stock.deduct': { icon: PackageMinus, text: 'took out stock of' },
   'data.export': { icon: Download, text: 'exported' },
   'data.restore': { icon: ArchiveRestore, text: 'restored a backup' },
+  'sale.void': { icon: Ban, text: 'voided sale' },
 };
 
 const timeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
@@ -63,6 +65,12 @@ function describe(entry: AuditEntry): string {
     case 'staff.create':
     case 'staff.deactivate':
       return `${who} ${info.text} ${target}`.trim();
+    case 'sale.void': {
+      const d = entry.details ?? {};
+      const num = typeof d.number === 'number' ? `#${String(d.number)}` : '';
+      const why = typeof d.reason === 'string' ? ` (${d.reason})` : '';
+      return `${who} voided sale ${num}${why}`;
+    }
     case 'data.export': {
       const d = entry.details ?? {};
       const str = (v: unknown) => (typeof v === 'string' || typeof v === 'number' ? String(v) : '');

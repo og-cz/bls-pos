@@ -310,3 +310,91 @@ describe('idempotency', () => {
     expect(res.status).toBe(409);
   });
 });
+
+describe('POST /sales/:id/void', () => {
+  function voidSale(id: string, cookie: string, reason = 'Customer changed their mind') {
+    return postJson(`/sales/${id}/void`, { reason }, cookie);
+  }
+
+  it('voids with a reason, keeps the number, restocks tracked items and logs it', async () => {
+    const owner = await signUp();
+    const p = await createProductAs(owner.cookie, { priceCents: 1_000, stock: 5 });
+    const labor = await createProductAs(owner.cookie, { priceCents: 5_000, trackStock: false });
+    const { receipt } = await (
+      await sell(owner.cookie, {
+        items: [
+          { productId: p.id, quantity: 2 },
+          { productId: labor.id, quantity: 1 },
+        ],
+      })
+    ).json<{ receipt: Receipt }>();
+    expect(await stockOf(p.id)).toBe(3);
+
+    const res = await voidSale(receipt.id, owner.cookie);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({
+      receipt: {
+        number: receipt.number,
+        status: 'voided',
+        voidReason: 'Customer changed their mind',
+      },
+    });
+    expect(await stockOf(p.id)).toBe(5);
+    const moves = await env.DB.prepare(
+      "SELECT delta, sale_id FROM stock_movements WHERE product_id = ? AND reason = 'void'",
+    )
+      .bind(p.id)
+      .all();
+    expect(moves.results).toEqual([{ delta: 2, sale_id: receipt.id }]);
+    const audit = await env.DB.prepare(
+      "SELECT details_json FROM audit_log WHERE shop_id = ? AND action = 'sale.void'",
+    )
+      .bind(owner.shopId)
+      .all<{ details_json: string }>();
+    expect(audit.results).toHaveLength(1);
+    expect(JSON.parse(audit.results[0]?.details_json ?? '{}')).toMatchObject({ number: 1 });
+
+    // The next sale gets a new number; the voided one keeps #1.
+    const next = await sell(owner.cookie, { items: [{ productId: p.id, quantity: 1 }] });
+    expect((await next.json<{ receipt: Receipt }>()).receipt.number).toBe(2);
+  });
+
+  it('voiding twice, even at the same moment, restocks once', async () => {
+    const owner = await signUp();
+    const admin = await addMember(owner, 'admin');
+    const p = await createProductAs(owner.cookie, { priceCents: 1_000, stock: 5 });
+    const { receipt } = await (
+      await sell(owner.cookie, { items: [{ productId: p.id, quantity: 3 }] })
+    ).json<{ receipt: Receipt }>();
+    const results = await Promise.all([
+      voidSale(receipt.id, owner.cookie),
+      voidSale(receipt.id, admin.cookie),
+    ]);
+    expect(results.map((r) => r.status).sort()).toEqual([200, 409]);
+    expect(await stockOf(p.id)).toBe(5);
+    const again = await voidSale(receipt.id, owner.cookie);
+    expect(again.status).toBe(409);
+    expect(await again.json()).toMatchObject({ error: { code: 'ALREADY_VOIDED' } });
+    expect(await stockOf(p.id)).toBe(5);
+    const logged = await env.DB.prepare(
+      "SELECT COUNT(*) AS n FROM audit_log WHERE shop_id = ? AND action = 'sale.void'",
+    )
+      .bind(owner.shopId)
+      .first<{ n: number }>();
+    expect(logged?.n).toBe(1);
+  });
+
+  it('needs a reason, is for admins only, and never reaches another shop', async () => {
+    const owner = await signUp();
+    const staff = await addMember(owner, 'staff');
+    const p = await createProductAs(owner.cookie, { stock: 5 });
+    const { receipt } = await (
+      await sell(staff.cookie, { items: [{ productId: p.id, quantity: 1 }] })
+    ).json<{ receipt: Receipt }>();
+    expect((await voidSale(receipt.id, owner.cookie, '')).status).toBe(400);
+    expect((await voidSale(receipt.id, staff.cookie)).status).toBe(403);
+    const other = await signUp();
+    expect((await voidSale(receipt.id, other.cookie)).status).toBe(404);
+    expect(await stockOf(p.id)).toBe(4);
+  });
+});

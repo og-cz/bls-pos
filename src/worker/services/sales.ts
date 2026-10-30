@@ -1,7 +1,7 @@
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 
 import { hasRole } from '@shared/roles';
-import type { CreateSaleInput, Receipt } from '@shared/schemas/sales';
+import type { CreateSaleInput, Receipt, VoidSaleInput } from '@shared/schemas/sales';
 
 import { paymentAdapterFor } from '../adapters/registry';
 import type { Db } from '../db/client';
@@ -284,4 +284,82 @@ export async function getReceipt(
     changeCents: s.changeCents,
     voidReason: s.voidReason,
   };
+}
+
+/**
+ * Voids a sale (admins and the owner): it keeps its number, is marked voided with who,
+ * when and why, and its tracked items go back into stock with 'void' movements. One
+ * batch; the restock only happens if this request is the one that voided the sale, so a
+ * second void (or two at once) can never return stock twice.
+ */
+export async function voidSale(
+  db: Db,
+  shopId: string,
+  actor: Actor,
+  saleId: string,
+  input: VoidSaleInput,
+  now: number = Date.now(),
+): Promise<Receipt> {
+  const sale = await db
+    .select({ status: sales.status, number: sales.number, totalCents: sales.totalCents })
+    .from(sales)
+    .where(and(eq(sales.id, saleId), eq(sales.shopId, shopId)))
+    .get();
+  if (!sale) throw new ApiError(404, 'NOT_FOUND', 'No such sale.');
+  if (sale.status === 'voided')
+    throw new ApiError(409, 'ALREADY_VOIDED', 'This sale is already voided.');
+
+  // "This request voided it": the sale row carries exactly this void's who and when.
+  const voidedHere = `EXISTS (SELECT 1 FROM sales WHERE id = ?1 AND shop_id = ?2 AND status = 'voided' AND voided_by = ?3 AND voided_at = ?4)`;
+  const raw = (query: string, ...params: unknown[]) => db.$client.prepare(query).bind(...params);
+  const results = await db.$client.batch([
+    raw(
+      `UPDATE sales SET status = 'voided', voided_by = ?3, voided_at = ?4, void_reason = ?5
+       WHERE id = ?1 AND shop_id = ?2 AND status = 'completed'`,
+      saleId,
+      shopId,
+      actor.userId,
+      now,
+      input.reason,
+    ),
+    raw(
+      `INSERT INTO stock_movements (id, shop_id, product_id, user_id, delta, reason, note, sale_id, created_at)
+       SELECT lower(hex(randomblob(16))), ?2, si.product_id, ?3, si.quantity, 'void', ?5, ?1, ?4
+       FROM sale_items si JOIN products p ON p.id = si.product_id AND p.shop_id = ?2
+       WHERE si.sale_id = ?1 AND si.shop_id = ?2 AND p.track_stock = 1 AND ${voidedHere}`,
+      saleId,
+      shopId,
+      actor.userId,
+      now,
+      input.reason,
+    ),
+    raw(
+      `UPDATE products SET stock = stock + si.quantity, updated_at = ?4
+       FROM (SELECT product_id, sum(quantity) AS quantity FROM sale_items
+             WHERE sale_id = ?1 AND shop_id = ?2 GROUP BY product_id) AS si
+       WHERE products.id = si.product_id AND products.shop_id = ?2 AND products.track_stock = 1
+         AND ${voidedHere}`,
+      saleId,
+      shopId,
+      actor.userId,
+      now,
+    ),
+    // Logged only by the request that actually voided it.
+    raw(
+      `INSERT INTO audit_log (id, shop_id, user_id, action, target_type, target_id, details_json, ip_hash, created_at)
+       SELECT ?6, ?2, ?3, 'sale.void', 'sale', ?1, ?7, ?8, ?4 WHERE ${voidedHere}`,
+      saleId,
+      shopId,
+      actor.userId,
+      now,
+      input.reason,
+      newId(now),
+      JSON.stringify({ number: sale.number, totalCents: sale.totalCents, reason: input.reason }),
+      actor.ipHash,
+    ),
+  ]);
+  if (results[0]?.meta.changes !== 1) {
+    throw new ApiError(409, 'ALREADY_VOIDED', 'This sale is already voided.');
+  }
+  return getReceipt(db, shopId, actor, saleId);
 }

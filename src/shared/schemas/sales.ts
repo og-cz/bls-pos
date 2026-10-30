@@ -69,3 +69,8 @@ export type Receipt = {
   changeCents: number | null;
   voidReason: string | null;
 };
+
+export const voidSaleSchema = z
+  .object({ reason: z.string().trim().min(3, 'Say why, in a few words.').max(200) })
+  .strict();
+export type VoidSaleInput = z.infer<typeof voidSaleSchema>;
