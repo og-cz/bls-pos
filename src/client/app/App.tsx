@@ -1,15 +1,5 @@
-import { useEffect, type JSX } from 'react';
+import { lazy, Suspense, useEffect, type ComponentType, type LazyExoticComponent } from 'react';
 
-import { LoginPage } from '@/features/auth/LoginPage';
-import { RecoverPage } from '@/features/auth/RecoverPage';
-import { SignupPage } from '@/features/auth/SignupPage';
-import { ActivityPage } from '@/features/activity/ActivityPage';
-import { ImportPage } from '@/features/import/ImportPage';
-import { InventoryPage } from '@/features/inventory/InventoryPage';
-import { DashboardPage, SellPage } from '@/features/placeholders';
-import { ProductsPage } from '@/features/products/ProductsPage';
-import { SettingsPage } from '@/features/settings/SettingsPage';
-import { StaffPage } from '@/features/staff/StaffPage';
 import { navigate, usePathname } from '@/lib/router';
 import { APP_NAME } from '@shared/app';
 import { hasRole } from '@shared/roles';
@@ -19,7 +9,32 @@ import { homeFor, NAV } from './nav';
 import { SessionGate } from './SessionGate';
 import { useMe } from './session';
 
-type Page = () => JSX.Element;
+// Each screen is its own download (route-level code splitting, Section 11), so the sell
+// screen never waits for import, export or settings code.
+type Page = LazyExoticComponent<ComponentType>;
+
+const page = <K extends string>(load: () => Promise<Record<K, ComponentType>>, name: K): Page =>
+  lazy(async () => ({ default: (await load())[name] }));
+
+const LoginPage = page(() => import('@/features/auth/LoginPage'), 'LoginPage');
+const SignupPage = page(() => import('@/features/auth/SignupPage'), 'SignupPage');
+const RecoverPage = page(() => import('@/features/auth/RecoverPage'), 'RecoverPage');
+const DashboardPage = page(() => import('@/features/placeholders'), 'DashboardPage');
+const SellPage = page(() => import('@/features/placeholders'), 'SellPage');
+const InventoryPage = page(() => import('@/features/inventory/InventoryPage'), 'InventoryPage');
+const ProductsPage = page(() => import('@/features/products/ProductsPage'), 'ProductsPage');
+const StaffPage = page(() => import('@/features/staff/StaffPage'), 'StaffPage');
+const ActivityPage = page(() => import('@/features/activity/ActivityPage'), 'ActivityPage');
+const ImportPage = page(() => import('@/features/import/ImportPage'), 'ImportPage');
+const SettingsPage = page(() => import('@/features/settings/SettingsPage'), 'SettingsPage');
+
+function Loading() {
+  return (
+    <p role="status" className="p-6 text-muted-foreground">
+      Loading…
+    </p>
+  );
+}
 
 const PUBLIC: Record<string, { title: string; Page: Page }> = {
   '/login': { title: 'Log in', Page: LoginPage },
@@ -53,7 +68,9 @@ function SignedInRoutes({ pathname }: { pathname: string }) {
   if (!allowed || !Page) return null;
   return (
     <AppShell>
-      <Page />
+      <Suspense fallback={<Loading />}>
+        <Page />
+      </Suspense>
     </AppShell>
   );
 }
@@ -66,7 +83,13 @@ export function App() {
     if (publicRoute) document.title = `${publicRoute.title} · ${APP_NAME}`;
   }, [publicRoute]);
 
-  if (publicRoute) return <publicRoute.Page />;
+  if (publicRoute) {
+    return (
+      <Suspense fallback={<Loading />}>
+        <publicRoute.Page />
+      </Suspense>
+    );
+  }
   return (
     <SessionGate>
       <SignedInRoutes pathname={pathname} />
