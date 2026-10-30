@@ -1,4 +1,4 @@
-# BLS POS — Master Build Prompt
+# bls POS — Master Build Prompt
 
 > **How to use this file:** Paste this whole document into your AI coding assistant (or keep it in the repo as `docs/MASTER_PROMPT.md`) and work through it one phase at a time. Every phase lists its goal, what to build, what "done" means, and the dated commit plan.
 
@@ -6,11 +6,11 @@
 
 ## 0. Role and ground rules for the AI assistant
 
-You are the lead engineer building **BLS POS**, a fast, secure, beautifully branded point-of-sale web app for small businesses. Follow these rules for the entire project:
+You are the lead engineer building **bls POS**, a fast, secure, beautifully branded point-of-sale web app for small businesses. Follow these rules for the entire project:
 
 1. **Focus.** Build the **Free edition** only. The Paid edition is *prepared for* (adapters, plan field, feature flags) but **never built** until Phase 11+. If a task drifts into paid features, stop and note it in `docs/ROADMAP.md` instead.
 2. **Security first.** Every API route checks: (a) is the user logged in, (b) which shop they belong to, (c) whether their role allows this action. No exceptions. Never trust anything the browser sends about price, role, or shop.
-3. **Simple over clever.** BLS POS: fast to set up, fast to sell, fast to grow. Every screen must be usable by a new cashier within one minute. If a feature needs a manual to understand, simplify it.
+3. **Simple over clever.** bls POS: fast to set up, fast to sell, fast to grow. Every screen must be usable by a new cashier within one minute. If a feature needs a manual to understand, simplify it.
 4. **$0 to run.** Only use services with a free tier that allows commercial use and does not sleep.
 5. **Small commits.** One logical change per commit, using Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`, `perf:`, `ci:`).
 6. **Honest history.** The commit schedule in Section 12 is a *plan*. Make each commit when the work is actually done. Never backdate or fake commit timestamps.
@@ -21,17 +21,17 @@ You are the lead engineer building **BLS POS**, a fast, secure, beautifully bran
 
 ## 1. Product overview
 
-**BLS POS** is a multi-store web POS. Any business can sign up, brand their store, add products, add staff, and start selling from a phone or PC, with a live dashboard available 24/7.
+**bls POS** is a multi-store web POS. Any business can sign up, brand their store, add products, add staff, and start selling from a phone or PC, with a live dashboard available 24/7.
 
 ### 1.0 Names and identity
 
 | Thing | Name |
 |---|---|
-| Product (titles, UI, docs, page titles, manifest, default sender names) | **BLS POS** (short form "BLS" in tight spaces, e.g. the PWA short name). No tagline |
+| Product (titles, UI, docs, page titles, manifest, default sender names) | **bls POS** — always written with a lowercase "bls" (short form "bls" in tight spaces, e.g. the PWA short name). No tagline |
 | Repo / package / Worker | `bls-pos` |
 | D1 database / R2 bucket | `bls-pos` / `bls-pos-media` |
 | Session cookie | `__Host-bls_session` |
-| PWA | name "BLS POS", short name "BLS" |
+| PWA | name "bls POS", short name "bls" |
 | Logo | `bls-logo.svg` (a B with a lightning bolt), provided by the owner. Used for the app icon, favicon, login screen and PWA icons; PNG icon sizes are generated from it in Phase 8 |
 
 ### 1.1 Who uses it
@@ -549,7 +549,7 @@ export const ThemeSchema = z.object({
 
 ### 6.5 Key screens
 
-1. **Sign up / Log in:** branded with BLS POS and the BLS logo; login asks shop code (slug), username, password.
+1. **Sign up / Log in:** branded with bls POS and the BLS logo; login asks shop code (slug), username, password.
 2. **Setup wizard** (Section 8).
 3. **Sell (Staff home):** search bar, category chips, product tiles (photo, name, price, stock badge), cart drawer/panel, big **Charge ₱X** button, cash keypad with quick amounts (exact, ₱100, ₱500, ₱1000), change display, receipt screen with "New sale".
 4. **Inventory:** list with stock badges (green / amber low / red out), quick "Deduct" with reason picker; admins see "Restock".
@@ -692,7 +692,7 @@ Log: logins (success/fail), password/2FA changes, staff create/deactivate/role c
 
 ## 10. PWA and offline selling
 
-- Installable PWA with manifest using the shop's name, brand color and icon (default BLS icon if no logo; PWA name "BLS POS", short name "BLS").
+- Installable PWA with manifest using the shop's name, brand color and icon (default BLS icon if no logo; PWA name "bls POS", short name "bls").
 - Offline app shell and cached product list (refreshed on each online load).
 - **Offline sales:** saved to IndexedDB with an idempotency key and `clientCreatedAt`. Shown with an "Unsynced" badge.
 - Sync on reconnect, oldest first. If the server rejects a sale (e.g. stock ran out), keep it in a **"Needs review"** list for an admin to resolve. Never silently drop a sale.

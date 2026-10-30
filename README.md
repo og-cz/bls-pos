@@ -1,9 +1,9 @@
 <h1 align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.png" />
-    <img src="docs/assets/logo-light.png" alt="BLS POS logo" width="64" valign="middle" />
+    <img src="docs/assets/logo-light.png" alt="bls POS logo" width="64" valign="middle" />
   </picture>
-  BLS POS
+  bls POS
 </h1>
 
 <p align="center">
@@ -22,7 +22,7 @@
 
 ---
 
-BLS POS is built for small shops, cafés, food stalls, salons and retail stores that need
+bls POS is built for small shops, cafés, food stalls, salons and retail stores that need
 a checkout that is quick to learn, quick to use and costs nothing to run.
 
 > **Status:** early development (Phases 0–2 done, Phase 3 in progress). Not ready for real shops yet.
