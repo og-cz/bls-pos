@@ -21,6 +21,7 @@ export const AUDIT_ACTIONS = [
   'data.export',
   'data.restore',
   'sale.void',
+  'day.close',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

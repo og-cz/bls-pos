@@ -1,23 +1,24 @@
 import { useState } from 'react';
 import {
   Archive,
-  Ban,
-  Download,
   ArchiveRestore,
+  Ban,
+  CalendarCheck,
+  Download,
   KeyRound,
+  Lock,
+  LogIn,
   Package,
   PackageMinus,
   PackagePlus,
   Pencil,
-  LogIn,
-  Lock,
+  ScrollText,
   ShieldAlert,
   Store,
-  Upload,
   Tag,
+  Upload,
   UserMinus,
   UserPlus,
-  ScrollText,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -53,6 +54,7 @@ const ACTIONS: Record<AuditAction, { icon: LucideIcon; text: string; warn?: bool
   'data.export': { icon: Download, text: 'exported' },
   'data.restore': { icon: ArchiveRestore, text: 'restored a backup' },
   'sale.void': { icon: Ban, text: 'voided sale' },
+  'day.close': { icon: CalendarCheck, text: 'closed the day' },
 };
 
 const timeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
@@ -70,6 +72,10 @@ function describe(entry: AuditEntry): string {
       const num = typeof d.number === 'number' ? `#${String(d.number)}` : '';
       const why = typeof d.reason === 'string' ? ` (${d.reason})` : '';
       return `${who} voided sale ${num}${why}`;
+    }
+    case 'day.close': {
+      const d = entry.details ?? {};
+      return `${who} closed ${typeof d.day === 'string' ? d.day : 'the day'}`;
     }
     case 'data.export': {
       const d = entry.details ?? {};

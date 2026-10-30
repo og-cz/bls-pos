@@ -326,3 +326,38 @@ export type User = typeof users.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type Sale = typeof sales.$inferSelect;
+
+/**
+ * Daily close, Z-reading style (Section 7.16). Written once and never changed: database
+ * triggers (migration 0007) refuse edits and deletes here, and refuse new sales or voids
+ * inside a closed day's window [start_ms, end_ms).
+ */
+export const dailyClosings = sqliteTable(
+  'daily_closings',
+  {
+    id: text('id').primaryKey(),
+    shopId: text('shop_id')
+      .notNull()
+      .references(() => shops.id),
+    day: text('day').notNull(),
+    // The day's window in UTC milliseconds, in the shop's timezone when it was closed.
+    startMs: integer('start_ms').notNull(),
+    endMs: integer('end_ms').notNull(),
+    firstSaleNumber: integer('first_sale_number'),
+    lastSaleNumber: integer('last_sale_number'),
+    salesCount: integer('sales_count').notNull(),
+    grossCents: integer('gross_cents').notNull(),
+    voidedCount: integer('voided_count').notNull(),
+    voidedCents: integer('voided_cents').notNull(),
+    // { [paymentMethod]: { count, cents } } for completed sales.
+    paymentsJson: text('payments_json').notNull(),
+    closedBy: text('closed_by')
+      .notNull()
+      .references(() => users.id),
+    closedAt: integer('closed_at').notNull(),
+  },
+  (t) => [
+    unique('daily_closings_shop_day').on(t.shopId, t.day),
+    index('daily_closings_shop_window').on(t.shopId, t.startMs),
+  ],
+);

@@ -17,6 +17,7 @@ import type { Receipt, SaleList, SaleSummary } from '@shared/schemas/sales';
 
 import { useImportWorker } from '../import/use-import-worker';
 import { ReceiptView } from '../sell/ReceiptView';
+import { DailyClose } from './DailyClose';
 
 const time = new Intl.DateTimeFormat(undefined, { timeStyle: 'short' });
 const dateTime = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
@@ -221,6 +222,17 @@ export function SalesPage() {
             Export CSV
           </Button>
         </div>
+      ) : null}
+
+      {isAdmin && shown && shown.from === shown.to ? (
+        <DailyClose
+          key={shown.from}
+          day={shown.from}
+          onClosed={() => {
+            setMore({ key: '', sales: [], next: null });
+            reload();
+          }}
+        />
       ) : null}
 
       {error ? <FormAlert>{error}</FormAlert> : null}

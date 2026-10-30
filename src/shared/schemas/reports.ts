@@ -93,3 +93,32 @@ export type IncomeReport = {
   buckets: IncomeBucket[];
   totals: IncomeTotals;
 };
+
+export const dailyCloseQuerySchema = z.object({ day: day.optional() });
+export const closeDaySchema = z.object({ day }).strict();
+
+/** Z-reading: what a day's close records (Section 7.16). */
+export type ZReading = {
+  day: string;
+  firstSaleNumber: number | null;
+  lastSaleNumber: number | null;
+  salesCount: number;
+  grossCents: number;
+  voidedCount: number;
+  voidedCents: number;
+  /** Completed sales per payment method. */
+  payments: Record<string, { count: number; cents: number }>;
+};
+
+export type DailyClosing = ZReading & {
+  closedBy: { id: string; displayName: string };
+  closedAt: number;
+};
+
+export type DailyCloseView = {
+  today: string;
+  /** Present once the day is closed; read-only from then on. */
+  closing: DailyClosing | null;
+  /** Live numbers while the day is still open. */
+  preview: ZReading | null;
+};

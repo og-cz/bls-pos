@@ -20,6 +20,14 @@ import type { Actor } from '../lib/actor';
 import { ApiError } from '../lib/errors';
 import { refreshShopDayAt } from './summaries';
 
+/** The database refused because the day is closed (triggers in migration 0007). */
+function isDayClosed(err: unknown): boolean {
+  return String(err instanceof Error && err.cause ? err.cause : err).includes('DAY_CLOSED');
+}
+
+const dayClosed = () =>
+  new ApiError(409, 'DAY_CLOSED', 'This day is already closed. Its sales can no longer change.');
+
 function isCheckViolation(err: unknown): boolean {
   const text = String(err instanceof Error && err.cause ? err.cause : err);
   return text.includes('CHECK constraint failed');
@@ -185,6 +193,7 @@ export async function createSale(
         : []),
     ]);
   } catch (err) {
+    if (isDayClosed(err)) throw dayClosed();
     if (isCheckViolation(err)) throw await stockError(db, shopId, tracked);
     // Two copies of the same sale arriving at once: the other one won; return it.
     if (isUniqueViolation(err, 'sales.idempotency_key')) {
@@ -326,52 +335,56 @@ export async function voidSale(
   // "This request voided it": the sale row carries exactly this void's who and when.
   const voidedHere = `EXISTS (SELECT 1 FROM sales WHERE id = ?1 AND shop_id = ?2 AND status = 'voided' AND voided_by = ?3 AND voided_at = ?4)`;
   const raw = (query: string, ...params: unknown[]) => db.$client.prepare(query).bind(...params);
-  const results = await db.$client.batch([
-    raw(
-      `UPDATE sales SET status = 'voided', voided_by = ?3, voided_at = ?4, void_reason = ?5
+  const results = await db.$client
+    .batch([
+      raw(
+        `UPDATE sales SET status = 'voided', voided_by = ?3, voided_at = ?4, void_reason = ?5
        WHERE id = ?1 AND shop_id = ?2 AND status = 'completed'`,
-      saleId,
-      shopId,
-      actor.userId,
-      now,
-      input.reason,
-    ),
-    raw(
-      `INSERT INTO stock_movements (id, shop_id, product_id, user_id, delta, reason, note, sale_id, created_at)
+        saleId,
+        shopId,
+        actor.userId,
+        now,
+        input.reason,
+      ),
+      raw(
+        `INSERT INTO stock_movements (id, shop_id, product_id, user_id, delta, reason, note, sale_id, created_at)
        SELECT lower(hex(randomblob(16))), ?2, si.product_id, ?3, si.quantity, 'void', ?5, ?1, ?4
        FROM sale_items si JOIN products p ON p.id = si.product_id AND p.shop_id = ?2
        WHERE si.sale_id = ?1 AND si.shop_id = ?2 AND p.track_stock = 1 AND ${voidedHere}`,
-      saleId,
-      shopId,
-      actor.userId,
-      now,
-      input.reason,
-    ),
-    raw(
-      `UPDATE products SET stock = stock + si.quantity, updated_at = ?4
+        saleId,
+        shopId,
+        actor.userId,
+        now,
+        input.reason,
+      ),
+      raw(
+        `UPDATE products SET stock = stock + si.quantity, updated_at = ?4
        FROM (SELECT product_id, sum(quantity) AS quantity FROM sale_items
              WHERE sale_id = ?1 AND shop_id = ?2 GROUP BY product_id) AS si
        WHERE products.id = si.product_id AND products.shop_id = ?2 AND products.track_stock = 1
          AND ${voidedHere}`,
-      saleId,
-      shopId,
-      actor.userId,
-      now,
-    ),
-    // Logged only by the request that actually voided it.
-    raw(
-      `INSERT INTO audit_log (id, shop_id, user_id, action, target_type, target_id, details_json, ip_hash, created_at)
+        saleId,
+        shopId,
+        actor.userId,
+        now,
+      ),
+      // Logged only by the request that actually voided it.
+      raw(
+        `INSERT INTO audit_log (id, shop_id, user_id, action, target_type, target_id, details_json, ip_hash, created_at)
        SELECT ?6, ?2, ?3, 'sale.void', 'sale', ?1, ?7, ?8, ?4 WHERE ${voidedHere}`,
-      saleId,
-      shopId,
-      actor.userId,
-      now,
-      input.reason,
-      newId(now),
-      JSON.stringify({ number: sale.number, totalCents: sale.totalCents, reason: input.reason }),
-      actor.ipHash,
-    ),
-  ]);
+        saleId,
+        shopId,
+        actor.userId,
+        now,
+        input.reason,
+        newId(now),
+        JSON.stringify({ number: sale.number, totalCents: sale.totalCents, reason: input.reason }),
+        actor.ipHash,
+      ),
+    ])
+    .catch((err: unknown) => {
+      throw isDayClosed(err) ? dayClosed() : err;
+    });
   if (results[0]?.meta.changes !== 1) {
     throw new ApiError(409, 'ALREADY_VOIDED', 'This sale is already voided.');
   }
