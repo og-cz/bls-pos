@@ -17,6 +17,7 @@ import {
   updateShopSettings,
   updateTheme,
 } from '../services/shop';
+import { addSampleProducts, removeSampleProducts } from '../services/samples';
 
 export const shopRoutes = new Hono<AuthedEnv>();
 
@@ -36,6 +37,15 @@ shopRoutes.patch('/onboarding', requireRole('admin'), async (c) => {
   const { step } = await parseJson(c, onboardingSchema);
   await setOnboardingStep(getDb(c.env.DB), c.var.shopId, step);
   return c.json({ step });
+});
+
+// Sample products for trying the shop out (Section 8.1), and removing them again.
+shopRoutes.post('/samples', requireRole('admin'), async (c) => {
+  return c.json(await addSampleProducts(getDb(c.env.DB), c.var.shopId, await actorOf(c)), 201);
+});
+
+shopRoutes.delete('/samples', requireRole('admin'), async (c) => {
+  return c.json(await removeSampleProducts(getDb(c.env.DB), c.var.shopId));
 });
 
 // Branding is for admins and the owner (Section 6.4).

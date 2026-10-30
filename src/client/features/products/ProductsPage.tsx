@@ -13,9 +13,11 @@ import { StockBadge } from '@/components/stock-badge';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { apiDelete } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { formatCents } from '@shared/money';
 import { hasRole } from '@shared/roles';
+import { SAMPLE_SKU_PREFIX } from '@shared/samples';
 import type { ProductDto } from '@shared/schemas/products';
 
 import { ExportMenu } from '../import/ExportMenu';
@@ -101,6 +103,8 @@ export function ProductsPage() {
   // 'new' = the add form; a product = its edit form. Editing is for admins only.
   const [editing, setEditing] = useState<ProductDto | 'new' | null>(null);
   const [viewing, setViewing] = useState<Parameters<typeof PhotoViewer>[0]['photo']>(null);
+  const [removingSamples, setRemovingSamples] = useState(false);
+  const hasSamples = catalog.products.some((p) => p.sku?.startsWith(SAMPLE_SKU_PREFIX));
   const open = (p: ProductDto) => {
     if (isAdmin) setEditing(p);
   };
@@ -138,6 +142,33 @@ export function ProductsPage() {
           </div>
         ) : null}
       </div>
+
+      {isAdmin && !archived && hasSamples ? (
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-dashed p-3 text-sm">
+          <span className="min-w-0 flex-1">
+            Sample products are in your list. Remove them when you&apos;re ready to add your own.
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={removingSamples}
+            onClick={() => {
+              setRemovingSamples(true);
+              apiDelete('/shop/samples')
+                .then(() => {
+                  catalog.reload();
+                })
+                .catch(() => undefined)
+                .finally(() => {
+                  setRemovingSamples(false);
+                });
+            }}
+          >
+            Remove sample products
+          </Button>
+        </div>
+      ) : null}
 
       <div className="mb-4 space-y-3">
         <div className="flex flex-wrap gap-2">

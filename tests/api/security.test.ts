@@ -54,6 +54,8 @@ const ROUTES: Record<string, Access> = {
   'PATCH /api/v1/shop': 'admin',
   'PATCH /api/v1/shop/theme': 'admin',
   'PATCH /api/v1/shop/onboarding': 'admin',
+  'POST /api/v1/shop/samples': 'admin',
+  'DELETE /api/v1/shop/samples': 'admin',
   'DELETE /api/v1/shop/logo': 'admin',
   'DELETE /api/v1/shop/cover': 'admin',
   'GET /api/v1/reports/daily-close': 'admin',
