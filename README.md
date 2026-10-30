@@ -53,6 +53,10 @@ pnpm install
 pnpm dev
 ```
 
+## Self-hosting
+
+Runs free on Cloudflare (Workers, D1, R2). Step-by-step: [docs/DEPLOY.md](docs/DEPLOY.md).
+
 ## License
 
 [MIT](LICENSE)
