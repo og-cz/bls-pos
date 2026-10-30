@@ -7,6 +7,7 @@ import type { AppEnv } from './env';
 import { runNightly } from './cron';
 import { ApiError } from './lib/errors';
 import { session } from './middleware/session';
+import { securityHeaders } from './security/headers';
 import { MAX_UPLOAD_BYTES } from './security/images';
 import { auditRoutes } from './routes/audit';
 import { authRoutes } from './routes/auth';
@@ -24,6 +25,8 @@ import { staffRoutes } from './routes/staff';
 export type { AppEnv };
 
 export const app = new Hono<AppEnv>().basePath(API_BASE);
+
+app.use(securityHeaders);
 
 // JSON bodies are capped at 64 KB (Section 5.1); image uploads at 2 MB (Section 7.8).
 const limit = (maxSize: number, message: string) =>
