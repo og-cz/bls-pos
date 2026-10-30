@@ -78,12 +78,15 @@ function NavLinks({
   items,
   pathname,
   collapsed = false,
+  compact = false,
   onNavigate,
 }: {
   items: NavItem[];
   pathname: string;
   collapsed?: boolean;
   onNavigate?: () => void;
+  /** Mouse-sized rows for the PC/tablet side menu; the phone drawer keeps finger-sized ones. */
+  compact?: boolean;
 }) {
   // Consecutive items of one group form a section with a small heading (a line when
   // the menu shows icons only).
@@ -105,7 +108,8 @@ function NavLinks({
         aria-label={collapsed ? item.label : undefined}
         title={collapsed ? item.label : undefined}
         className={cn(
-          'flex h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
+          'flex items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
+          compact ? 'h-9' : 'h-11',
           collapsed && 'justify-center px-0',
           active
             ? 'bg-primary/10 text-primary'
@@ -128,12 +132,15 @@ function NavLinks({
             role={heading ? 'group' : undefined}
             aria-labelledby={heading && !collapsed ? id : undefined}
             aria-label={heading && collapsed ? heading : undefined}
-            className={cn('space-y-1', i > 0 && (collapsed ? 'mt-2 border-t pt-2' : 'mt-4'))}
+            className={cn(
+              compact ? 'space-y-0.5' : 'space-y-1',
+              i > 0 && (collapsed ? 'mt-1.5 border-t pt-1.5' : 'mt-3'),
+            )}
           >
             {heading && !collapsed ? (
               <div
                 id={id}
-                className="px-3 pb-1 text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase"
+                className="px-3 pb-0.5 text-[11px] leading-4 font-semibold tracking-wide text-muted-foreground/70 uppercase"
               >
                 {heading}
               </div>
@@ -293,10 +300,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           aria-label="Main"
           className={cn('flex-1 overflow-y-auto pb-3', collapsed ? 'px-2' : 'px-3')}
         >
-          <NavLinks items={mainItems} pathname={pathname} collapsed={collapsed} />
+          <NavLinks items={mainItems} pathname={pathname} collapsed={collapsed} compact />
         </nav>
         <div className={cn('space-y-1 border-t py-3', collapsed ? 'px-2' : 'px-3')}>
-          <NavLinks items={bottomItems} pathname={pathname} collapsed={collapsed} />
+          <NavLinks items={bottomItems} pathname={pathname} collapsed={collapsed} compact />
         </div>
       </aside>
 
