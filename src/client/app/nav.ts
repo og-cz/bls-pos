@@ -26,17 +26,77 @@ export type NavItem = {
   hidden?: true;
   /** Listed at the bottom of the menu, below a divider (e.g. Settings). */
   bottom?: true;
+  /** The menu section it is listed under. */
+  group?: NavGroup;
 };
 
+export const NAV_GROUPS = {
+  overview: 'Overview',
+  selling: 'Selling',
+  stock: 'Stock',
+  shop: 'Shop',
+} as const;
+export type NavGroup = keyof typeof NAV_GROUPS;
+
 export const NAV: NavItem[] = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard, minRole: 'admin', tab: true },
-  { href: '/sell', label: 'Sell', icon: ShoppingCart, minRole: 'staff', tab: true },
-  { href: '/inventory', label: 'Inventory', icon: Boxes, minRole: 'staff', tab: true },
-  { href: '/products', label: 'Products', icon: Package, minRole: 'admin', tab: true },
-  { href: '/staff', label: 'Staff', icon: Users, minRole: 'admin', tab: true },
-  { href: '/sales', label: 'Sales', icon: ReceiptText, minRole: 'staff', tab: false },
-  { href: '/branding', label: 'Branding', icon: Palette, minRole: 'admin', tab: false },
-  { href: '/activity', label: 'Activity', icon: ScrollText, minRole: 'admin', tab: false },
+  // Listed in this order, under their group's heading; the phone tab bar takes the `tab` ones.
+  {
+    href: '/',
+    label: 'Dashboard',
+    icon: LayoutDashboard,
+    minRole: 'admin',
+    tab: true,
+    group: 'overview',
+  },
+  {
+    href: '/sell',
+    label: 'Sell',
+    icon: ShoppingCart,
+    minRole: 'staff',
+    tab: true,
+    group: 'selling',
+  },
+  {
+    href: '/sales',
+    label: 'Sales',
+    icon: ReceiptText,
+    minRole: 'staff',
+    tab: false,
+    group: 'selling',
+  },
+  {
+    href: '/inventory',
+    label: 'Inventory',
+    icon: Boxes,
+    minRole: 'staff',
+    tab: true,
+    group: 'stock',
+  },
+  {
+    href: '/products',
+    label: 'Products',
+    icon: Package,
+    minRole: 'admin',
+    tab: true,
+    group: 'stock',
+  },
+  { href: '/staff', label: 'Staff', icon: Users, minRole: 'admin', tab: true, group: 'shop' },
+  {
+    href: '/branding',
+    label: 'Branding',
+    icon: Palette,
+    minRole: 'admin',
+    tab: false,
+    group: 'shop',
+  },
+  {
+    href: '/activity',
+    label: 'Activity',
+    icon: ScrollText,
+    minRole: 'admin',
+    tab: false,
+    group: 'shop',
+  },
   {
     href: '/settings',
     label: 'Settings',

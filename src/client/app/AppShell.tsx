@@ -9,7 +9,7 @@ import { usePathname } from '@/lib/router';
 import { cn } from '@/lib/utils';
 import { APP_NAME } from '@shared/app';
 
-import { navFor, type NavItem } from './nav';
+import { NAV_GROUPS, navFor, type NavGroup, type NavItem } from './nav';
 import { logout, useMe } from './session';
 
 const ROLE_LABEL = { owner: 'Owner', admin: 'Admin', staff: 'Staff' } as const;
@@ -85,30 +85,61 @@ function NavLinks({
   collapsed?: boolean;
   onNavigate?: () => void;
 }) {
+  // Consecutive items of one group form a section with a small heading (a line when
+  // the menu shows icons only).
+  const sections: { group: NavGroup | undefined; items: NavItem[] }[] = [];
+  for (const item of items) {
+    const last = sections.at(-1);
+    if (last && last.group === item.group) last.items.push(item);
+    else sections.push({ group: item.group, items: [item] });
+  }
+  const link = (item: NavItem) => {
+    const active = isActive(item, pathname);
+    return (
+      <Link
+        key={item.href}
+        href={item.href}
+        onClick={onNavigate}
+        aria-current={active ? 'page' : undefined}
+        // Icons only when collapsed: the name is still there for screen readers and as a tooltip.
+        aria-label={collapsed ? item.label : undefined}
+        title={collapsed ? item.label : undefined}
+        className={cn(
+          'flex h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
+          collapsed && 'justify-center px-0',
+          active
+            ? 'bg-primary/10 text-primary'
+            : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+        )}
+      >
+        <item.icon className="size-5 shrink-0" aria-hidden="true" />
+        {collapsed ? null : item.label}
+      </Link>
+    );
+  };
   return (
     <>
-      {items.map((item) => {
-        const active = isActive(item, pathname);
+      {sections.map((section, i) => {
+        const heading = section.group && sections.length > 1 ? NAV_GROUPS[section.group] : null;
+        const id = heading ? `nav-${section.group ?? ''}${collapsed ? '-c' : ''}` : undefined;
         return (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onNavigate}
-            aria-current={active ? 'page' : undefined}
-            // Icons only when collapsed: the name is still there for screen readers and as a tooltip.
-            aria-label={collapsed ? item.label : undefined}
-            title={collapsed ? item.label : undefined}
-            className={cn(
-              'flex h-11 items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
-              collapsed && 'justify-center px-0',
-              active
-                ? 'bg-primary/10 text-primary'
-                : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-            )}
+          <div
+            key={section.group ?? i}
+            role={heading ? 'group' : undefined}
+            aria-labelledby={heading && !collapsed ? id : undefined}
+            aria-label={heading && collapsed ? heading : undefined}
+            className={cn('space-y-1', i > 0 && (collapsed ? 'mt-2 border-t pt-2' : 'mt-4'))}
           >
-            <item.icon className="size-5 shrink-0" aria-hidden="true" />
-            {collapsed ? null : item.label}
-          </Link>
+            {heading && !collapsed ? (
+              <div
+                id={id}
+                className="px-3 pb-1 text-xs font-semibold tracking-wide text-muted-foreground/80 uppercase"
+              >
+                {heading}
+              </div>
+            ) : null}
+            {section.items.map(link)}
+          </div>
         );
       })}
     </>
@@ -161,7 +192,7 @@ function MenuDrawer({
               {user.displayName} · {ROLE_LABEL[user.role]}
             </div>
           </div>
-          <nav aria-label="Menu" className="flex-1 space-y-1 overflow-y-auto p-3">
+          <nav aria-label="Menu" className="flex-1 overflow-y-auto p-3">
             <NavLinks
               items={items.filter((i) => !i.bottom)}
               pathname={pathname}
@@ -260,7 +291,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
         <nav
           aria-label="Main"
-          className={cn('flex-1 space-y-1 overflow-y-auto', collapsed ? 'px-2' : 'px-3')}
+          className={cn('flex-1 overflow-y-auto pb-3', collapsed ? 'px-2' : 'px-3')}
         >
           <NavLinks items={mainItems} pathname={pathname} collapsed={collapsed} />
         </nav>
