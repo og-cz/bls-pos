@@ -41,7 +41,7 @@ function Chip({
         'h-9 shrink-0 rounded-full border px-4 text-sm font-medium whitespace-nowrap outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
         active
           ? 'border-primary bg-primary text-primary-foreground'
-          : 'bg-background text-foreground hover:bg-accent',
+          : 'bg-card text-foreground hover:bg-accent',
       )}
     >
       {children}

@@ -268,7 +268,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="flex min-w-0 flex-col">
-        <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b bg-background/95 px-4 backdrop-blur md:h-16 md:px-6">
+        <header className="sticky top-0 z-40 flex h-14 items-center justify-between gap-3 border-b bg-card/95 px-4 backdrop-blur md:h-16 md:px-6">
           <div className="flex min-w-0 items-center gap-2">
             {/* Phones only: PCs and tablets have the button in the side menu. */}
             <button
@@ -308,7 +308,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Tab bar: phones */}
       <nav
         aria-label="Main"
-        className="fixed inset-x-0 bottom-0 z-40 grid border-t bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 grid border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
         style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
       >
         {tabs.map((item) => {
