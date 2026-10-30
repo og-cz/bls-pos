@@ -7,22 +7,13 @@ import { ApiClientError, apiPost } from '@/lib/api';
 import { focusFirstError, validate, withoutError, type FieldErrors } from '@/lib/form';
 import { Link } from '@/components/link';
 import { navigate } from '@/lib/router';
-import { BUSINESS_TYPES, type BusinessType } from '@shared/business';
+import { BUSINESS_LABEL, BUSINESS_TYPES, type BusinessType } from '@shared/business';
 import { signupSchema } from '@shared/schemas/auth';
 import { slugify } from '@shared/slug';
 
 import { AuthLayout } from './AuthLayout';
 import { RecoveryCodes } from './RecoveryCodes';
 import { rememberShopCode } from './shop-code';
-
-const BUSINESS_LABELS: Record<BusinessType, string> = {
-  cafe: 'Café',
-  retail: 'Retail store',
-  sari_sari: 'Sari-sari store',
-  salon: 'Salon',
-  food_stall: 'Food stall',
-  other: 'Other',
-};
 
 type SignupResponse = {
   shop: { slug: string };
@@ -169,7 +160,7 @@ export function SignupPage() {
         >
           {BUSINESS_TYPES.map((type) => (
             <option key={type} value={type}>
-              {BUSINESS_LABELS[type]}
+              {BUSINESS_LABEL[type]}
             </option>
           ))}
         </SelectField>

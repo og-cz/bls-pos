@@ -9,6 +9,8 @@ import { addMember, api, createProductAs, postJson, signUp } from './helpers';
 type Access = 'public' | Role;
 const ROUTES: Record<string, Access> = {
   'GET /api/v1/health': 'public',
+  'GET /api/v1/public/s/:slug': 'public',
+  'GET /api/v1/public/s/:slug/media/*': 'public',
   'POST /api/v1/auth/signup': 'public',
   'POST /api/v1/auth/login': 'public',
   'POST /api/v1/auth/recover': 'public',

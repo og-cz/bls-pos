@@ -24,6 +24,10 @@
   "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "bls-pos-media" }],
   // Set with `wrangler secret put <NAME>` in production, `.dev.vars` locally.
   "secrets": { "required": ["PEPPER", "TURNSTILE_SECRET"] },
+  // Public shop pages (/api/v1/public/*): at most 120 requests a minute per visitor IP.
+  "ratelimits": [
+    { "name": "PUBLIC_LIMITER", "namespace_id": "1001", "simple": { "limit": 120, "period": 60 } },
+  ],
   // Nightly daily summaries at 16:10 UTC = 00:10 in Manila (src/worker/cron.ts).
   "triggers": { "crons": ["10 16 * * *"] },
 }

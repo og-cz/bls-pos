@@ -10,6 +10,15 @@ export const BUSINESS_TYPES = [
 ] as const;
 export type BusinessType = (typeof BUSINESS_TYPES)[number];
 
+export const BUSINESS_LABEL: Record<BusinessType, string> = {
+  cafe: 'Café',
+  retail: 'Retail store',
+  sari_sari: 'Sari-sari store',
+  salon: 'Salon',
+  food_stall: 'Food stall',
+  other: 'Other',
+};
+
 /** Starting theme per business type (Section 6.3 presets); changed later in Branding. */
 const PRESET_BY_TYPE: Record<BusinessType, (typeof PRESETS)[number]['id']> = {
   cafe: 'cafe-mocha',

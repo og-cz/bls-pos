@@ -31,6 +31,9 @@ const PRE_TENANT = new Set([
   'rate-limit.retryAfterSeconds',
   'rate-limit.recordFailure',
   'rate-limit.clearUserFailures',
+  'storefront.getStorefront', // public page: finds the shop from the code in the URL
+  'storefront.isPublicImage',
+  'storefront.publicMediaUrl',
   'summaries.summaryStatement', // nightly cron: scoped to one shop or to every shop in a timezone
 ]);
 

@@ -28,6 +28,9 @@ const StaffPage = page(() => import('@/features/staff/StaffPage'), 'StaffPage');
 const ActivityPage = page(() => import('@/features/activity/ActivityPage'), 'ActivityPage');
 const ImportPage = page(() => import('@/features/import/ImportPage'), 'ImportPage');
 const SettingsPage = page(() => import('@/features/settings/SettingsPage'), 'SettingsPage');
+const StorefrontPage = lazy(async () => ({
+  default: (await import('@/features/storefront/StorefrontPage')).StorefrontPage,
+}));
 const ProfilePage = page(() => import('@/features/profile/ProfilePage'), 'ProfilePage');
 const BrandingPage = page(() => import('@/features/branding/BrandingPage'), 'BrandingPage');
 
@@ -89,6 +92,15 @@ export function App() {
     if (publicRoute) document.title = `${publicRoute.title} · ${APP_NAME}`;
   }, [publicRoute]);
 
+  // Public shop pages: /s/<shop code>, no sign-in (Section 9).
+  const shopPage = /^\/s\/([a-z0-9-]+)\/?$/.exec(pathname);
+  if (shopPage?.[1]) {
+    return (
+      <Suspense fallback={<Loading />}>
+        <StorefrontPage slug={shopPage[1]} />
+      </Suspense>
+    );
+  }
   if (publicRoute) {
     return (
       <Suspense fallback={<Loading />}>
