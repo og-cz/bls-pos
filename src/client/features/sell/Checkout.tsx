@@ -4,18 +4,24 @@ import { Banknote, Delete, Smartphone } from 'lucide-react';
 import { FormAlert } from '@/components/field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useMe } from '@/app/session';
 import { ApiClientError, apiPost } from '@/lib/api';
+import { queuePut } from '@/lib/offline-store';
 import { cn } from '@/lib/utils';
 import type { Cart } from '@shared/cart';
 import { applyKey, quickCashAmounts } from '@shared/checkout';
 import { formatCents, parseAmountToCents } from '@shared/money';
+import type { ProductDto } from '@shared/schemas/products';
 import type { Receipt } from '@shared/schemas/sales';
 
 type Props = {
   cart: Cart;
+  /** The products in the cart, for an offline receipt. */
+  products: Map<string, ProductDto>;
   totalCents: number;
   currency: string;
-  onSold: (receipt: Receipt) => void;
+  /** `offline`: kept on this device, sent when the connection is back. */
+  onSold: (receipt: Receipt, offline: boolean) => void;
   /** Stock changed under us (another till sold the last one): refresh the products. */
   onStockChanged: () => void;
 };
@@ -25,6 +31,48 @@ function newSaleKey(): string {
   return crypto.randomUUID().replace(/-/g, '');
 }
 
+/** What the customer gets while offline: number 0 = numbered when it reaches the server. */
+function offlineReceipt(
+  body: { idempotencyKey: string; paymentMethod: string; clientCreatedAt: number } & {
+    cashReceivedCents?: number;
+    paymentReference?: string;
+  },
+  cart: Cart,
+  products: Map<string, ProductDto>,
+  totalCents: number,
+  user: { id: string; displayName: string },
+): Receipt {
+  return {
+    id: `offline-${body.idempotencyKey}`,
+    number: 0,
+    status: 'completed',
+    createdAt: body.clientCreatedAt,
+    cashier: { id: user.id, displayName: user.displayName },
+    lines: cart.map((l) => {
+      const p = products.get(l.productId);
+      const unit = p?.priceCents ?? 0;
+      return {
+        productId: l.productId,
+        name: p?.name ?? 'Item',
+        quantity: l.quantity,
+        unitPriceCents: unit,
+        lineTotalCents: unit * l.quantity,
+      };
+    }),
+    subtotalCents: totalCents,
+    discountCents: 0,
+    totalCents,
+    paymentMethod: body.paymentMethod,
+    paymentReference: body.paymentReference ?? null,
+    cashReceivedCents: body.cashReceivedCents ?? null,
+    changeCents: body.cashReceivedCents !== undefined ? body.cashReceivedCents - totalCents : null,
+    voidReason: null,
+  };
+}
+
+/** The device's clock, kept with offline sales (`clientCreatedAt`). */
+const deviceTime = () => Date.now();
+
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫'] as const;
 
 /**
@@ -32,7 +80,8 @@ const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫'] as c
  * Other (manual) with a reference. One sale key per checkout, reused on every retry, so a
  * double tap or a dropped connection can never record the sale twice.
  */
-export function Checkout({ cart, totalCents, currency, onSold, onStockChanged }: Props) {
+export function Checkout({ cart, products, totalCents, currency, onSold, onStockChanged }: Props) {
+  const { user } = useMe();
   const money = (c: number) => formatCents(c, currency);
   const [saleKey] = useState(newSaleKey);
   const [method, setMethod] = useState<'cash' | 'other_manual'>('cash');
@@ -49,18 +98,40 @@ export function Checkout({ cart, totalCents, currency, onSold, onStockChanged }:
     if (short || busy) return;
     setBusy(true);
     setError(null);
+    const body = {
+      idempotencyKey: saleKey,
+      items: cart,
+      paymentMethod: method,
+      clientCreatedAt: deviceTime(),
+      ...(method === 'cash' ? { cashReceivedCents: received ?? totalCents } : {}),
+      ...(method === 'other_manual' && reference.trim()
+        ? { paymentReference: reference.trim() }
+        : {}),
+    };
     try {
-      const { receipt } = await apiPost<{ receipt: Receipt }>('/sales', {
-        idempotencyKey: saleKey,
-        items: cart,
-        paymentMethod: method,
-        ...(method === 'cash' ? { cashReceivedCents: received ?? totalCents } : {}),
-        ...(method === 'other_manual' && reference.trim()
-          ? { paymentReference: reference.trim() }
-          : {}),
-      });
-      onSold(receipt);
+      const { receipt } = await apiPost<{ receipt: Receipt }>('/sales', body);
+      onSold(receipt, false);
     } catch (err) {
+      // No connection: keep the sale on this device and finish (Section 10). It is sent
+      // with the same key later, so it can never be recorded twice.
+      if (err instanceof ApiClientError && err.code === 'NETWORK') {
+        try {
+          await queuePut({
+            key: saleKey,
+            body,
+            totalCents,
+            itemCount: cart.reduce((n, l) => n + l.quantity, 0),
+            createdAt: body.clientCreatedAt,
+            status: 'pending',
+            error: null,
+            userId: user.id,
+          });
+          onSold(offlineReceipt(body, cart, products, totalCents, user), true);
+          return;
+        } catch {
+          // Storage unavailable: fall through to the retry message.
+        }
+      }
       if (err instanceof ApiClientError && err.code === 'STOCK_INSUFFICIENT') onStockChanged();
       setError(
         err instanceof ApiClientError && err.code === 'NETWORK'

@@ -370,14 +370,23 @@ export function SellPage() {
         {checkingOut ? (
           <Checkout
             cart={cart}
+            products={byId}
             totalCents={subtotalCents}
             currency={shop.currency}
             onStockChanged={catalog.reload}
-            onSold={(receipt) => {
+            onSold={(receipt, offline) => {
               setCheckingOut(false);
+              if (offline) {
+                // Count the stock down here until the sale reaches the server.
+                for (const line of cart) {
+                  const p = byId.get(line.productId);
+                  if (p?.trackStock) catalog.replace({ ...p, stock: p.stock - line.quantity });
+                }
+              } else {
+                catalog.reload();
+              }
               setRawCart([]);
               setLastSale(receipt);
-              catalog.reload();
             }}
           />
         ) : null}
@@ -387,7 +396,13 @@ export function SellPage() {
         onOpenChange={(open) => {
           if (!open) setLastSale(null);
         }}
-        title={lastSale ? `Sale #${String(lastSale.number)}` : 'Sale'}
+        title={
+          lastSale
+            ? lastSale.number
+              ? `Sale #${String(lastSale.number)}`
+              : 'Saved offline'
+            : 'Sale'
+        }
       >
         {lastSale ? (
           <ReceiptView

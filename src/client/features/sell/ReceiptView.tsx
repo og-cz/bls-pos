@@ -30,7 +30,9 @@ function ReceiptBody({
     <div className="receipt mx-auto w-full max-w-xs font-mono text-sm leading-relaxed">
       <div className="text-center">
         <div className="text-base font-bold">{shopName}</div>
-        <div>Sale #{receipt.number}</div>
+        <div>
+          {receipt.number ? `Sale #${String(receipt.number)}` : 'Sale number: when back online'}
+        </div>
         <div>{dateTime.format(receipt.createdAt)}</div>
         <div>Cashier: {receipt.cashier.displayName}</div>
         {voided ? (
