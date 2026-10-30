@@ -48,3 +48,20 @@ export function apiPost<T>(path: string, data: unknown = {}): Promise<T> {
     body: JSON.stringify(data),
   });
 }
+
+export function apiPatch<T>(path: string, data: unknown): Promise<T> {
+  return request<T>(path, {
+    method: 'PATCH',
+    headers: { 'content-type': 'application/json', accept: 'application/json' },
+    body: JSON.stringify(data),
+  });
+}
+
+/** Sends raw image bytes; the type travels in Content-Type (Section 7.8). */
+export function apiUpload<T>(path: string, blob: Blob): Promise<T> {
+  return request<T>(path, {
+    method: 'POST',
+    headers: { 'content-type': blob.type, accept: 'application/json' },
+    body: blob,
+  });
+}

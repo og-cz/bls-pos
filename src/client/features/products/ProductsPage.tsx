@@ -1,16 +1,19 @@
 import { useDeferredValue, useMemo, useState, type ReactNode } from 'react';
-import { ImageOff, Package, Search, SearchX } from 'lucide-react';
+import { ImageOff, Package, Plus, Search, SearchX } from 'lucide-react';
 
 import { useMe } from '@/app/session';
 import { EmptyState, PageHeader } from '@/components/empty-state';
 import { FormAlert } from '@/components/field';
 import { StockBadge } from '@/components/stock-badge';
+import { Button } from '@/components/ui/button';
+import { Dialog } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { formatCents } from '@shared/money';
 import { hasRole } from '@shared/roles';
 import type { ProductDto } from '@shared/schemas/products';
 
+import { ProductForm } from './ProductForm';
 import { searchKey, useCatalog } from './use-catalog';
 
 type StockFilter = 'all' | 'low';
@@ -103,17 +106,35 @@ export function ProductsPage() {
   ).length;
   const money = (cents: number) => formatCents(cents, shop.currency);
   const filtered = query !== '' || categoryId !== null || stockFilter !== 'all';
+  // 'new' = the add form; a product = its edit form. Editing is for admins only.
+  const [editing, setEditing] = useState<ProductDto | 'new' | null>(null);
+  const open = (p: ProductDto) => {
+    if (isAdmin) setEditing(p);
+  };
 
   return (
     <>
-      <PageHeader
-        title={archived ? 'Archived products' : 'Products'}
-        description={
-          catalog.loading && catalog.products.length === 0
-            ? undefined
-            : `${catalog.products.length.toLocaleString()} ${archived ? 'archived' : 'products'}`
-        }
-      />
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <PageHeader
+          title={archived ? 'Archived products' : 'Products'}
+          description={
+            catalog.loading && catalog.products.length === 0
+              ? undefined
+              : `${catalog.products.length.toLocaleString()} ${archived ? 'archived' : 'products'}`
+          }
+        />
+        {isAdmin && !archived ? (
+          <Button
+            className="mb-6"
+            onClick={() => {
+              setEditing('new');
+            }}
+          >
+            <Plus aria-hidden="true" />
+            Add product
+          </Button>
+        ) : null}
+      </div>
 
       <div className="mb-4 space-y-3">
         <div className="relative">
@@ -203,10 +224,30 @@ export function ProductsPage() {
           {/* Phone: cards */}
           <ul className="space-y-2 md:hidden">
             {visible.map((p) => (
-              <li key={p.id} className="flex items-center gap-3 rounded-xl border bg-card p-3">
+              <li
+                key={p.id}
+                className={cn(
+                  'relative flex items-center gap-3 rounded-xl border bg-card p-3',
+                  isAdmin && 'hover:bg-accent/50',
+                )}
+              >
                 <Thumb product={p} />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate font-medium">{p.name}</div>
+                  <div className="truncate font-medium">
+                    {isAdmin ? (
+                      <button
+                        type="button"
+                        className="text-left outline-none after:absolute after:inset-0 after:rounded-xl focus-visible:after:ring-[3px] focus-visible:after:ring-ring/50"
+                        onClick={() => {
+                          open(p);
+                        }}
+                      >
+                        {p.name}
+                      </button>
+                    ) : (
+                      p.name
+                    )}
+                  </div>
                   <div className="truncate text-sm text-muted-foreground">
                     {[p.categoryId ? categoryName.get(p.categoryId) : null, p.sku]
                       .filter(Boolean)
@@ -252,7 +293,21 @@ export function ProductsPage() {
                       <div className="flex items-center gap-3">
                         <Thumb product={p} />
                         <div className="min-w-0">
-                          <div className="font-medium">{p.name}</div>
+                          <div className="font-medium">
+                            {isAdmin ? (
+                              <button
+                                type="button"
+                                className="rounded text-left outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                onClick={() => {
+                                  open(p);
+                                }}
+                              >
+                                {p.name}
+                              </button>
+                            ) : (
+                              p.name
+                            )}
+                          </div>
                           {p.sku ? (
                             <div className="font-mono text-xs text-muted-foreground">{p.sku}</div>
                           ) : null}
@@ -280,6 +335,26 @@ export function ProductsPage() {
           </div>
         </>
       ) : null}
+
+      <Dialog
+        open={editing !== null}
+        onOpenChange={(o) => {
+          if (!o) setEditing(null);
+        }}
+        title={editing === 'new' ? 'Add product' : 'Edit product'}
+      >
+        {editing !== null ? (
+          <ProductForm
+            key={editing === 'new' ? 'new' : editing.id}
+            product={editing === 'new' ? null : editing}
+            categories={catalog.categories}
+            onSaved={() => {
+              setEditing(null);
+              catalog.reload();
+            }}
+          />
+        ) : null}
+      </Dialog>
     </>
   );
 }
