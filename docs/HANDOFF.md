@@ -1,6 +1,6 @@
 # Handoff — read this first
 
-For any AI assistant (or person) picking up **bls POS** (formerly POS Fast / Bilis POS). Updated 2026-10-30.
+For any AI assistant (or person) picking up **bls POS** (formerly POS Fast / Bilis POS). Updated 2026-10-31.
 
 ## Where things are
 
@@ -11,8 +11,8 @@ For any AI assistant (or person) picking up **bls POS** (formerly POS Fast / Bil
   redirect, so switch only when the owner says so.
 - **Plan:** `docs/MASTER_PROMPT.md` (original name "POS Fast" = Bilis POS). Follow it
   phase by phase, one Conventional Commit per planned item.
-- **Status:** Phases 0–5 (and 3.5) done and pushed (see `docs/PROGRESS.md`). **Next: Phase 6
-  (Branding and storefront).** Not deployed yet: the owner chose to keep building first (Cloudflare account
+- **Status:** Phases 0–6 (and 3.5) done and pushed (see `docs/PROGRESS.md`). **Next: Phase 7
+  (Onboarding and help).** Not deployed yet: the owner chose to keep building first (Cloudflare account
   on this PC: audioguyyy@gmail.com; a Turnstile widget is needed before deploying).
 - **Security tests:** `tests/api/security.test.ts` lists every API route with its
   minimum role. Add new routes there, or CI fails.

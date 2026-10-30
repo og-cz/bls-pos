@@ -239,3 +239,40 @@ admin-only.
 
 **Notes:** reports are admin-only because they show cost and profit. The chart is plain
 HTML/CSS (no chart library; the dashboard screen is 4 KB gzipped).
+
+## Phase 6 — Branding and storefront (2026-10-31)
+
+**Demo:** log in as the owner or an admin.
+
+1. **Branding** (menu → Shop): pick a preset, the color wheel, or a color **From logo**;
+   the whole app changes as you pick. **Look**: Automatic/Light/Dark for the shop,
+   five fonts, sharp/soft/round corners. **Logo and cover photo**: pick, crop (square
+   logo, 16:5 cover), upload; darken the cover with the slider. **Save** stays at the
+   bottom of the screen; leaving without saving puts the old look back.
+2. **My profile** (account menu): add a photo (square crop) and change your display
+   name. Photos show in the menu and on the Staff list.
+3. **Shop page** (menu → Shop): turn the public page on, choose to show prices and
+   "Available/Sold out", write a description, then **Copy link**, **Share** or
+   **Download QR** (a printable PNG with the shop name). Each product has "Show on your
+   shop page" in its form.
+4. Open `/s/<shop code>` signed out: cover, logo, name, description and the chosen
+   products, in the shop's colors and font, with a Share button.
+
+**How it works:** the theme is Zod-validated JSON; only those values become CSS
+variables (brand scale 50–950 from OKLCH math in `src/shared/theme.ts`, no library). A
+contrast guard keeps button text at 4.5:1 and buttons at 3:1 against the page, nudging
+the lightness if needed. Fonts download only when a shop uses them. The public page and
+its images go through `/api/v1/public/*`: off means 404 (the same as no shop), only the
+logo, cover and shown products' photos are served (never avatars), prices and
+availability only when chosen, never cost, exact stock or staff. Rate limited per IP
+(Workers rate limiting binding, 120/min) and cached for 60 seconds. The menu is grouped
+into Overview, Selling, Stock and Shop; Settings is also in the account menu.
+
+**Proven by tests (343):** palette and contrast for every preset and 200 random colors;
+theme, shop settings and profile edits refuse unknown fields, bad values and raw CSS;
+staff can't change branding or the shop page; the public page leaks no cost, stock
+count, hidden/archived product, username or internal id; off and missing pages look the
+same; another shop's page can't reach this shop's images; reserved shop codes refused.
+
+**Notes:** the cover's edge cache is a 60-second max-age rather than an explicit purge.
+Not checked on a real phone yet: camera crop for avatars, and the share sheet.
