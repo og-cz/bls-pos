@@ -6,6 +6,9 @@ import { EmptyState, PageHeader } from '@/components/empty-state';
 import { FormAlert } from '@/components/field';
 import { Link } from '@/components/link';
 import { PhotoViewer, ProductPhoto } from '@/components/product-photo';
+import { ProductTiles } from '@/components/product-tiles';
+import { ViewSwitcher } from '@/components/view-switcher';
+import { usePreferences } from '@/lib/preferences';
 import { StockBadge } from '@/components/stock-badge';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
@@ -49,6 +52,7 @@ function Chip({
 /** Products (Section 6.5): table on PC, cards on phone, searched on the device. */
 export function ProductsPage() {
   const { user, shop } = useMe();
+  const { productView } = usePreferences();
   const isAdmin = hasRole(user.role, 'admin');
   const [archived, setArchived] = useState(false);
   const catalog = useCatalog(archived);
@@ -132,22 +136,25 @@ export function ProductsPage() {
       </div>
 
       <div className="mb-4 space-y-3">
-        <div className="relative">
-          <Search
-            className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-muted-foreground"
-            aria-hidden="true"
-          />
-          <Input
-            type="search"
-            inputMode="search"
-            placeholder="Search name or SKU"
-            aria-label="Search products by name or SKU"
-            className="pl-10"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-            }}
-          />
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search
+              className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <Input
+              type="search"
+              inputMode="search"
+              placeholder="Search name or SKU"
+              aria-label="Search products by name or SKU"
+              className="pl-10"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+              }}
+            />
+          </div>
+          <ViewSwitcher />
         </div>
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0">
           <Chip
@@ -214,7 +221,45 @@ export function ProductsPage() {
         </EmptyState>
       ) : null}
 
-      {visible.length > 0 ? (
+      {visible.length > 0 && (productView === 'tiles' || productView === 'large-tiles') ? (
+        <ProductTiles
+          products={visible}
+          size={productView}
+          onOpenPhoto={setViewing}
+          onSelect={isAdmin ? open : undefined}
+          subtitle={(p) => <span className="font-semibold tabular">{money(p.priceCents)}</span>}
+        />
+      ) : visible.length > 0 && productView === 'compact' ? (
+        <ul className="divide-y rounded-xl border bg-card">
+          {visible.map((p) => (
+            <li key={p.id} className="flex items-center gap-3 px-3 py-1.5">
+              <ProductPhoto product={p} onOpen={setViewing} className="size-10" />
+              <div className="min-w-0 flex-1 truncate text-sm">
+                {isAdmin ? (
+                  <button
+                    type="button"
+                    className="rounded font-medium outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    onClick={() => {
+                      open(p);
+                    }}
+                  >
+                    {p.name}
+                  </button>
+                ) : (
+                  <span className="font-medium">{p.name}</span>
+                )}
+                {p.sku ? (
+                  <span className="ml-2 font-mono text-xs text-muted-foreground">{p.sku}</span>
+                ) : null}
+              </div>
+              <StockBadge status={p.stockStatus} stock={p.stock} />
+              <div className="w-24 text-right text-sm font-semibold tabular">
+                {money(p.priceCents)}
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : visible.length > 0 ? (
         <>
           {/* Phone: cards */}
           <ul className="space-y-2 md:hidden">

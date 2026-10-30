@@ -8,6 +8,7 @@ import { ImportPage } from '@/features/import/ImportPage';
 import { InventoryPage } from '@/features/inventory/InventoryPage';
 import { DashboardPage, SellPage } from '@/features/placeholders';
 import { ProductsPage } from '@/features/products/ProductsPage';
+import { SettingsPage } from '@/features/settings/SettingsPage';
 import { StaffPage } from '@/features/staff/StaffPage';
 import { navigate, usePathname } from '@/lib/router';
 import { APP_NAME } from '@shared/app';
@@ -34,6 +35,7 @@ const SIGNED_IN: Record<string, Page> = {
   '/staff': StaffPage,
   '/activity': ActivityPage,
   '/products/import': ImportPage,
+  '/settings': SettingsPage,
 };
 
 /** Signed-in screens. A screen the role can't use sends the user to their home screen. */

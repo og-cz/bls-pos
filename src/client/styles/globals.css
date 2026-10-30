@@ -82,6 +82,10 @@
 }
 
 @layer base {
+  /* Settings > Text size: Large makes every rem-based size about 12% bigger. */
+  html.text-large {
+    font-size: 112.5%;
+  }
   * {
     @apply border-border outline-ring/50;
   }

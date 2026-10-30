@@ -5,6 +5,9 @@ import { useMe } from '@/app/session';
 import { EmptyState, PageHeader } from '@/components/empty-state';
 import { FormAlert } from '@/components/field';
 import { PhotoViewer, ProductPhoto } from '@/components/product-photo';
+import { ProductTiles } from '@/components/product-tiles';
+import { ViewSwitcher } from '@/components/view-switcher';
+import { usePreferences } from '@/lib/preferences';
 import { StockBadge } from '@/components/stock-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,6 +63,7 @@ function RecentMovements({ isAdmin }: { isAdmin: boolean }) {
  */
 export function InventoryPage() {
   const { user } = useMe();
+  const { productView } = usePreferences();
   const isAdmin = hasRole(user.role, 'admin');
   const catalog = useCatalog();
   const [query, setQuery] = useState('');
@@ -121,21 +125,24 @@ export function InventoryPage() {
         </div>
       ) : null}
 
-      <div className="relative mb-4">
-        <Search
-          className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-muted-foreground"
-          aria-hidden="true"
-        />
-        <Input
-          type="search"
-          placeholder="Search name or SKU"
-          aria-label="Search stock by name or SKU"
-          className="pl-10"
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-          }}
-        />
+      <div className="mb-4 flex gap-2">
+        <div className="relative flex-1">
+          <Search
+            className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <Input
+            type="search"
+            placeholder="Search name or SKU"
+            aria-label="Search stock by name or SKU"
+            className="pl-10"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+            }}
+          />
+        </div>
+        <ViewSwitcher />
       </div>
 
       {catalog.error ? <FormAlert>{catalog.error}</FormAlert> : null}
@@ -153,11 +160,62 @@ export function InventoryPage() {
         <EmptyState icon={SearchX} title="No matching products" />
       ) : null}
 
-      {visible.length > 0 ? (
+      {visible.length > 0 && (productView === 'tiles' || productView === 'large-tiles') ? (
+        <ProductTiles
+          products={visible}
+          size={productView}
+          onOpenPhoto={setViewing}
+          footer={(p) => (
+            <div
+              className={cn(
+                'grid gap-2',
+                productView === 'large-tiles' && isAdmin ? 'grid-cols-2' : 'grid-cols-1',
+              )}
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-11 w-full"
+                disabled={p.stock <= 0}
+                onClick={() => {
+                  setAction({ kind: 'deduct', product: p });
+                }}
+                aria-label={`Take out stock of ${p.name}`}
+              >
+                <Minus aria-hidden="true" />
+                Deduct
+              </Button>
+              {isAdmin ? (
+                <Button
+                  size="sm"
+                  className="h-11 w-full"
+                  onClick={() => {
+                    setAction({ kind: 'restock', product: p });
+                  }}
+                  aria-label={`Restock ${p.name}`}
+                >
+                  <Plus aria-hidden="true" />
+                  Restock
+                </Button>
+              ) : null}
+            </div>
+          )}
+        />
+      ) : visible.length > 0 ? (
         <ul className="divide-y rounded-xl border bg-card">
           {visible.map((p) => (
-            <li key={p.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-              <ProductPhoto product={p} onOpen={setViewing} className="size-16" />
+            <li
+              key={p.id}
+              className={cn(
+                'flex flex-wrap items-center gap-3',
+                productView === 'compact' ? 'px-3 py-1.5' : 'px-4 py-3',
+              )}
+            >
+              <ProductPhoto
+                product={p}
+                onOpen={setViewing}
+                className={productView === 'compact' ? 'size-10' : 'size-16'}
+              />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-medium">{p.name}</div>
                 {p.sku ? (
