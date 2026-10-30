@@ -10,6 +10,7 @@ export const AUDIT_ACTIONS = [
   'staff.deactivate',
   'product.create',
   'product.update',
+  'product.import',
   'product.archive',
   'product.unarchive',
   'category.create',

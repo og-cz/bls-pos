@@ -41,6 +41,31 @@ export function auditInsert(db: Db, shopId: string, input: AuditInput, now: numb
   });
 }
 
+/** The same entry as {@link auditInsert}, as a raw D1 statement for raw D1 batches. */
+export function auditStatement(
+  db: Db,
+  shopId: string,
+  input: AuditInput,
+  now: number = Date.now(),
+): D1PreparedStatement {
+  return db.$client
+    .prepare(
+      `INSERT INTO audit_log (id, shop_id, user_id, action, target_type, target_id, details_json, ip_hash, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(
+      newId(now),
+      shopId,
+      input.userId ?? null,
+      input.action,
+      input.target?.type ?? null,
+      input.target?.id ?? null,
+      scrub(input.details),
+      input.ipHash ?? null,
+      now,
+    );
+}
+
 /** Writes one entry on its own, for events with no other write (e.g. a failed login). */
 export async function writeAudit(
   db: Db,

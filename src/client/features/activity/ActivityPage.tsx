@@ -11,6 +11,7 @@ import {
   Lock,
   ShieldAlert,
   Store,
+  Upload,
   Tag,
   UserMinus,
   UserPlus,
@@ -39,6 +40,7 @@ const ACTIONS: Record<AuditAction, { icon: LucideIcon; text: string; warn?: bool
   'staff.deactivate': { icon: UserMinus, text: 'deactivated' },
   'product.create': { icon: Package, text: 'added product' },
   'product.update': { icon: Pencil, text: 'edited product' },
+  'product.import': { icon: Upload, text: 'imported products' },
   'product.archive': { icon: Archive, text: 'archived product' },
   'product.unarchive': { icon: ArchiveRestore, text: 'restored product' },
   'category.create': { icon: Tag, text: 'added category' },
@@ -58,6 +60,11 @@ function describe(entry: AuditEntry): string {
     case 'staff.create':
     case 'staff.deactivate':
       return `${who} ${info.text} ${target}`.trim();
+    case 'product.import': {
+      const d = entry.details ?? {};
+      const n = (k: string) => (typeof d[k] === 'number' ? d[k] : 0);
+      return `${who} imported products: ${n('created')} added, ${n('updated')} updated`;
+    }
     case 'product.create':
     case 'product.update':
     case 'product.archive':

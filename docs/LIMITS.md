@@ -33,6 +33,13 @@ in brackets). Free tiers change, so re-check this file before each release.
 | SQL statement length                    | 100 KB                  |                                                                                                                            |
 | **Time Travel** (point-in-time restore) | **7 days**              | Our nightly R2 backups (14 days) cover longer windows.                                                                     |
 
+**Bulk import (Phase 3.5)** is built around these limits: 250 rows per request, each
+list sent as one JSON value read with `json_each`, so a chunk is about 8 queries and never
+near the 100-parameter or 50-query limits. Writes are the cost to watch: importing 5,000
+new products with opening stock writes roughly 10,000 rows plus index updates, a sizeable
+share of the 100,000 rows/day shared by every shop on the deployment. Re-imports that only
+update are about half that. Large catalogs are best imported once, not repeatedly.
+
 When daily read/write limits are hit, **D1 rejects queries until 00:00 UTC**. The app
 must show a clear "service busy" error, and offline sales stay queued until then.
 

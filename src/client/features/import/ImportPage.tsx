@@ -15,6 +15,7 @@ import {
 import { checkRows, type CheckedRow } from '@shared/import-validate';
 
 import { ImportReview } from './ImportReview';
+import { ImportRunner } from './ImportRunner';
 import { useImportWorker } from './use-import-worker';
 
 /** Bulk product import, step 1: get the rows in (Phase 3.5). */
@@ -177,6 +178,17 @@ export function ImportPage() {
             {result.missing.length === 0 && checked.length ? (
               <ImportReview key={loads} rows={checked} columns={result.columns} onEdit={editCell} />
             ) : null}
+          </section>
+        ) : null}
+
+        {result && result.missing.length === 0 && checked.length ? (
+          <section className="space-y-3 rounded-xl border bg-card p-5">
+            <h2 className="font-semibold">3. Import</h2>
+            <p className="text-sm text-muted-foreground">
+              Rows with a SKU that already exists update that product; the rest are added. Rows
+              without a SKU are always added as new products.
+            </p>
+            <ImportRunner key={loads} rows={checked} />
           </section>
         ) : null}
       </div>

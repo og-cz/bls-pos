@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 
+import { importChunkSchema } from '@shared/schemas/import';
 import {
   createProductSchema,
   productQuerySchema,
@@ -13,6 +14,7 @@ import { ApiError } from '../lib/errors';
 import { parseJson } from '../lib/validate';
 import { requireRole } from '../middleware/role';
 import { authed } from '../middleware/tenant';
+import { importChunk } from '../services/import';
 import {
   createProduct,
   getProduct,
@@ -30,6 +32,12 @@ productRoutes.get('/', async (c) => {
   const query = productQuerySchema.safeParse(c.req.query());
   if (!query.success) throw new ApiError(400, 'VALIDATION_ERROR', 'Invalid search or paging.');
   return c.json(await listProducts(getDb(c.env.DB), c.var.shopId, c.var.auth.role, query.data));
+});
+
+// Bulk import, one chunk per request (Phase 3.5). Registered before /:id routes.
+productRoutes.post('/import', requireRole('admin'), async (c) => {
+  const input = await parseJson(c, importChunkSchema);
+  return c.json(await importChunk(getDb(c.env.DB), c.var.shopId, await actorOf(c), input));
 });
 
 productRoutes.get('/:id', async (c) => {

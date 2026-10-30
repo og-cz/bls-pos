@@ -22,6 +22,7 @@ const ROUTES: Record<string, Access> = {
   'GET /api/v1/products/:id': 'staff',
   'POST /api/v1/products': 'admin',
   'PATCH /api/v1/products/:id': 'admin',
+  'POST /api/v1/products/import': 'admin',
   'POST /api/v1/products/:id/archive': 'admin',
   'POST /api/v1/products/:id/unarchive': 'admin',
   'GET /api/v1/categories': 'staff',
