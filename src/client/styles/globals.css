@@ -61,7 +61,8 @@
 }
 
 @theme inline {
-  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  /* --shop-font comes from the shop's theme (Section 6.2); Inter until it loads. */
+  --font-sans: var(--shop-font, 'Inter Variable'), ui-sans-serif, system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

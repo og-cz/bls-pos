@@ -227,6 +227,30 @@ export function resolvedColors(theme: Theme) {
   return { light, dark, adjusted: light.adjusted };
 }
 
+/** The CSS font-family name of each font choice. */
+export const FONT_FAMILY: Record<Theme['font'], string> = {
+  inter: 'Inter Variable',
+  poppins: 'Poppins',
+  'dm-sans': 'DM Sans Variable',
+  lora: 'Lora Variable',
+  'space-grotesk': 'Space Grotesk Variable',
+};
+
+export const FONT_LABEL: Record<Theme['font'], string> = {
+  inter: 'Inter',
+  poppins: 'Poppins',
+  'dm-sans': 'DM Sans',
+  lora: 'Lora',
+  'space-grotesk': 'Space Grotesk',
+};
+
+/** Corner roundness of cards, buttons and fields. */
+export const RADIUS_REM: Record<Theme['radius'], number> = {
+  sharp: 0.375,
+  soft: 0.75,
+  round: 1.25,
+};
+
 /**
  * The CSS that applies a shop's theme: the brand scale and the primary color for light
  * and dark mode. Built only from validated hex values, never from user text.
@@ -237,6 +261,7 @@ export function themeCss(theme: Theme): string {
   const { light: l, dark: d } = resolvedColors(theme);
   const light = `--primary: ${l.color}; --ring: ${l.color}; --primary-foreground: ${l.foreground};`;
   const dark = `--primary: ${d.color}; --ring: ${d.color}; --primary-foreground: ${d.foreground};`;
-  return `:root { ${vars} ${light} }
+  const look = `--shop-font: '${FONT_FAMILY[theme.font]}'; --radius: ${String(RADIUS_REM[theme.radius])}rem;`;
+  return `:root { ${vars} ${light} ${look} }
 .dark { ${dark} }`;
 }

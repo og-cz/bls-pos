@@ -83,11 +83,19 @@ export function usePreferences(): Preferences {
 const darkQuery =
   typeof window !== 'undefined' ? window.matchMedia('(prefers-color-scheme: dark)') : null;
 
+// The shop's own look (Branding). "Automatic" here follows it, then the device.
+let shopMode: 'light' | 'dark' | 'system' = 'system';
+
+export function setShopMode(mode: 'light' | 'dark' | 'system') {
+  shopMode = mode;
+  applyPreferences();
+}
+
 /** Puts the theme and text size on <html>. Called at start-up and on every change. */
 export function applyPreferences() {
   const root = document.documentElement;
-  const dark =
-    current.theme === 'dark' || (current.theme === 'system' && darkQuery?.matches === true);
+  const automatic = shopMode === 'system' ? darkQuery?.matches === true : shopMode === 'dark';
+  const dark = current.theme === 'dark' || (current.theme === 'system' && automatic);
   root.classList.toggle('dark', dark);
   root.style.colorScheme = dark ? 'dark' : 'light';
   root.classList.toggle('text-large', current.textSize === 'large');

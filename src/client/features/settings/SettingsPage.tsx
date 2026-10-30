@@ -119,7 +119,12 @@ export function SettingsPage() {
             value={prefs.theme}
             onChange={set('theme')}
             options={[
-              { value: 'system', label: 'Automatic', hint: 'Follows the device', icon: Monitor },
+              {
+                value: 'system',
+                label: 'Automatic',
+                hint: "Follows the shop's look, then the device",
+                icon: Monitor,
+              },
               { value: 'light', label: 'Light', icon: Sun },
               { value: 'dark', label: 'Dark', hint: 'Easier at night', icon: Moon },
             ]}

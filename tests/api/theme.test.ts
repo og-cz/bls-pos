@@ -74,6 +74,13 @@ describe('OKLCH palette', () => {
     expect(css).toContain('--primary: #2E9E5B;');
     expect(css).not.toMatch(/url\(|@import|expression/);
   });
+
+  it('sets the font and corners from the allowed lists only', () => {
+    const css = themeCss(parseTheme({ brand: '#2E9E5B', font: 'lora', radius: 'round' }));
+    expect(css).toContain("--shop-font: 'Lora Variable';");
+    expect(css).toContain('--radius: 1.25rem;');
+    expect(themeSchema.safeParse({ brand: '#2E9E5B', font: "x'; }" }).success).toBe(false);
+  });
 });
 
 describe('/me theme', () => {

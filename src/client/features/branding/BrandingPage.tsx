@@ -12,6 +12,7 @@ import { applyShopTheme } from '@/lib/shop-theme';
 import { dominantColors } from '@/lib/logo-colors';
 import { cn } from '@/lib/utils';
 import { formatCents } from '@shared/money';
+import { LookSettings } from './LookSettings';
 import { ShopImages } from './ShopImages';
 import { DEFAULT_THEME, HEX, PRESETS, resolvedColors, type Theme } from '@shared/theme';
 
@@ -293,32 +294,15 @@ export function BrandingPage() {
             </p>
           ) : null}
           {error ? <FormAlert>{error}</FormAlert> : null}
-
-          <div className="flex flex-wrap gap-2 border-t pt-4">
-            <Button type="button" size="lg" disabled={!dirty || busy} onClick={save}>
-              {busy ? 'Saving…' : 'Save colors'}
-            </Button>
-            <Button
-              type="button"
-              size="lg"
-              variant="outline"
-              disabled={busy}
-              onClick={() => {
-                setSaved(false);
-                setHexText(DEFAULT_THEME.brand);
-                setDraft({ ...draft, brand: DEFAULT_THEME.brand, presetId: 'ocean-retail' });
-              }}
-            >
-              <RotateCcw aria-hidden="true" />
-              Reset to default
-            </Button>
-            {saved && !dirty ? (
-              <span role="status" className="flex items-center gap-1 text-sm text-muted-foreground">
-                <Check className="size-4" aria-hidden="true" /> Saved
-              </span>
-            ) : null}
-          </div>
         </section>
+
+        <LookSettings
+          theme={draft}
+          onChange={(patch) => {
+            setSaved(false);
+            setDraft((d) => ({ ...d, ...patch }));
+          }}
+        />
 
         <ShopImages
           overlay={draft.coverOverlay}
@@ -328,10 +312,35 @@ export function BrandingPage() {
           }}
         />
 
-        <aside className="space-y-2 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+        <aside className="space-y-2 lg:col-start-2 lg:row-span-3 lg:row-start-1">
           <h2 className="text-sm font-medium text-muted-foreground">Preview</h2>
           <Preview shopName={shop.name} currency={shop.currency} />
         </aside>
+      </div>
+      {/* Always in reach: stays above the phone tab bar while scrolling. */}
+      <div className="sticky bottom-20 z-30 mt-6 flex flex-wrap items-center gap-2 rounded-xl border bg-card/95 p-3 shadow-lg backdrop-blur md:bottom-4">
+        <Button type="button" size="lg" disabled={!dirty || busy} onClick={save}>
+          {busy ? 'Saving…' : 'Save'}
+        </Button>
+        <Button
+          type="button"
+          size="lg"
+          variant="outline"
+          disabled={busy}
+          onClick={() => {
+            setSaved(false);
+            setHexText(DEFAULT_THEME.brand);
+            setDraft(DEFAULT_THEME);
+          }}
+        >
+          <RotateCcw aria-hidden="true" />
+          Reset to default
+        </Button>
+        {saved && !dirty ? (
+          <span role="status" className="flex items-center gap-1 text-sm text-muted-foreground">
+            <Check className="size-4" aria-hidden="true" /> Saved
+          </span>
+        ) : null}
       </div>
     </>
   );
