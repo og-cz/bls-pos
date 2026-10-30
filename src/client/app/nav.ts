@@ -4,6 +4,7 @@ import {
   Package,
   ScrollText,
   ShoppingCart,
+  Upload,
   Users,
   type LucideIcon,
 } from 'lucide-react';
@@ -18,6 +19,8 @@ export type NavItem = {
   minRole: Role;
   /** Shown in the phone tab bar (max 5); the rest live in the account menu. */
   tab: boolean;
+  /** A screen reached from another screen, not listed in any menu. */
+  hidden?: true;
 };
 
 export const NAV: NavItem[] = [
@@ -27,10 +30,18 @@ export const NAV: NavItem[] = [
   { href: '/products', label: 'Products', icon: Package, minRole: 'admin', tab: true },
   { href: '/staff', label: 'Staff', icon: Users, minRole: 'admin', tab: true },
   { href: '/activity', label: 'Activity', icon: ScrollText, minRole: 'admin', tab: false },
+  {
+    href: '/products/import',
+    label: 'Import products',
+    icon: Upload,
+    minRole: 'admin',
+    tab: false,
+    hidden: true,
+  },
 ];
 
 export function navFor(role: Role): NavItem[] {
-  return NAV.filter((item) => hasRole(role, item.minRole));
+  return NAV.filter((item) => !item.hidden && hasRole(role, item.minRole));
 }
 
 /** Where each role lands after login: admins see the dashboard, staff start selling. */

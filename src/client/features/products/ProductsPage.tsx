@@ -1,9 +1,10 @@
 import { useDeferredValue, useMemo, useState, type ReactNode } from 'react';
-import { ImageOff, Package, Plus, Search, SearchX } from 'lucide-react';
+import { ImageOff, Package, Plus, Search, SearchX, Upload } from 'lucide-react';
 
 import { useMe } from '@/app/session';
 import { EmptyState, PageHeader } from '@/components/empty-state';
 import { FormAlert } from '@/components/field';
+import { Link } from '@/components/link';
 import { StockBadge } from '@/components/stock-badge';
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
@@ -124,15 +125,22 @@ export function ProductsPage() {
           }
         />
         {isAdmin && !archived ? (
-          <Button
-            className="mb-6"
-            onClick={() => {
-              setEditing('new');
-            }}
-          >
-            <Plus aria-hidden="true" />
-            Add product
-          </Button>
+          <div className="mb-6 flex gap-2">
+            <Button variant="outline" asChild>
+              <Link href="/products/import">
+                <Upload aria-hidden="true" />
+                Import
+              </Link>
+            </Button>
+            <Button
+              onClick={() => {
+                setEditing('new');
+              }}
+            >
+              <Plus aria-hidden="true" />
+              Add product
+            </Button>
+          </div>
         ) : null}
       </div>
 

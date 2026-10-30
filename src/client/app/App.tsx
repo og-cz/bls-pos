@@ -4,6 +4,7 @@ import { LoginPage } from '@/features/auth/LoginPage';
 import { RecoverPage } from '@/features/auth/RecoverPage';
 import { SignupPage } from '@/features/auth/SignupPage';
 import { ActivityPage } from '@/features/activity/ActivityPage';
+import { ImportPage } from '@/features/import/ImportPage';
 import { InventoryPage } from '@/features/inventory/InventoryPage';
 import { DashboardPage, SellPage } from '@/features/placeholders';
 import { ProductsPage } from '@/features/products/ProductsPage';
@@ -32,6 +33,7 @@ const SIGNED_IN: Record<string, Page> = {
   '/products': ProductsPage,
   '/staff': StaffPage,
   '/activity': ActivityPage,
+  '/products/import': ImportPage,
 };
 
 /** Signed-in screens. A screen the role can't use sends the user to their home screen. */
