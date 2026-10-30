@@ -10,18 +10,19 @@ import { exportFileName, type Cell, type ExportFormat, type ExportKind } from '@
 import type { CategoryDto } from '@shared/schemas/categories';
 import type { MovementDto } from '@shared/schemas/inventory';
 import type { ProductDto } from '@shared/schemas/products';
+import { BACKUP_FORMAT, BACKUP_VERSION, type Backup } from '@shared/backup';
 
 import { useImportWorker } from './use-import-worker';
 
 const pesos = (cents: number | null | undefined) => (cents == null ? null : cents / 100);
 
-async function allProducts(): Promise<ProductDto[]> {
+async function allProducts(archived = false): Promise<ProductDto[]> {
   const out: ProductDto[] = [];
   let cursor: string | null = null;
   do {
     const q: string = cursor ? `&cursor=${encodeURIComponent(cursor)}` : '';
     const page: { products: ProductDto[]; nextCursor: string | null } = await apiGet(
-      `/products?limit=100${q}`,
+      `/products?limit=100${archived ? '&archived=true' : ''}${q}`,
     );
     out.push(...page.products);
     cursor = page.nextCursor;
@@ -101,12 +102,79 @@ const KINDS: { kind: ExportKind; label: string; sheet: string }[] = [
   { kind: 'movements', label: 'Stock movements', sheet: 'Movements' },
 ];
 
-/** Products/stock/movements as CSV or Excel (admins and the owner). */
+/** The whole shop's catalog and stock history as one JSON file (no staff accounts). */
+async function buildBackup(shop: {
+  name: string;
+  slug: string;
+  currency: string;
+}): Promise<Backup> {
+  const [products, movements, { categories }, archived] = await Promise.all([
+    allProducts(),
+    allMovements(),
+    apiGet<{ categories: CategoryDto[] }>('/categories'),
+    allProducts(true),
+  ]);
+  const cat = new Map(categories.map((c) => [c.id, c.name]));
+  const skuOf = new Map(products.map((p) => [p.id, p.sku]));
+  return {
+    format: BACKUP_FORMAT,
+    version: BACKUP_VERSION,
+    exportedAt: new Date().toISOString(),
+    shop,
+    categories: categories.map((c) => c.name),
+    products: [...products, ...archived].map((p) => ({
+      name: p.name,
+      sku: p.sku,
+      category: p.categoryId ? (cat.get(p.categoryId) ?? null) : null,
+      priceCents: p.priceCents,
+      costCents: p.costCents ?? null,
+      trackStock: p.trackStock,
+      stock: p.stock,
+      lowStockThreshold: p.lowStockThreshold,
+      archived: p.archived,
+    })),
+    movements: movements.map((m) => ({
+      date: new Date(m.createdAt).toISOString(),
+      product: m.product.name,
+      sku: skuOf.get(m.product.id) ?? null,
+      change: m.delta,
+      reason: m.reason,
+      note: m.note,
+      by: m.user.displayName,
+    })),
+  };
+}
+
+/** Products/stock/movements as CSV or Excel, and a full backup (admins and the owner). */
 export function ExportMenu() {
   const { shop } = useMe();
   const { downloadRows } = useImportWorker();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  async function downloadBackup() {
+    setBusy(true);
+    setError(null);
+    try {
+      const backup = await buildBackup(shop);
+      await apiPost('/audit/exports', {
+        kind: 'backup',
+        format: 'json',
+        rows: backup.products.length,
+      });
+      const blob = new Blob([JSON.stringify(backup, null, 1)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${shop.slug}-backup-${backup.exportedAt.slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Backup failed.');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function exportAs(kind: ExportKind, format: ExportFormat, sheet: string) {
     setBusy(true);
@@ -159,6 +227,13 @@ export function ExportMenu() {
                 ))}
               </div>
             ))}
+            <DropdownMenu.Separator className="my-1 h-px bg-border" />
+            <DropdownMenu.Item
+              onSelect={() => void downloadBackup()}
+              className="flex min-h-11 cursor-pointer items-center rounded-md px-3 text-sm font-medium outline-none data-[highlighted]:bg-accent"
+            >
+              Full backup (.json)
+            </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
       </DropdownMenu.Root>

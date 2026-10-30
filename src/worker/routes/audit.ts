@@ -50,3 +50,19 @@ auditRoutes.post('/exports', async (c) => {
   });
   return c.json({ ok: true });
 });
+
+// A restore runs through the import endpoint; this marks it in the log as a restore.
+auditRoutes.post('/restores', async (c) => {
+  const input = await parseJson(
+    c,
+    z.object({ products: z.number().int().min(0).max(1_000_000) }).strict(),
+  );
+  const actor = await actorOf(c);
+  await writeAudit(getDb(c.env.DB), c.var.shopId, {
+    action: 'data.restore',
+    userId: actor.userId,
+    details: input,
+    ipHash: actor.ipHash,
+  });
+  return c.json({ ok: true });
+});

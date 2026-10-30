@@ -19,6 +19,7 @@ const ROUTES: Record<string, Access> = {
   'POST /api/v1/staff/:id/deactivate': 'admin',
   'GET /api/v1/audit': 'admin',
   'POST /api/v1/audit/exports': 'admin',
+  'POST /api/v1/audit/restores': 'admin',
   'GET /api/v1/products': 'staff',
   'GET /api/v1/products/:id': 'staff',
   'POST /api/v1/products': 'admin',

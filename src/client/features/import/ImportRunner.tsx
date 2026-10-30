@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { CheckCircle2, Upload } from 'lucide-react';
 
+import { ConfirmDialog } from '@/components/confirm-dialog';
 import { FormAlert } from '@/components/field';
 import { Link } from '@/components/link';
 import { Button } from '@/components/ui/button';
@@ -48,10 +49,16 @@ async function sendChunk(rows: CheckedRow[]): Promise<ImportChunkResult> {
 export function ImportRunner({
   rows,
   onFinished,
+  confirmMessage,
+  onBeforeRun,
 }: {
   rows: CheckedRow[];
   onFinished?: () => void;
+  /** Ask before starting (restoring a backup overwrites products with the same SKU). */
+  confirmMessage?: string | undefined;
+  onBeforeRun?: (() => Promise<void>) | undefined;
 }) {
+  const [confirming, setConfirming] = useState(false);
   const ready = rows.filter((r) => r.check.ok);
   const [state, setState] = useState<'idle' | 'running' | 'done' | 'stopped' | 'failed'>('idle');
   const [sent, setSent] = useState(0);
@@ -63,6 +70,15 @@ export function ImportRunner({
 
   async function run() {
     stop.current = false;
+    if (onBeforeRun && sent === 0) {
+      try {
+        await onBeforeRun();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Something went wrong.');
+        setState('failed');
+        return;
+      }
+    }
     setState('running');
     setSent(0);
     setTotals(EMPTY);
@@ -100,7 +116,14 @@ export function ImportRunner({
   return (
     <div className="space-y-4">
       {state === 'idle' ? (
-        <Button size="lg" disabled={ready.length === 0} onClick={() => void run()}>
+        <Button
+          size="lg"
+          disabled={ready.length === 0}
+          onClick={() => {
+            if (confirmMessage) setConfirming(true);
+            else void run();
+          }}
+        >
           <Upload aria-hidden="true" />
           Import {ready.length.toLocaleString()} product{ready.length === 1 ? '' : 's'}
         </Button>
@@ -190,6 +213,18 @@ export function ImportRunner({
           </div>
         </div>
       ) : null}
+      <ConfirmDialog
+        open={confirming}
+        onOpenChange={setConfirming}
+        title="Restore this backup?"
+        confirmLabel="Restore"
+        onConfirm={() => {
+          setConfirming(false);
+          void run();
+        }}
+      >
+        {confirmMessage}
+      </ConfirmDialog>
     </div>
   );
 }

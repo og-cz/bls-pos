@@ -50,6 +50,7 @@ const ACTIONS: Record<AuditAction, { icon: LucideIcon; text: string; warn?: bool
   'stock.restock': { icon: PackagePlus, text: 'restocked' },
   'stock.deduct': { icon: PackageMinus, text: 'took out stock of' },
   'data.export': { icon: Download, text: 'exported' },
+  'data.restore': { icon: ArchiveRestore, text: 'restored a backup' },
 };
 
 const timeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });

@@ -1,5 +1,12 @@
 import { useState } from 'react';
-import { ArrowLeft, ClipboardPaste, FileSpreadsheet, FileText, Upload } from 'lucide-react';
+import {
+  ArchiveRestore,
+  ArrowLeft,
+  ClipboardPaste,
+  FileSpreadsheet,
+  FileText,
+  Upload,
+} from 'lucide-react';
 
 import { PageHeader } from '@/components/empty-state';
 import { FormAlert } from '@/components/field';
@@ -12,7 +19,9 @@ import {
   type ImportColumn,
   type ParseResult,
 } from '@shared/import';
+import { backupToImport } from '@shared/backup';
 import { checkRows, type CheckedRow } from '@shared/import-validate';
+import { apiPost } from '@/lib/api';
 
 import { BulkPhotos } from './BulkPhotos';
 import { ImportReview } from './ImportReview';
@@ -26,6 +35,8 @@ export function ImportPage() {
   const [checked, setChecked] = useState<CheckedRow[]>([]);
   // Each file gets a fresh review (filters and page reset).
   const [loads, setLoads] = useState(0);
+  // Set when the rows came from a backup file (restore) instead of a spreadsheet.
+  const [restoring, setRestoring] = useState<{ products: number } | null>(null);
   const [source, setSource] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -41,6 +52,27 @@ export function ImportPage() {
     );
   }
 
+  async function loadBackup(file: File) {
+    setError(null);
+    try {
+      const { backup, result: parsed } = backupToImport(JSON.parse(await file.text()) as unknown);
+      setResult(parsed);
+      setChecked(checkRows(parsed.rows));
+      setSource(`Backup of ${backup.shop.name} from ${backup.exportedAt.slice(0, 10)}`);
+      setRestoring({ products: parsed.rows.length });
+      setLoads((n) => n + 1);
+      setPasting(false);
+    } catch (err) {
+      setError(
+        err instanceof SyntaxError
+          ? "That file isn't a bls POS backup."
+          : err instanceof Error
+            ? err.message
+            : 'Could not read the backup.',
+      );
+    }
+  }
+
   async function load(input: File | string, label: string) {
     setError(null);
     setBusy(true);
@@ -48,6 +80,7 @@ export function ImportPage() {
       const parsed = await parse(input);
       setResult(parsed);
       setChecked(checkRows(parsed.rows));
+      setRestoring(null);
       setLoads((n) => n + 1);
       setSource(label);
       setPasting(false);
@@ -130,6 +163,20 @@ export function ImportPage() {
               <ClipboardPaste aria-hidden="true" />
               Paste from Google Sheets
             </Button>
+            <label className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-md border bg-card px-4 text-sm font-medium shadow-xs hover:bg-accent focus-within:ring-[3px] focus-within:ring-ring/50">
+              <ArchiveRestore className="size-4" aria-hidden="true" />
+              Restore from backup
+              <input
+                type="file"
+                accept=".json,application/json"
+                className="sr-only"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void loadBackup(file);
+                  e.target.value = '';
+                }}
+              />
+            </label>
           </div>
           {pasting ? (
             <div className="space-y-2">
@@ -189,7 +236,22 @@ export function ImportPage() {
               Rows with a SKU that already exists update that product; the rest are added. Rows
               without a SKU are always added as new products.
             </p>
-            <ImportRunner key={loads} rows={checked} />
+            <ImportRunner
+              key={loads}
+              rows={checked}
+              confirmMessage={
+                restoring
+                  ? `${restoring.products.toLocaleString()} products will be restored. Products with the same SKU are overwritten with the backup's name, price, cost and category; stock is set only for products that don't exist yet.`
+                  : undefined
+              }
+              onBeforeRun={
+                restoring
+                  ? async () => {
+                      await apiPost('/audit/restores', { products: restoring.products });
+                    }
+                  : undefined
+              }
+            />
           </section>
         ) : null}
 
