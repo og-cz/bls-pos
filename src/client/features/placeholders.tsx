@@ -1,4 +1,4 @@
-import { LayoutDashboard, ShoppingCart } from 'lucide-react';
+import { LayoutDashboard } from 'lucide-react';
 
 import { useMe } from '@/app/session';
 import { EmptyState, PageHeader } from '@/components/empty-state';
@@ -13,17 +13,6 @@ export function DashboardPage() {
       <EmptyState icon={LayoutDashboard} title="Your dashboard is on the way">
         Today&apos;s sales, income by day, top products and low stock will show here once you start
         selling.
-      </EmptyState>
-    </>
-  );
-}
-
-export function SellPage() {
-  return (
-    <>
-      <PageHeader title="Sell" />
-      <EmptyState icon={ShoppingCart} title="Selling is coming soon">
-        Tap products, take cash and print receipts from this screen.
       </EmptyState>
     </>
   );

@@ -20,7 +20,7 @@ const LoginPage = page(() => import('@/features/auth/LoginPage'), 'LoginPage');
 const SignupPage = page(() => import('@/features/auth/SignupPage'), 'SignupPage');
 const RecoverPage = page(() => import('@/features/auth/RecoverPage'), 'RecoverPage');
 const DashboardPage = page(() => import('@/features/placeholders'), 'DashboardPage');
-const SellPage = page(() => import('@/features/placeholders'), 'SellPage');
+const SellPage = page(() => import('@/features/sell/SellPage'), 'SellPage');
 const InventoryPage = page(() => import('@/features/inventory/InventoryPage'), 'InventoryPage');
 const ProductsPage = page(() => import('@/features/products/ProductsPage'), 'ProductsPage');
 const StaffPage = page(() => import('@/features/staff/StaffPage'), 'StaffPage');
