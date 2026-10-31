@@ -28,6 +28,24 @@ For any AI assistant (or person) picking up **bls POS** (formerly POS Fast / Bil
 - **Before the first deploy:** create the R2 bucket (`wrangler r2 bucket create bls-pos-media`)
   and the D1 database, and paste the D1 id into `wrangler.jsonc`.
 
+## Deployment status (2026-10-31) — read before deploying
+
+- Cloudflare account on this PC: **audioguyyy@gmail.com** (account `6ad4e07f1b89790e5bac7b4f5529f1f6`),
+  confirmed by the owner as the right one. workers.dev subdomain: `blspos.workers.dev`, so
+  the app will be **https://bls-pos.blspos.workers.dev**.
+- **Done:** D1 `bls-pos` created (APAC), id in `wrangler.jsonc`, all migrations applied remotely.
+- **Not done:** R2 is off: Cloudflare requires a card or PayPal and the owner has neither.
+  The owner chose to **store photos and backups in a second D1 database instead of R2**
+  (no card needed; about 500 MB total, so lower the per-shop photo allowance to ~100 MB;
+  D1 caps a row at 2,000,000 bytes, so cap uploads at ~1.9 MB). This was approved but **not
+  started**. It touches the storage adapter, uploads, media and public-page routes,
+  `backup.ts`, `purge.ts`, wrangler bindings and their tests. Keep R2 possible later.
+- **Owner still has to do:** Turnstile widget for `bls-pos.blspos.workers.dev`; create
+  `.env.production.local` with `VITE_TURNSTILE_SITE_KEY=…` in the project folder;
+  `pnpm exec wrangler secret put` for `PEPPER`, `TURNSTILE_SECRET`, `TOTP_ENC_KEY`
+  (typed by the owner, never in chat). Check with `wrangler secret list` (names only).
+- Then: `pnpm deploy`, open the URL, sign up, test a sale. Afterwards: pilot shops → v1.0.0.
+
 ## Rules the owner set (follow them)
 
 - **Commits are authored by og-cz only.** No `Co-Authored-By`, no Claude/AI mention in
