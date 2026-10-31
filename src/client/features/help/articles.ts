@@ -177,6 +177,10 @@ No. bls POS is not BIR-accredited, and every receipt says it is not an official 
 
 Staff: ask the owner or an admin. In **Staff**, they tap **Manage → Reset password** and give you a new temporary password. Owner: use **Forgot password** on the login page with one of your recovery codes. Change your own password any time in **My profile**.
 
+## Where is my data, and who can see it?
+
+Only people with a login to your shop. Read the **Privacy policy** (link on the login page) for what is kept and for how long.
+
 ## Can I bring my product list from a spreadsheet?
 
 Yes. In **Products**, tap **Import** and choose your CSV or Excel file. You can also export everything as a backup.

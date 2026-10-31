@@ -108,6 +108,15 @@ export function LoginPage() {
               Create a shop
             </Link>
           </p>
+          <p className="text-xs">
+            <Link href="/privacy" className="hover:underline">
+              Privacy
+            </Link>
+            {' · '}
+            <Link href="/terms" className="hover:underline">
+              Terms
+            </Link>
+          </p>
         </>
       }
     >

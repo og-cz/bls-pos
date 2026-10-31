@@ -107,15 +107,28 @@ export function SignupPage() {
       title="Create your shop"
       description="Set up your shop and owner account. It's free."
       footer={
-        <p>
-          Already have a shop?{' '}
-          <Link
-            href="/login"
-            className="font-medium text-primary underline-offset-4 hover:underline"
-          >
-            Log in
-          </Link>
-        </p>
+        <>
+          <p>
+            Already have a shop?{' '}
+            <Link
+              href="/login"
+              className="font-medium text-primary underline-offset-4 hover:underline"
+            >
+              Log in
+            </Link>
+          </p>
+          <p>
+            By creating a shop you agree to the{' '}
+            <Link href="/terms" className="underline underline-offset-4">
+              Terms
+            </Link>{' '}
+            and{' '}
+            <Link href="/privacy" className="underline underline-offset-4">
+              Privacy policy
+            </Link>
+            .
+          </p>
+        </>
       }
     >
       <form ref={formRef} onSubmit={(e) => void onSubmit(e)} noValidate className="space-y-5">

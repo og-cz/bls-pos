@@ -49,10 +49,15 @@ function Loading() {
   );
 }
 
+const PrivacyPage = page(() => import('@/features/legal/LegalPage'), 'PrivacyPage');
+const TermsPage = page(() => import('@/features/legal/LegalPage'), 'TermsPage');
+
 const PUBLIC: Record<string, { title: string; Page: Page }> = {
   '/login': { title: 'Log in', Page: LoginPage },
   '/signup': { title: 'Create your shop', Page: SignupPage },
   '/recover': { title: 'Reset password', Page: RecoverPage },
+  '/privacy': { title: 'Privacy policy', Page: PrivacyPage },
+  '/terms': { title: 'Terms of use', Page: TermsPage },
 };
 
 const SIGNED_IN: Record<string, Page> = {
