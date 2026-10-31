@@ -12,7 +12,7 @@ For any AI assistant (or person) picking up **bls POS** (formerly POS Fast / Bil
 - **Plan:** `docs/MASTER_PROMPT.md` (original name "POS Fast" = Bilis POS). Follow it
   phase by phase, one Conventional Commit per planned item.
 - **Status:** Phases 0–9 (and 3.5) done and pushed (see `docs/PROGRESS.md`). **Next: Phase 10
-  (Polish and launch).** Secrets now include `TOTP_ENC_KEY` (see `docs/DEPLOY.md`). Deploy steps: `docs/DEPLOY.md`. Not deployed yet: the owner chose to keep building first (Cloudflare account
+  (Polish and launch).** Secrets now include `TOTP_ENC_KEY` (see `docs/DEPLOY_FREE.md`). Deploy steps: `docs/DEPLOY_FREE.md`. Not deployed yet: the owner chose to keep building first (Cloudflare account
   on this PC: audioguyyy@gmail.com; a Turnstile widget is needed before deploying).
 - **Security tests:** `tests/api/security.test.ts` lists every API route with its
   minimum role. Add new routes there, or CI fails.

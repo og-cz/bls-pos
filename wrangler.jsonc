@@ -31,4 +31,32 @@
   // Nightly daily summaries at 16:10 UTC = 00:10 in Manila (src/worker/cron.ts), and hourly
   // backups at :25, each shop in its own hour (src/worker/backup.ts).
   "triggers": { "crons": ["10 16 * * *", "25 * * * *"] },
+  // Environments (Section 11): local = `pnpm dev` with Miniflare; production = the settings
+  // above (`pnpm deploy`); preview = its own Worker, database and bucket, so trying a
+  // change never touches real shops (`pnpm deploy:preview`). Bindings are not inherited,
+  // so they are listed again.
+  "env": {
+    "preview": {
+      "name": "bls-pos-preview",
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "bls-pos-preview",
+          // Replace with the ID printed by `wrangler d1 create bls-pos-preview`.
+          "database_id": "00000000-0000-0000-0000-000000000001",
+          "migrations_dir": "migrations",
+        },
+      ],
+      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "bls-pos-media-preview" }],
+      "ratelimits": [
+        {
+          "name": "PUBLIC_LIMITER",
+          "namespace_id": "1002",
+          "simple": { "limit": 120, "period": 60 },
+        },
+      ],
+      // No scheduled jobs on preview: they would only use the free plan's Cron quota.
+      "triggers": { "crons": [] },
+    },
+  },
 }

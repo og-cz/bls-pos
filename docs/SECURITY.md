@@ -71,7 +71,7 @@ Please do not open a public issue. Email the maintainer (see the GitHub profile 
 ### 7.10 Secrets and configuration
 
 - [x] `.dev.vars` git-ignored; `.dev.vars.example` holds only throwaway values
-- [x] `PEPPER`, `TURNSTILE_SECRET`, `TOTP_ENC_KEY` required by `wrangler.jsonc`, set with `wrangler secret put` (see `DEPLOY.md`)
+- [x] `PEPPER`, `TURNSTILE_SECRET`, `TOTP_ENC_KEY` required by `wrangler.jsonc`, set with `wrangler secret put` (see `DEPLOY_FREE.md`)
 - [x] Dependabot updates (`.github/dependabot.yml`) and a CI dependency audit (`pnpm audit --audit-level high`)
 - [ ] **Owner:** turn on **Settings → Code security → Secret scanning** and **Push protection** in GitHub (a repository setting, not a file)
 

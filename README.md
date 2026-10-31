@@ -55,7 +55,7 @@ pnpm dev
 
 ## Self-hosting
 
-Runs free on Cloudflare (Workers, D1, R2). Step-by-step: [docs/DEPLOY.md](docs/DEPLOY.md).
+Runs free on Cloudflare (Workers, D1, R2). Step-by-step: [docs/DEPLOY_FREE.md](docs/DEPLOY_FREE.md).
 
 ## License
 

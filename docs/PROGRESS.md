@@ -294,7 +294,7 @@ Setup resumes where it was left (`onboarding_step`); **Skip setup** is always th
 Then a **guided tour** points at each part of the menu (owners/admins on the dashboard;
 staff on Sell: search, tap to add, cart and Charge, Deduct). **Help** (bottom of the
 menu and the account menu) has ten short articles, search, and "Take the tour again".
-`docs/DEPLOY.md` explains free self-hosting on Cloudflare step by step.
+`docs/DEPLOY_FREE.md` explains free self-hosting on Cloudflare step by step.
 
 **Proven by tests (351):** setup steps stay in range and only admins can move them;
 recovery codes: 10 new ones, the old ones refused, logged, owner only; samples follow

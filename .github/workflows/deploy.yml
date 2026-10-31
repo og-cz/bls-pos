@@ -1,0 +1,79 @@
+name: Deploy
+
+# Deploys main to production after CI passes (Section 11), and preview by hand.
+# Does nothing until the owner adds, in GitHub → Settings → Secrets and variables → Actions:
+#   secrets: CLOUDFLARE_API_TOKEN (Workers, D1 and R2 edit), CLOUDFLARE_ACCOUNT_ID
+#   variables: VITE_TURNSTILE_SITE_KEY (public site key)
+# Worker secrets (PEPPER, TURNSTILE_SECRET, TOTP_ENC_KEY) are set once with
+# `wrangler secret put` and never pass through GitHub (docs/DEPLOY_FREE.md).
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Where to deploy
+        type: choice
+        options: [preview, production]
+        default: preview
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.event.inputs.environment || 'production' }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to ${{ github.event.inputs.environment || 'production' }}
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ github.event.inputs.environment || 'production' }}
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
+      TARGET: ${{ github.event.inputs.environment || 'production' }}
+    steps:
+      - name: Skip until Cloudflare is connected
+        id: ready
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::notice::No CLOUDFLARE_API_TOKEN secret yet: skipping deploy."
+            echo "go=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v5
+        if: steps.ready.outputs.go == 'true'
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - uses: pnpm/action-setup@v4
+        if: steps.ready.outputs.go == 'true'
+
+      - uses: actions/setup-node@v5
+        if: steps.ready.outputs.go == 'true'
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - if: steps.ready.outputs.go == 'true'
+        run: pnpm install --frozen-lockfile
+
+      # Migrations first: new code may need the new columns.
+      - name: Apply database migrations
+        if: steps.ready.outputs.go == 'true'
+        run: |
+          if [ "$TARGET" = preview ]; then pnpm db:migrate:preview; else pnpm db:migrate:prod; fi
+
+      - name: Build and deploy
+        if: steps.ready.outputs.go == 'true'
+        run: |
+          if [ "$TARGET" = preview ]; then pnpm deploy:preview; else pnpm deploy; fi

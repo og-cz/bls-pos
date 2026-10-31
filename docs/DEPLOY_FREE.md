@@ -127,3 +127,40 @@ Turnstile widget too.
 - **Error 1027 / "daily limit":** the 100,000 requests a day are used up; they reset at
   00:00 UTC. See [LIMITS.md](LIMITS.md).
 - **Photos don't upload:** check the R2 bucket name matches `wrangler.jsonc`.
+
+## Automatic deploys from GitHub (optional)
+
+`.github/workflows/deploy.yml` deploys `main` to production every time CI passes, and
+can deploy **preview** by hand (Actions → Deploy → Run workflow). It does nothing until
+you add, in GitHub → **Settings → Secrets and variables → Actions**:
+
+- Secrets: `CLOUDFLARE_API_TOKEN` (a token with Workers Scripts, D1 and R2 edit
+  permissions) and `CLOUDFLARE_ACCOUNT_ID`.
+- Variable: `VITE_TURNSTILE_SITE_KEY` (the public site key).
+
+The Worker secrets (`PEPPER`, `TURNSTILE_SECRET`, `TOTP_ENC_KEY`) stay in Cloudflare;
+GitHub never sees them.
+
+## A preview copy (optional)
+
+To try changes without touching real shops, make a second, separate copy:
+
+```bash
+pnpm exec wrangler d1 create bls-pos-preview
+```
+
+```bash
+pnpm exec wrangler r2 bucket create bls-pos-media-preview
+```
+
+Paste the new database id into `wrangler.jsonc` under `env.preview`, set its three
+secrets with `--env preview` (for example `pnpm exec wrangler secret put PEPPER --env
+preview`), then:
+
+```bash
+pnpm db:migrate:preview
+```
+
+```bash
+pnpm deploy:preview
+```

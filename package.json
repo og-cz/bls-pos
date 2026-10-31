@@ -18,6 +18,8 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc -b",
     "deploy": "pnpm build && wrangler deploy",
+    "deploy:preview": "tsc -b && vite build --mode preview && wrangler deploy",
+    "db:migrate:preview": "wrangler d1 migrations apply DB --remote --env preview",
     "cf-typegen": "wrangler types",
     "icons": "node scripts/make-icons.mjs",
     "audit": "pnpm audit --audit-level high",
