@@ -1,4 +1,5 @@
 import { getDb } from './db/client';
+import { purgeDeletedShops } from './purge';
 import { summaryStatement } from './services/summaries';
 import { addDays, localDay } from '@shared/time';
 
@@ -22,4 +23,5 @@ export async function runNightly(env: Env, now: number = Date.now()): Promise<vo
     );
   });
   if (statements.length) await env.DB.batch(statements);
+  await purgeDeletedShops(env, now);
 }

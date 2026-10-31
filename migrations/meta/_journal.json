@@ -64,6 +64,13 @@
       "when": 1793383777836,
       "tag": "0008_audit_chain",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1793410250539,
+      "tag": "0009_shop_purge",
+      "breakpoints": true
     }
   ]
 }

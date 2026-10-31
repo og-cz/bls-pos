@@ -1,12 +1,14 @@
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 
-import type { ShopSettings, ShopSettingsInput } from '@shared/schemas/shop';
+import type { DeleteShopInput, ShopSettings, ShopSettingsInput } from '@shared/schemas/shop';
 import { themeSchema, type Theme } from '@shared/theme';
 
 import type { StorageAdapter } from '../adapters/types';
 import type { Db } from '../db/client';
-import { shops } from '../db/schema';
+import { sessions, shops, users } from '../db/schema';
 import type { Actor } from '../lib/actor';
+import { ApiError } from '../lib/errors';
+import { verifyPassword } from '../security/password';
 import { auditInsert, auditStatement } from './audit';
 
 /**
@@ -122,4 +124,50 @@ export async function updateShopSettings(
 /** Where the setup wizard resumes (Section 8.1). Not logged: it is only progress. */
 export async function setOnboardingStep(db: Db, shopId: string, step: number): Promise<void> {
   await db.update(shops).set({ onboardingStep: step }).where(eq(shops.id, shopId));
+}
+
+/**
+ * The owner deletes the shop (Section 7.14). It closes at once: nobody can log in, its
+ * public page is gone, and every session ends. Everything is erased for good 30 days
+ * later by the nightly job (src/worker/purge.ts).
+ */
+export async function deleteShop(
+  db: Db,
+  shopId: string,
+  pepper: string,
+  actor: Actor,
+  input: DeleteShopInput,
+  now: number = Date.now(),
+): Promise<void> {
+  if (actor.role !== 'owner') {
+    throw new ApiError(403, 'FORBIDDEN', 'Only the owner can delete the shop.');
+  }
+  const row = await db
+    .select({ slug: shops.slug, passwordHash: users.passwordHash })
+    .from(shops)
+    .innerJoin(users, and(eq(users.shopId, shops.id), eq(users.id, actor.userId)))
+    .where(eq(shops.id, shopId))
+    .get();
+  if (!row) throw new ApiError(404, 'NOT_FOUND', 'Shop not found.');
+  const fields: Record<string, string> = {};
+  if (input.shopSlug !== row.slug) fields.shopSlug = 'Type your shop code exactly.';
+  if (!(await verifyPassword(input.password, row.passwordHash, pepper)).ok) {
+    fields.password = 'That is not your password.';
+  }
+  if (Object.keys(fields).length) {
+    throw new ApiError(400, 'VALIDATION_ERROR', 'Some fields need fixing.', fields);
+  }
+  await db.batch([
+    db.update(shops).set({ deletedAt: now, storefrontEnabled: false }).where(eq(shops.id, shopId)),
+    db
+      .update(sessions)
+      .set({ revokedAt: now })
+      .where(and(eq(sessions.shopId, shopId), isNull(sessions.revokedAt))),
+    auditInsert(
+      db,
+      shopId,
+      { action: 'shop.delete', userId: actor.userId, ipHash: actor.ipHash },
+      now,
+    ),
+  ]);
 }

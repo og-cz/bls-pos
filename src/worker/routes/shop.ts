@@ -1,16 +1,18 @@
 import { Hono } from 'hono';
 
-import { onboardingSchema, shopSettingsSchema } from '@shared/schemas/shop';
+import { deleteShopSchema, onboardingSchema, shopSettingsSchema } from '@shared/schemas/shop';
 import { themeSchema } from '@shared/theme';
 
 import { R2Storage } from '../adapters/storage/r2';
 import { getDb } from '../db/client';
 import type { AuthedEnv } from '../env';
 import { actorOf } from '../lib/actor';
+import { clearSessionCookie } from '../lib/cookies';
 import { parseJson } from '../lib/validate';
 import { requireRole } from '../middleware/role';
 import { authed } from '../middleware/tenant';
 import {
+  deleteShop,
   getShopSettings,
   removeShopImage,
   setOnboardingStep,
@@ -63,4 +65,12 @@ shopRoutes.delete('/logo', requireRole('admin'), async (c) => {
 shopRoutes.delete('/cover', requireRole('admin'), async (c) => {
   await removeShopImage(getDb(c.env.DB), c.var.shopId, new R2Storage(c.env.MEDIA), 'cover');
   return c.json({ ok: true });
+});
+
+// Danger zone (Section 7.14): owner only, with the shop code and password typed again.
+shopRoutes.post('/delete', requireRole('owner'), async (c) => {
+  const input = await parseJson(c, deleteShopSchema);
+  await deleteShop(getDb(c.env.DB), c.var.shopId, c.env.PEPPER, await actorOf(c), input);
+  clearSessionCookie(c);
+  return c.json({ deleted: true });
 });

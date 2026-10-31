@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   Store,
   Tag,
+  Trash2,
   Upload,
   UserMinus,
   UserPlus,
@@ -70,6 +71,7 @@ const ACTIONS: Record<AuditAction, { icon: LucideIcon; text: string; warn?: bool
   'staff.password_reset': { icon: KeyRound, text: 'reset the password of' },
   'staff.role': { icon: Users, text: 'changed the role of' },
   'password.change': { icon: KeyRound, text: 'changed their password' },
+  'shop.delete': { icon: Trash2, text: 'deleted the shop', warn: true },
 };
 
 const timeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });

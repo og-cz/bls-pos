@@ -41,3 +41,12 @@ export type ShopSettings = {
   storefrontShowPrices: boolean;
   storefrontShowStock: boolean;
 };
+
+/** Deleting the shop: type its code and the owner's password, so it is never by accident. */
+export const deleteShopSchema = z
+  .object({
+    shopSlug: z.string().trim().toLowerCase().min(1, 'Required.').max(40),
+    password: z.string().min(1, 'Required.').max(128),
+  })
+  .strict();
+export type DeleteShopInput = z.infer<typeof deleteShopSchema>;

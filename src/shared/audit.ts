@@ -31,6 +31,7 @@ export const AUDIT_ACTIONS = [
   'staff.password_reset',
   'staff.role',
   'password.change',
+  'shop.delete',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

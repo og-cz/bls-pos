@@ -63,6 +63,7 @@ const ROUTES: Record<string, Access> = {
   'GET /api/v1/reports/income': 'admin',
   'GET /api/v1/shop': 'staff',
   'PATCH /api/v1/shop': 'admin',
+  'POST /api/v1/shop/delete': 'owner',
   'PATCH /api/v1/shop/theme': 'admin',
   'PATCH /api/v1/shop/onboarding': 'admin',
   'POST /api/v1/shop/samples': 'admin',

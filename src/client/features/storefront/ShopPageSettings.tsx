@@ -11,6 +11,7 @@ import { useApiGet } from '@/lib/use-api';
 import { cn } from '@/lib/utils';
 import { BIO_MAX, type ShopSettings } from '@shared/schemas/shop';
 
+import { DangerZone } from './DangerZone';
 import { ShareCard } from './ShareCard';
 
 function Toggle({
@@ -215,7 +216,10 @@ export function ShopPageSettings() {
       />
       {error ? <FormAlert>{error}</FormAlert> : null}
       {data ? (
-        <Form initial={data.shop} />
+        <div className="space-y-8">
+          <Form initial={data.shop} />
+          <DangerZone />
+        </div>
       ) : error ? null : (
         <p role="status" className="flex items-center gap-2 text-muted-foreground">
           <Globe className="size-4" aria-hidden="true" /> Loading…
