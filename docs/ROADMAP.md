@@ -20,7 +20,7 @@
 | 6     | Branding and storefront                                         | Done                                                 |
 | 7     | Onboarding and help                                             | Done                                                 |
 | 8     | PWA and offline                                                 | Done                                                 |
-| 9     | Security hardening                                              | Not started                                          |
+| 9     | Security hardening                                              | Done                                                 |
 | 10    | Polish and launch                                               | Not started                                          |
 
 ## Before selling to other businesses

@@ -336,3 +336,40 @@ would need a signed-in route; the header and colors still follow the shop). A sy
 sale counts on the day it reached the server; the device time is kept as
 `client_created_at`. The service worker runs only in production builds, so offline
 start-up is untested until the first deploy.
+
+## Phase 9 — Security hardening (2026-10-31)
+
+**Demo (as the owner):**
+
+1. **My profile:** change your password; turn on **two-step login** (scan the QR code
+   with Google Authenticator or similar, enter the code); see **where you're logged in**
+   and log out other devices. Log out and back in: the code is asked after the password.
+2. **Staff → Manage:** reset someone's password (new temporary one, shown once), make
+   them admin or staff, or deactivate them. Each signs that person out.
+3. **Dashboard:** a red notice appears if an account is locked after wrong passwords.
+4. **Activity → Check the log:** your browser re-checks the hash chain and says the log
+   is intact (or which entry was changed or removed).
+5. **Shop page → Delete shop:** type the shop code and password; the shop closes at once
+   and is erased after 30 days.
+6. `/privacy` and `/terms` are linked from login and signup.
+
+**Under the hood:** security headers on the app (`public/_headers`) and API; Origin
+check on every change; TOTP (RFC 6238) with secrets AES-GCM encrypted under
+`TOTP_ENC_KEY`; hourly cron seals activity entries into a per-shop hash chain and backs
+up that hour's shops to private R2 (14 days, data built as JSON by D1 to fit the free
+CPU limit); nightly job erases shops deleted 30+ days ago; Dependabot and a CI
+`pnpm audit` gate; Playwright end-to-end tests (sale, cashier login, offline sale and
+sync) on phone and desktop sizes, in CI. `docs/SECURITY.md` has every §7 item checked
+except GitHub's secret scanning (an owner setting); `docs/THREAT_MODEL.md` lists threats,
+controls, accepted risks and a review checklist.
+
+**Proven by tests (389 API + 6 end-to-end):** headers on every answer; cross-site changes
+refused; RFC 6238 vectors; login needs the code once on; password change, reset and role
+change sign people out; admins can't touch the owner or promote; sessions list scoped
+to you; backups private, without secrets, kept 14 days; sealed log entries changed,
+removed or re-hashed are caught; shop deletion closes at once and erases everything
+after 30 days without touching other shops.
+
+**Notes:** turn on GitHub secret scanning and push protection (repository settings).
+The privacy policy, terms and receipt wording need a lawyer's and tax professional's
+review before offering bls POS to other businesses.

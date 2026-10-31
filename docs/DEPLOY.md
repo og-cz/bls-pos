@@ -80,6 +80,14 @@ codes stop working.
 pnpm exec wrangler secret put TURNSTILE_SECRET
 ```
 
+`TOTP_ENC_KEY` encrypts two-step login secrets. Generate it the same way as `PEPPER`
+(32 random bytes, base64) and keep a copy: losing it turns off everyone's two-step
+login.
+
+```bash
+pnpm exec wrangler secret put TOTP_ENC_KEY
+```
+
 ## 6. Deploy
 
 ```bash
