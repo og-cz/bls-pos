@@ -18,7 +18,7 @@ export function Avatar({
       )}
     >
       {url ? (
-        <img src={url} alt="" className="size-full object-cover" />
+        <img src={url} alt="" loading="lazy" decoding="async" className="size-full object-cover" />
       ) : (
         name.slice(0, 1).toUpperCase()
       )}

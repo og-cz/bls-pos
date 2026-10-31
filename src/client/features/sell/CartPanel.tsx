@@ -62,6 +62,8 @@ export function CartPanel({
                   <img
                     src={p.thumbUrl ?? p.imageUrl ?? ''}
                     alt=""
+                    loading="lazy"
+                    decoding="async"
                     className="size-11 shrink-0 rounded-md bg-muted object-cover"
                   />
                 ) : (

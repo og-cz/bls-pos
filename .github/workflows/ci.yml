@@ -41,6 +41,8 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      - name: Performance budget (sell screen ≤ 200 KB gzipped)
+        run: pnpm size
 
   e2e:
     name: End-to-end (Playwright)

@@ -6,6 +6,8 @@ import { cloudflare } from '@cloudflare/vite-plugin';
 
 export default defineConfig({
   plugins: [react(), tailwindcss(), cloudflare()],
+  // The manifest lets scripts/check-bundle.mjs measure what each screen downloads.
+  environments: { client: { build: { manifest: true } } },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src/client', import.meta.url)),

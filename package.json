@@ -21,6 +21,7 @@
     "cf-typegen": "wrangler types",
     "icons": "node scripts/make-icons.mjs",
     "audit": "pnpm audit --audit-level high",
+    "size": "node scripts/check-bundle.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
