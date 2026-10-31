@@ -373,3 +373,28 @@ after 30 days without touching other shops.
 **Notes:** turn on GitHub secret scanning and push protection (repository settings).
 The privacy policy, terms and receipt wording need a lawyer's and tax professional's
 review before offering bls POS to other businesses.
+
+## Phase 10 — Polish and launch, up to v1.0.0-rc.1 (2026-10-31)
+
+**Done:**
+
+- **Performance:** `pnpm size` measures what each screen downloads (gzipped): sell 157 KB,
+  dashboard 152 KB, login 150 KB, public shop page 148 KB. CI fails if the sell screen
+  passes 200 KB. Every screen is its own download; images load lazily.
+- **Accessibility:** every screen (signed in and public) is scanned with axe for WCAG
+  2.1/2.2 AA in light and dark mode, on phone and desktop sizes, in CI. Fixes: a
+  `--link` color for brand-colored text (a deeper shade, 4.5:1 on every surface, also
+  per shop theme), readable menu headings and selected items, dark text on the lighter
+  dark-mode blue, a "Skip to content" link, reduced motion respected.
+- **Legal, data export, shop deletion:** done in Phase 9 (`/privacy`, `/terms`,
+  Products → Export, Shop page → Delete shop).
+- **Production:** `wrangler.jsonc` has a separate **preview** environment (own Worker,
+  D1, R2, no crons; `pnpm deploy:preview`). `.github/workflows/deploy.yml` deploys `main`
+  after CI passes once the owner adds `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and
+  the `VITE_TURNSTILE_SITE_KEY` variable; until then it skips. Guide renamed
+  `docs/DEPLOY_FREE.md`.
+- **Release:** `1.0.0-rc.1`, `CHANGELOG.md` generated from the commits
+  (`pnpm changelog <version>`), git tag `v1.0.0-rc.1`. The version shows in Help.
+
+**Left for the owner:** deploy, run 2–3 pilot shops for a few days, then the last two
+commits of the plan (pilot fixes, v1.0.0).

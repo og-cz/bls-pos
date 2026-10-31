@@ -8,20 +8,20 @@
 
 ## Free edition — v1.0.0
 
-| Phase | Scope                                                           | Status                                               |
-| ----- | --------------------------------------------------------------- | ---------------------------------------------------- |
-| 0     | Foundation: repo, tooling, client + worker scaffold, CI, limits | Done (preview deploy still needs a Cloudflare login) |
-| 1     | Database and authentication                                     | Done                                                 |
-| 2     | Tenancy, roles and staff                                        | Done                                                 |
-| 3     | Products and inventory                                          | Done                                                 |
-| 3.5   | Bulk import, export and backup                                  | Done                                                 |
-| 4     | Selling                                                         | Done                                                 |
-| 5     | Dashboard and reports                                           | Done                                                 |
-| 6     | Branding and storefront                                         | Done                                                 |
-| 7     | Onboarding and help                                             | Done                                                 |
-| 8     | PWA and offline                                                 | Done                                                 |
-| 9     | Security hardening                                              | Done                                                 |
-| 10    | Polish and launch                                               | Not started                                          |
+| Phase | Scope                                                           | Status                                                |
+| ----- | --------------------------------------------------------------- | ----------------------------------------------------- |
+| 0     | Foundation: repo, tooling, client + worker scaffold, CI, limits | Done (preview deploy still needs a Cloudflare login)  |
+| 1     | Database and authentication                                     | Done                                                  |
+| 2     | Tenancy, roles and staff                                        | Done                                                  |
+| 3     | Products and inventory                                          | Done                                                  |
+| 3.5   | Bulk import, export and backup                                  | Done                                                  |
+| 4     | Selling                                                         | Done                                                  |
+| 5     | Dashboard and reports                                           | Done                                                  |
+| 6     | Branding and storefront                                         | Done                                                  |
+| 7     | Onboarding and help                                             | Done                                                  |
+| 8     | PWA and offline                                                 | Done                                                  |
+| 9     | Security hardening                                              | Done                                                  |
+| 10    | Polish and launch                                               | v1.0.0-rc.1 tagged; waiting on deploy and pilot shops |
 
 ## Before selling to other businesses
 
