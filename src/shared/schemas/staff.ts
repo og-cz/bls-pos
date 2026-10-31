@@ -26,3 +26,5 @@ export type StaffMember = {
   createdAt: number;
   avatarUrl: string | null;
 };
+
+export const changeRoleSchema = z.object({ role: z.enum(ASSIGNABLE_ROLES) }).strict();

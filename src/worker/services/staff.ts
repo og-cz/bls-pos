@@ -2,7 +2,7 @@ import { and, asc, count, eq, inArray, isNull, sql } from 'drizzle-orm';
 
 import { entitlementsFor } from '@shared/entitlements';
 import { hasRole, type Role } from '@shared/roles';
-import type { CreateStaffInput, StaffMember } from '@shared/schemas/staff';
+import type { AssignableRole, CreateStaffInput, StaffMember } from '@shared/schemas/staff';
 
 import type { Db } from '../db/client';
 import { isUniqueViolation } from '../db/errors';
@@ -194,4 +194,104 @@ export async function deactivateMember(
   ]);
   const { avatarKey, ...rest } = target;
   return { ...rest, active: false, avatarUrl: avatarKey ? mediaUrl(avatarKey) : null };
+}
+
+async function managedTarget(db: Db, shopId: string, actor: Actor, targetId: string) {
+  const target = await db
+    .select(memberColumns)
+    .from(users)
+    .where(and(eq(users.id, targetId), eq(users.shopId, shopId)))
+    .get();
+  if (!target) throw new ApiError(404, 'NOT_FOUND', 'No such account in this shop.');
+  if (!canManage(actor, target)) {
+    throw new ApiError(403, 'FORBIDDEN', "You can't change this account.");
+  }
+  return target;
+}
+
+const revokeAll = (db: Db, shopId: string, userId: string, now: number) =>
+  db
+    .update(sessions)
+    .set({ revokedAt: now })
+    .where(
+      and(eq(sessions.userId, userId), eq(sessions.shopId, shopId), isNull(sessions.revokedAt)),
+    );
+
+/**
+ * A new temporary password for someone who forgot theirs (Section 7.12: staff passwords
+ * are reset by an admin). Also unlocks the account and signs it out everywhere. The
+ * password is shown once, to the admin, and never stored in clear.
+ */
+export async function resetMemberPassword(
+  db: Db,
+  shopId: string,
+  pepper: string,
+  actor: Actor,
+  targetId: string,
+  now: number = Date.now(),
+): Promise<{ temporaryPassword: string }> {
+  const target = await managedTarget(db, shopId, actor, targetId);
+  const temporaryPassword = newTemporaryPassword();
+  await db.batch([
+    db
+      .update(users)
+      .set({
+        passwordHash: await hashPassword(temporaryPassword, pepper),
+        failedLogins: 0,
+        lockedUntil: null,
+      })
+      .where(and(eq(users.id, target.id), eq(users.shopId, shopId))),
+    revokeAll(db, shopId, target.id, now),
+    auditInsert(
+      db,
+      shopId,
+      {
+        action: 'staff.password_reset',
+        userId: actor.userId,
+        target: { type: 'user', id: target.id },
+        details: { username: target.username },
+        ipHash: actor.ipHash,
+      },
+      now,
+    ),
+  ]);
+  return { temporaryPassword };
+}
+
+/**
+ * Makes someone an admin or staff. Only the owner changes admins (canManage), so an admin
+ * can't promote anyone to admin. Signs the person out, so the new role applies at once.
+ */
+export async function changeMemberRole(
+  db: Db,
+  shopId: string,
+  actor: Actor,
+  targetId: string,
+  role: AssignableRole,
+  now: number = Date.now(),
+): Promise<void> {
+  const target = await managedTarget(db, shopId, actor, targetId);
+  if (role === 'admin' && actor.role !== 'owner') {
+    throw new ApiError(403, 'FORBIDDEN', 'Only the owner can make someone an admin.');
+  }
+  if (target.role === role) return;
+  await db.batch([
+    db
+      .update(users)
+      .set({ role })
+      .where(and(eq(users.id, target.id), eq(users.shopId, shopId))),
+    revokeAll(db, shopId, target.id, now),
+    auditInsert(
+      db,
+      shopId,
+      {
+        action: 'staff.role',
+        userId: actor.userId,
+        target: { type: 'user', id: target.id },
+        details: { username: target.username, from: target.role, to: role },
+        ipHash: actor.ipHash,
+      },
+      now,
+    ),
+  ]);
 }

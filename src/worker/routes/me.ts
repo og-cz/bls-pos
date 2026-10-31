@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 
 import { entitlementsFor } from '@shared/entitlements';
 import { disableTotpSchema, enableTotpSchema } from '@shared/schemas/auth';
-import { updateProfileSchema } from '@shared/schemas/profile';
+import { changePasswordSchema, updateProfileSchema } from '@shared/schemas/profile';
 import { parseTheme } from '@shared/theme';
 
 import { R2Storage } from '../adapters/storage/r2';
@@ -15,7 +15,7 @@ import { mediaUrl } from '../lib/media';
 import { parseJson } from '../lib/validate';
 import { requireRole } from '../middleware/role';
 import { authed } from '../middleware/tenant';
-import { avatarUrlOf, removeAvatar, updateProfile } from '../services/profile';
+import { avatarUrlOf, changeOwnPassword, removeAvatar, updateProfile } from '../services/profile';
 import { recoveryCodesLeft, regenerateRecoveryCodes } from '../services/recovery';
 import { listMySessions, revokeMyOtherSessions, revokeMySession } from '../services/sessions';
 import {
@@ -163,6 +163,19 @@ meRoutes.post('/sessions/revoke-others', async (c) => {
     c.var.shopId,
     await actorOf(c),
     c.var.auth.sessionId,
+  );
+  return c.json({ ok: true });
+});
+
+meRoutes.post('/password', async (c) => {
+  const input = await parseJson(c, changePasswordSchema);
+  await changeOwnPassword(
+    getDb(c.env.DB),
+    c.var.shopId,
+    c.env.PEPPER,
+    await actorOf(c),
+    c.var.auth.sessionId,
+    input,
   );
   return c.json({ ok: true });
 });

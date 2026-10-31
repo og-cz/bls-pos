@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { UserPlus, Users } from 'lucide-react';
+import { DropdownMenu } from 'radix-ui';
+import { ChevronDown, KeyRound, UserPlus, Users, UserX } from 'lucide-react';
 
 import { useMe } from '@/app/session';
 import { Avatar } from '@/components/avatar';
@@ -17,6 +18,9 @@ import { AddStaffForm, NewPasswordCard } from './staff-forms';
 
 const ROLE_LABEL: Record<Role, string> = { owner: 'Owner', admin: 'Admin', staff: 'Staff' };
 
+const MENU_ITEM =
+  'flex min-h-11 cursor-pointer items-center gap-2 rounded-md px-3 text-sm outline-none data-[highlighted]:bg-accent';
+
 /** Mirrors the server rule: owner manages admins and staff, admins manage staff. */
 function canManage(actor: { id: string; role: Role }, member: StaffMember) {
   if (member.id === actor.id || member.role === 'owner') return false;
@@ -29,12 +33,41 @@ export function StaffPage() {
   const [adding, setAdding] = useState(false);
   const [created, setCreated] = useState<{ member: StaffMember; password: string } | null>(null);
   const [toDeactivate, setToDeactivate] = useState<StaffMember | null>(null);
+  const [toReset, setToReset] = useState<StaffMember | null>(null);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const members = data?.members ?? [];
   const activeCount = members.filter((m) => m.role !== 'owner' && m.active).length;
   const atLimit = activeCount >= entitlements.maxStaff;
+
+  async function resetPassword() {
+    const member = toReset;
+    if (!member) return;
+    setBusy(true);
+    setActionError(null);
+    try {
+      const { temporaryPassword } = await apiPost<{ temporaryPassword: string }>(
+        `/staff/${member.id}/reset-password`,
+      );
+      setCreated({ member, password: temporaryPassword });
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Something went wrong.');
+    } finally {
+      setBusy(false);
+      setToReset(null);
+    }
+  }
+
+  async function changeRole(member: StaffMember, role: 'admin' | 'staff') {
+    setActionError(null);
+    try {
+      await apiPost(`/staff/${member.id}/role`, { role });
+      reload();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Something went wrong.');
+    }
+  }
 
   async function deactivate() {
     if (!toDeactivate) return;
@@ -153,21 +186,71 @@ export function StaffPage() {
                   </div>
                 </div>
                 {m.active && canManage(user, m) ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setToDeactivate(m);
-                    }}
-                  >
-                    Deactivate
-                  </Button>
+                  <DropdownMenu.Root>
+                    <DropdownMenu.Trigger asChild>
+                      <Button variant="outline" size="sm" aria-label={`Manage ${m.displayName}`}>
+                        Manage
+                        <ChevronDown aria-hidden="true" />
+                      </Button>
+                    </DropdownMenu.Trigger>
+                    <DropdownMenu.Portal>
+                      <DropdownMenu.Content
+                        align="end"
+                        sideOffset={6}
+                        className="z-50 min-w-48 rounded-lg border bg-popover p-1 text-popover-foreground shadow-md"
+                      >
+                        <DropdownMenu.Item
+                          className={MENU_ITEM}
+                          onSelect={() => {
+                            setToReset(m);
+                          }}
+                        >
+                          <KeyRound className="size-4" aria-hidden="true" />
+                          Reset password
+                        </DropdownMenu.Item>
+                        {user.role === 'owner' ? (
+                          <DropdownMenu.Item
+                            className={MENU_ITEM}
+                            onSelect={() => {
+                              void changeRole(m, m.role === 'admin' ? 'staff' : 'admin');
+                            }}
+                          >
+                            <Users className="size-4" aria-hidden="true" />
+                            {m.role === 'admin' ? 'Make staff' : 'Make admin'}
+                          </DropdownMenu.Item>
+                        ) : null}
+                        <DropdownMenu.Item
+                          className={cn(MENU_ITEM, 'text-destructive')}
+                          onSelect={() => {
+                            setToDeactivate(m);
+                          }}
+                        >
+                          <UserX className="size-4" aria-hidden="true" />
+                          Deactivate
+                        </DropdownMenu.Item>
+                      </DropdownMenu.Content>
+                    </DropdownMenu.Portal>
+                  </DropdownMenu.Root>
                 ) : null}
               </li>
             ))}
           </ul>
         ) : null}
       </div>
+
+      <ConfirmDialog
+        open={toReset !== null}
+        onOpenChange={(open) => {
+          if (!open) setToReset(null);
+        }}
+        title={`Reset ${toReset?.displayName ?? ''}'s password?`}
+        confirmLabel={busy ? 'Resetting…' : 'Reset password'}
+        onConfirm={() => void resetPassword()}
+        busy={busy}
+      >
+        You get a new temporary password to give them. Their old password stops working, and they
+        are logged out everywhere.
+      </ConfirmDialog>
 
       <ConfirmDialog
         open={toDeactivate !== null}

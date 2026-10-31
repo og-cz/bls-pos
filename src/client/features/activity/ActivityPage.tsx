@@ -22,6 +22,7 @@ import {
   Upload,
   UserMinus,
   UserPlus,
+  Users,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -66,6 +67,9 @@ const ACTIONS: Record<AuditAction, { icon: LucideIcon; text: string; warn?: bool
   '2fa.enable': { icon: ShieldCheck, text: 'turned on two-step login' },
   '2fa.disable': { icon: ShieldAlert, text: 'turned off two-step login', warn: true },
   'sessions.revoke': { icon: LogOut, text: 'logged out their other devices' },
+  'staff.password_reset': { icon: KeyRound, text: 'reset the password of' },
+  'staff.role': { icon: Users, text: 'changed the role of' },
+  'password.change': { icon: KeyRound, text: 'changed their password' },
 };
 
 const timeFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });
@@ -77,6 +81,8 @@ function describe(entry: AuditEntry): string {
   switch (entry.action) {
     case 'staff.create':
     case 'staff.deactivate':
+    case 'staff.password_reset':
+    case 'staff.role':
       return `${who} ${info.text} ${target}`.trim();
     case 'sale.void': {
       const d = entry.details ?? {};

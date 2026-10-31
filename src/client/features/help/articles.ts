@@ -175,7 +175,7 @@ No. bls POS is not BIR-accredited, and every receipt says it is not an official 
 
 ## I forgot my password.
 
-Staff: ask the owner or an admin. They deactivate your old login and add you again with a new temporary password. Owner: use **Forgot password** on the login page with one of your recovery codes.
+Staff: ask the owner or an admin. In **Staff**, they tap **Manage → Reset password** and give you a new temporary password. Owner: use **Forgot password** on the login page with one of your recovery codes. Change your own password any time in **My profile**.
 
 ## Can I bring my product list from a spreadsheet?
 

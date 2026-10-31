@@ -28,6 +28,9 @@ export const AUDIT_ACTIONS = [
   '2fa.enable',
   '2fa.disable',
   'sessions.revoke',
+  'staff.password_reset',
+  'staff.role',
+  'password.change',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

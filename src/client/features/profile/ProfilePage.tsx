@@ -11,6 +11,7 @@ import { apiDelete, apiPatch, apiUpload } from '@/lib/api';
 import { compressImage, IMAGE_ACCEPT, MAX_EDGE } from '@/lib/image';
 
 import { PhotoEditor } from '../products/photo/PhotoEditor';
+import { PasswordCard } from './PasswordCard';
 import { SessionsCard } from './SessionsCard';
 import { TwoFactorCard } from './TwoFactorCard';
 
@@ -136,6 +137,7 @@ export function ProfilePage() {
           </div>
         </form>
 
+        <PasswordCard />
         <TwoFactorCard />
         <SessionsCard />
 
