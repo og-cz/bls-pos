@@ -259,8 +259,8 @@ export function themeCss(theme: Theme): string {
   const scale = brandScale(theme.brand);
   const vars = SHADES.map((s) => `--brand-${String(s)}: ${scale[s]};`).join(' ');
   const { light: l, dark: d } = resolvedColors(theme);
-  const light = `--primary: ${l.color}; --ring: ${l.color}; --primary-foreground: ${l.foreground};`;
-  const dark = `--primary: ${d.color}; --ring: ${d.color}; --primary-foreground: ${d.foreground};`;
+  const light = `--primary: ${l.color}; --ring: ${l.color}; --primary-foreground: ${l.foreground}; --link: ${scale[700]};`;
+  const dark = `--primary: ${d.color}; --ring: ${d.color}; --primary-foreground: ${d.foreground}; --link: ${scale[300]};`;
   const look = `--shop-font: '${FONT_FAMILY[theme.font]}'; --radius: ${String(RADIUS_REM[theme.radius])}rem;`;
   return `:root { ${vars} ${light} ${look} }
 .dark { ${dark} }`;

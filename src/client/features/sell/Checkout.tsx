@@ -169,9 +169,7 @@ export function Checkout({ cart, products, totalCents, currency, onSold, onStock
             }}
             className={cn(
               'flex h-12 items-center justify-center gap-2 rounded-lg border font-medium outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
-              method === id
-                ? 'border-primary bg-primary/10 text-primary'
-                : 'bg-card hover:bg-accent',
+              method === id ? 'border-primary bg-primary/10 text-link' : 'bg-card hover:bg-accent',
             )}
           >
             <Icon className="size-5" aria-hidden="true" />

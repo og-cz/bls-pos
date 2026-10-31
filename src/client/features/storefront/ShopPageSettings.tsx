@@ -144,7 +144,7 @@ function Form({ initial }: { initial: ShopSettings }) {
         {saved.storefrontEnabled ? (
           <Link
             href={pagePath}
-            className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+            className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-link hover:underline"
           >
             Open your page <ExternalLink className="size-4" aria-hidden="true" />
           </Link>

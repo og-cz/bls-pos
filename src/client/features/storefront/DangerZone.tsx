@@ -26,11 +26,11 @@ export function DangerZone() {
 
   return (
     <section className="max-w-2xl space-y-3 rounded-xl border border-destructive/40 p-4">
-      <h2 className="font-semibold text-destructive">Delete shop</h2>
+      <h2 className="font-semibold">Delete shop</h2>
       <p className="text-sm text-muted-foreground">
         Closes the shop for everyone right away. Everything (products, sales, staff, photos) is
         erased for good after 30 days. Download a backup first from{' '}
-        <Link href="/products" className="font-medium text-primary hover:underline">
+        <Link href="/products" className="font-medium text-link hover:underline">
           Products → Export
         </Link>
         .

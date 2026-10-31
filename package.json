@@ -31,6 +31,7 @@
     "db:seed": "wrangler d1 execute DB --local --file scripts/seed.sql"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.10.2",
     "@cloudflare/vite-plugin": "^1.65.0",
     "@cloudflare/vitest-plugin": "^1.4.9",
     "@eslint/js": "^10.0.1",

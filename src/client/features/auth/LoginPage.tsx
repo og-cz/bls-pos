@@ -14,7 +14,7 @@ import { loginSchema } from '@shared/schemas/auth';
 import { AuthLayout } from './AuthLayout';
 import { lastShopCode, rememberShopCode } from './shop-code';
 
-const linkClass = 'font-medium text-primary underline-offset-4 hover:underline';
+const linkClass = 'font-medium text-link underline-offset-4 hover:underline';
 
 export function LoginPage() {
   const [values, setValues] = useState(() => ({

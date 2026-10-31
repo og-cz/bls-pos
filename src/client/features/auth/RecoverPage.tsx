@@ -102,10 +102,7 @@ export function RecoverPage() {
       footer={
         <p>
           Remembered it?{' '}
-          <Link
-            href="/login"
-            className="font-medium text-primary underline-offset-4 hover:underline"
-          >
+          <Link href="/login" className="font-medium text-link underline-offset-4 hover:underline">
             Log in
           </Link>
         </p>

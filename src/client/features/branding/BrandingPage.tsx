@@ -25,7 +25,7 @@ function Preview({ shopName, currency }: { shopName: string; currency: string })
     <div className="space-y-3" aria-label="Preview" role="img">
       <div className="overflow-hidden rounded-xl border bg-card">
         <div className="bg-primary px-4 py-6 text-primary-foreground">
-          <div className="text-xs opacity-80">Your shop page</div>
+          <div className="text-xs">Your shop page</div>
           <div className="text-lg font-semibold">{shopName}</div>
         </div>
         <div className="grid grid-cols-2 gap-2 p-3">

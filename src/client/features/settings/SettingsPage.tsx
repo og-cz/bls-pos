@@ -63,7 +63,7 @@ function Choice<V extends string>({
             className={cn(
               'flex min-h-11 cursor-pointer flex-col items-center gap-1.5 rounded-xl border p-3 text-center text-sm transition-colors has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50',
               value === o.value
-                ? 'border-primary bg-primary/10 text-primary'
+                ? 'border-primary bg-primary/10 text-link'
                 : 'bg-card hover:bg-accent',
             )}
           >

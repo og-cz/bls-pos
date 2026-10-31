@@ -117,7 +117,8 @@ function NavLinks({
           compact ? 'h-9' : 'h-11',
           collapsed && 'justify-center px-0',
           active
-            ? 'bg-primary/10 text-primary'
+            ? // Name in the normal text color (readable on the tint); the icon carries the brand.
+              'bg-primary/10 font-semibold text-foreground [&_svg]:text-primary'
             : 'text-muted-foreground hover:bg-accent hover:text-foreground',
         )}
       >
@@ -145,7 +146,7 @@ function NavLinks({
             {heading && !collapsed ? (
               <div
                 id={id}
-                className="px-3 pb-0.5 text-[11px] leading-4 font-semibold tracking-wide text-muted-foreground/70 uppercase"
+                className="px-3 pb-0.5 text-[11px] leading-4 font-semibold tracking-wide text-muted-foreground uppercase"
               >
                 {heading}
               </div>
@@ -290,6 +291,13 @@ export function AppShell({ children }: { children: ReactNode }) {
             : 'md:grid-cols-[15rem_1fr]',
       )}
     >
+      {/* Keyboard users jump past the menu (WCAG 2.4.1). Visible only when focused. */}
+      <a
+        href="#main"
+        className="sr-only z-50 rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
+      >
+        Skip to content
+      </a>
       {/* Side menu: tablet and up */}
       <aside
         className={cn(
@@ -364,7 +372,13 @@ export function AppShell({ children }: { children: ReactNode }) {
         </header>
 
         {/* Bottom padding keeps content clear of the phone tab bar. */}
-        <main className="flex-1 px-4 py-6 pb-24 md:px-8 md:pb-8">{children}</main>
+        <main
+          id="main"
+          tabIndex={-1}
+          className="flex-1 px-4 py-6 pb-24 outline-none md:px-8 md:pb-8"
+        >
+          {children}
+        </main>
       </div>
 
       <MenuDrawer

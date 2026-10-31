@@ -21,7 +21,7 @@ export function LegalPage({ doc }: { doc: 'privacy' | 'terms' }) {
       <p className="mt-10 text-sm text-muted-foreground">
         <Link
           href={doc === 'privacy' ? '/terms' : '/privacy'}
-          className="text-primary hover:underline"
+          className="text-link hover:underline"
         >
           {doc === 'privacy' ? 'Terms of use' : 'Privacy policy'}
         </Link>

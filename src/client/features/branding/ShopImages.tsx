@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
 import { apiDelete, apiUpload } from '@/lib/api';
 import { compressImage, IMAGE_ACCEPT, MAX_EDGE } from '@/lib/image';
+import { cn } from '@/lib/utils';
 
 import { PhotoEditor } from '../products/photo/PhotoEditor';
 
@@ -94,7 +95,12 @@ export function ShopImages({
             className="absolute inset-0 bg-black"
             style={{ opacity: shop.coverUrl ? overlay : 0 }}
           />
-          <div className="absolute right-3 bottom-2 left-24 truncate text-lg font-semibold text-white sm:left-28">
+          <div
+            className={cn(
+              'absolute right-3 bottom-2 left-24 truncate text-lg font-semibold sm:left-28',
+              shop.coverUrl ? 'text-white' : 'text-primary-foreground',
+            )}
+          >
             {shop.name}
           </div>
         </div>

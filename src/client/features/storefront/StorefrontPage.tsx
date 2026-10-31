@@ -166,7 +166,7 @@ export function StorefrontPage({ slug }: { slug: string }) {
                   <div className="space-y-1 p-3">
                     <div className="line-clamp-2 font-medium">{p.name}</div>
                     {p.priceCents !== null ? (
-                      <div className="font-semibold text-primary tabular">
+                      <div className="font-semibold text-link tabular">
                         {formatCents(p.priceCents, s.currency)}
                       </div>
                     ) : null}
