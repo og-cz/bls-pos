@@ -1,5 +1,12 @@
 import { useState } from 'react';
-import { AlertTriangle, ArrowRight, LayoutDashboard, PackageX, ShoppingCart } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  Lock,
+  LayoutDashboard,
+  PackageX,
+  ShoppingCart,
+} from 'lucide-react';
 
 import { useMe } from '@/app/session';
 import { EmptyState, PageHeader } from '@/components/empty-state';
@@ -96,6 +103,27 @@ export function DashboardPage() {
   return (
     <>
       {header}
+
+      {data.locked.length ? (
+        <Link
+          href="/staff"
+          className="mb-4 flex items-center gap-3 rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm hover:bg-destructive/15"
+        >
+          <Lock className="size-5 shrink-0 text-destructive" aria-hidden="true" />
+          <span className="flex-1">
+            {data.locked
+              .map(
+                (u) =>
+                  `${u.displayName} is locked out until ${new Date(u.until).toLocaleTimeString([], { timeStyle: 'short' })}`,
+              )
+              .join(' · ')}
+            . Too many wrong passwords. If it wasn&apos;t them, reset their password.
+          </span>
+          <span className="flex items-center gap-1 font-medium">
+            Staff <ArrowRight className="size-4" aria-hidden="true" />
+          </span>
+        </Link>
+      ) : null}
 
       {alerts.out + alerts.low > 0 ? (
         <Link

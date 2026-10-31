@@ -1,3 +1,4 @@
+import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 
 import { addMember, api, getWithCookie, postJson, signUp } from './helpers';
@@ -113,5 +114,25 @@ describe('changing roles', () => {
     );
     const me = await (await getWithCookie('/me', fresh)).json<{ user: { role: string } }>();
     expect(me.user.role).toBe('admin');
+  });
+});
+
+describe('locked accounts', () => {
+  it('the dashboard tells admins who is locked out', async () => {
+    const owner = await signUp();
+    const staff = await addMember(owner, 'staff');
+    // (Rate limiting usually stops guesses first; the lock is the second line of defence.)
+    await env.DB.prepare('UPDATE users SET locked_until = ? WHERE id = ?')
+      .bind(Date.now() + 15 * 60_000, staff.id)
+      .run();
+    const res = await getWithCookie('/reports/dashboard?days=7', owner.cookie);
+    const { locked } = await res.json<{ locked: { id: string; until: number }[] }>();
+    expect(locked).toEqual([expect.objectContaining({ id: staff.id })]);
+    expect(locked[0]?.until).toBeGreaterThan(Date.now());
+
+    // A reset unlocks.
+    await postJson(`/staff/${staff.id}/reset-password`, {}, owner.cookie);
+    const after = await getWithCookie('/reports/dashboard?days=7', owner.cookie);
+    expect((await after.json<{ locked: unknown[] }>()).locked).toEqual([]);
   });
 });

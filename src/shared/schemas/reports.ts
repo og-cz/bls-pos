@@ -61,6 +61,8 @@ export type Dashboard = {
   topProducts: TopProduct[];
   staff: StaffSales[];
   alerts: { low: number; out: number };
+  /** Accounts locked after too many wrong passwords (Section 7.3), until when. */
+  locked: { id: string; displayName: string; until: number }[];
 };
 
 export type StaffSales = {

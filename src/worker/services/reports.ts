@@ -1,4 +1,4 @@
-import { and, between, eq } from 'drizzle-orm';
+import { and, between, eq, gt } from 'drizzle-orm';
 
 import type {
   Dashboard,
@@ -15,7 +15,7 @@ import type {
 import { addDays, dayStartMs, daysBetween, localDay } from '@shared/time';
 
 import type { Db } from '../db/client';
-import { dailySummaries, shops } from '../db/schema';
+import { dailySummaries, shops, users } from '../db/schema';
 import { ApiError } from '../lib/errors';
 import { mediaUrl, thumbKeyFor } from '../lib/media';
 import { stockAlerts } from './inventory';
@@ -254,11 +254,21 @@ export async function dashboard(
   const timeZone = await shopTimeZone(db, shopId);
   const to = localDay(now, timeZone);
   const range = { from: addDays(to, 1 - days), to };
-  const [income, top, staff, alerts] = await Promise.all([
+  const [income, top, staff, alerts, locked] = await Promise.all([
     incomeReport(db, shopId, { ...range, group: 'day' }, now),
     topProducts(db, shopId, { ...range, sort: 'revenue', limit: 5 }),
     salesByStaff(db, shopId, range),
     stockAlerts(db, shopId),
+    db
+      .select({ id: users.id, displayName: users.displayName, until: users.lockedUntil })
+      .from(users)
+      .where(and(eq(users.shopId, shopId), gt(users.lockedUntil, now))),
   ]);
-  return { income, topProducts: top, staff, alerts };
+  return {
+    income,
+    topProducts: top,
+    staff,
+    alerts,
+    locked: locked.map((u) => ({ id: u.id, displayName: u.displayName, until: u.until ?? now })),
+  };
 }
