@@ -6,6 +6,7 @@ import { EmptyState, PageHeader } from '@/components/empty-state';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { navigate } from '@/lib/router';
+import { APP_NAME } from '@shared/app';
 import { hasRole } from '@shared/roles';
 
 import { ARTICLES } from './articles';
@@ -110,6 +111,9 @@ export function HelpPage() {
             ))}
           </ul>
         )}
+        <p className="text-center text-xs text-muted-foreground">
+          {APP_NAME} {__APP_VERSION__}
+        </p>
       </div>
     </>
   );

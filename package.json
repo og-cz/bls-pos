@@ -1,6 +1,6 @@
 {
   "name": "bls-pos",
-  "version": "0.0.0",
+  "version": "1.0.0-rc.1",
   "private": true,
   "description": "Fast, secure, branded point-of-sale for small businesses",
   "license": "MIT",
@@ -24,6 +24,7 @@
     "icons": "node scripts/make-icons.mjs",
     "audit": "pnpm audit --audit-level high",
     "size": "node scripts/check-bundle.mjs",
+    "changelog": "node scripts/changelog.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
