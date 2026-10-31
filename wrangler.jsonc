@@ -14,9 +14,8 @@
     {
       "binding": "DB",
       "database_name": "bls-pos",
-      // Replace with the ID printed by `wrangler d1 create bls-pos` before deploying.
-      // Local dev and tests ignore it.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      // From `wrangler d1 create bls-pos`. Local dev and tests ignore it.
+      "database_id": "adca64c3-0577-4fde-97a2-ea97509377fe",
       "migrations_dir": "migrations",
     },
   ],
