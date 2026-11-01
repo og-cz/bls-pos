@@ -1,5 +1,5 @@
-// Image upload checks (Section 7.8). JPEG, PNG and WebP only: never SVG, which can carry
-// scripts. The declared type must match the file's first bytes, so a renamed file or a
+// Image upload checks (Section 7.8). JPEG, PNG, WebP and AVIF only: never SVG, which can
+// carry scripts. The declared type must match the file's first bytes, so a renamed file or a
 // disguised HTML page is refused.
 
 // Under the 2,000,000-byte D1 row limit (photos are stored in D1, see adapters/storage).
@@ -9,6 +9,7 @@ export const IMAGE_TYPES = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
   'image/webp': 'webp',
+  'image/avif': 'avif',
 } as const;
 export type ImageType = keyof typeof IMAGE_TYPES;
 
@@ -24,6 +25,11 @@ export function sniffImageType(data: ArrayBuffer): ImageType | null {
   // "RIFF" <size> "WEBP"
   if (startsWith(b, [0x52, 0x49, 0x46, 0x46]) && startsWith(b, [0x57, 0x45, 0x42, 0x50], 8)) {
     return 'image/webp';
+  }
+  // ISO-BMFF: <size> "ftyp" then the brand "avif" (still image) or "avis" (sequence).
+  if (startsWith(b, [0x66, 0x74, 0x79, 0x70], 4)) {
+    const brand = String.fromCharCode(...b.slice(8, 12));
+    if (brand === 'avif' || brand === 'avis') return 'image/avif';
   }
   return null;
 }

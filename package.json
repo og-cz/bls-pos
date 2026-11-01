@@ -67,6 +67,7 @@
     "@fontsource-variable/lora": "5.2.8",
     "@fontsource-variable/space-grotesk": "5.2.10",
     "@fontsource/poppins": "5.2.7",
+    "@jsquash/avif": "2.1.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "driver.js": "1.3.6",

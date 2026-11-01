@@ -13,6 +13,13 @@ const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 16, 0x4a, 0x46, 0x49, 0x
 const WEBP = new Uint8Array([
   0x52, 0x49, 0x46, 0x46, 4, 0, 0, 0, 0x57, 0x45, 0x42, 0x50, 0x56, 0x50, 0x38, 0x20,
 ]);
+// <size> "ftyp" "avif": the start of every AVIF file. "ftyp" "mp41" is a video, not AVIF.
+const AVIF = new Uint8Array([
+  0, 0, 0, 0x1c, 0x66, 0x74, 0x79, 0x70, 0x61, 0x76, 0x69, 0x66, 0, 0, 0, 0,
+]);
+const MP4 = new Uint8Array([
+  0, 0, 0, 0x1c, 0x66, 0x74, 0x79, 0x70, 0x6d, 0x70, 0x34, 0x31, 0, 0, 0, 0,
+]);
 const SVG = new TextEncoder().encode(
   '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',
 );
@@ -58,6 +65,15 @@ describe('POST /uploads/:kind', () => {
     expect(shop?.cover_key).toMatch(/\/cover\/.+\.webp$/);
   });
 
+  it('accepts AVIF, the smallest format the app makes', async () => {
+    const owner = await signUp();
+    expect((await upload('logo', AVIF, 'image/avif', owner.cookie)).status).toBe(201);
+    const shop = await env.DB.prepare('SELECT logo_key FROM shops WHERE id = ?')
+      .bind(owner.shopId)
+      .first<{ logo_key: string }>();
+    expect(shop?.logo_key).toMatch(/\/logo\/.+\.avif$/);
+  });
+
   it('refuses SVG, HTML and files whose bytes do not match their declared type', async () => {
     const owner = await signUp();
     for (const [body, type] of [
@@ -66,6 +82,8 @@ describe('POST /uploads/:kind', () => {
       [HTML, 'image/jpeg'],
       [JPEG, 'image/png'],
       [PNG, 'application/octet-stream'],
+      [MP4, 'image/avif'],
+      [AVIF, 'image/png'],
     ] as const) {
       const res = await upload('logo', body, type, owner.cookie);
       expect(res.status, type).toBe(415);

@@ -49,8 +49,10 @@ R2 needs a card or PayPal on file even on the free plan, so photos and nightly b
 are stored in a second D1 database (`MEDIA_DB`, table `objects`). Decided 2026-11-01.
 
 - **Space:** 500 MB for that database. Each shop may use **100 MB** of photos
-  (`maxImagesMB`). Photos are shrunk on the phone first (product photo + thumbnail
-  ≈ 170 KB), so 100 MB is about 550 product photos. Most shops have 10–300 products.
+  (`maxImagesMB`). Photos are shrunk on the phone first and saved as **AVIF** where the
+  browser supports it (product photo + thumbnail ≈ 40–95 KB; measured 34 KB + 5 KB for a
+  2400×1800 photo, against 130 KB + 11 KB as WebP). So 100 MB holds roughly 1,000–2,500
+  product photos. Most shops have 10–300 products. Older browsers fall back to WebP.
 - **One photo:** at most 1.9 MB (a D1 row holds 2,000,000 bytes).
 - **Backups** are gzipped (about 10× smaller) and kept 14 days.
 - **Reads:** D1 returns photo bytes as a list of numbers, which costs some CPU, so every

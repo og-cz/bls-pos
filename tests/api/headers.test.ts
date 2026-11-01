@@ -27,14 +27,15 @@ describe('security headers', () => {
     const csp = /Content-Security-Policy: (.+)/.exec(staticHeaders)?.[1] ?? '';
     for (const rule of [
       "default-src 'self'",
-      "script-src 'self' https://challenges.cloudflare.com",
+      // 'wasm-unsafe-eval' lets the photo compressor (WebAssembly) run; it allows no JS eval.
+      "script-src 'self' 'wasm-unsafe-eval' https://challenges.cloudflare.com",
       "frame-ancestors 'none'",
       "object-src 'none'",
       "base-uri 'self'",
     ]) {
       expect(csp).toContain(rule);
     }
-    expect(csp).not.toMatch(/unsafe-eval|script-src[^;]*unsafe-inline/);
+    expect(csp).not.toMatch(/(?<!wasm-)unsafe-eval|script-src[^;]*unsafe-inline/);
     expect(staticHeaders).toContain('Permissions-Policy: camera=(self)');
   });
 });
