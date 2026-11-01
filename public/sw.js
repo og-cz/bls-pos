@@ -1,4 +1,4 @@
-// bls POS service worker (Section 10): the app opens without internet, and product photos
+// BLS POS service worker (Section 10): the app opens without internet, and product photos
 // already seen stay available. API data is never cached here; the app keeps its own
 // offline copy of the product list and clears everything on logout.
 

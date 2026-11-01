@@ -49,10 +49,10 @@ const pesos = (cents: number | null) => (cents == null ? '' : (cents / 100).toFi
 export function backupToImport(json: unknown): { backup: Backup; result: ParseResult } {
   const b = json as Partial<Backup> | null;
   if (b?.format !== BACKUP_FORMAT || !Array.isArray(b.products)) {
-    throw new Error("That file isn't a bls POS backup.");
+    throw new Error("That file isn't a BLS POS backup.");
   }
   if (typeof b.version !== 'number' || b.version > BACKUP_VERSION) {
-    throw new Error('That backup is from a newer version of bls POS. Update first.');
+    throw new Error('That backup is from a newer version of BLS POS. Update first.');
   }
   const rows = b.products
     .filter((p) => !p.archived)

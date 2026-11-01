@@ -1,6 +1,6 @@
 {
-  "name": "bls POS",
-  "short_name": "bls",
+  "name": "BLS POS",
+  "short_name": "BLS",
   "description": "Fast, simple point of sale for small shops.",
   "start_url": "/",
   "scope": "/",

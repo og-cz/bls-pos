@@ -1,6 +1,6 @@
-# Self-hosting bls POS for free
+# Self-hosting BLS POS for free
 
-bls POS runs entirely on Cloudflare's free plan: one Worker (the API and the web app),
+BLS POS runs entirely on Cloudflare's free plan: one Worker (the API and the web app),
 two D1 databases (one for shop data, one for photos and backups). No card, no server
 to look after, nothing that sleeps. This guide takes about 20 minutes the first time.
 

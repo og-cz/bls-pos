@@ -48,7 +48,7 @@ export const ARTICLES: Article[] = [
 
 Only the owner and admins can void a sale. Open it in **Sales**, tap **Void** and write the reason. The items go back into stock.
 
-Receipts from bls POS are not official receipts or invoices.
+Receipts from BLS POS are not official receipts or invoices.
 `,
   },
   {
@@ -114,17 +114,17 @@ Choose which products appear with **Show on your shop page** when editing a prod
   {
     id: 'install',
     title: 'Install on your phone',
-    summary: 'Open bls POS like an app, from your home screen.',
+    summary: 'Open BLS POS like an app, from your home screen.',
     minRole: 'staff',
     body: `
 ## Android (Chrome)
 
-1. Open bls POS in Chrome.
+1. Open BLS POS in Chrome.
 2. Tap the ⋮ menu, then **Install app** or **Add to Home screen**.
 
 ## iPhone (Safari)
 
-1. Open bls POS in Safari.
+1. Open BLS POS in Safari.
 2. Tap the **Share** button, then **Add to Home Screen**.
 
 It then opens full screen from its own icon.
@@ -136,12 +136,12 @@ It then opens full screen from its own icon.
     summary: 'What happens when the connection drops.',
     minRole: 'staff',
     body: `
-Keep selling when the internet drops. Open bls POS while online at least once on the phone or PC, so it has your product list.
+Keep selling when the internet drops. Open BLS POS while online at least once on the phone or PC, so it has your product list.
 
 - The header shows **Offline**. Sell as usual: the receipt says the sale number comes when you are back online.
 - Sales are kept on this device and sent by themselves when the connection returns, oldest first. Sending twice never records a sale twice.
 - If one can't be recorded (for example another till sold the last item meanwhile), it shows under **Sales → On this device → Needs review**. Try it again, or the owner or an admin can discard it. Nothing is dropped without someone deciding.
-- Logging out removes sales that were not sent yet, so connect first. bls POS warns you.
+- Logging out removes sales that were not sent yet, so connect first. BLS POS warns you.
 
 Prices and stock while offline are from the last time the list loaded.
 `,
@@ -165,13 +165,13 @@ Prices and stock while offline are from the last time the list loaded.
     summary: 'Common questions, short answers.',
     minRole: 'staff',
     body: `
-## Is bls POS free?
+## Is BLS POS free?
 
 Yes. The free plan covers up to 5,000 products and 5 staff accounts.
 
 ## Are the receipts official?
 
-No. bls POS is not BIR-accredited, and every receipt says it is not an official receipt or invoice.
+No. BLS POS is not BIR-accredited, and every receipt says it is not an official receipt or invoice.
 
 ## I forgot my password.
 

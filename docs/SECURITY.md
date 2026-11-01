@@ -94,7 +94,7 @@ Please do not open a public issue. Email the maintainer (see the GitHub profile 
 - [x] Nightly JSON export per shop to private R2 (`backups/…`, never served), 14-day retention — `tests/api/nightly-backup.test.ts`
 - [x] D1 Time Travel window recorded in `LIMITS.md` (7 days, Free)
 - [x] Owner data export (Products → Export, full backup) and shop deletion (soft, erased after 30 days) — `tests/api/delete-shop.test.ts`
-- [x] Privacy policy and terms (RA 10173) at `/privacy` and `/terms`. **TODO(lawyer):** review before offering bls POS to other businesses.
+- [x] Privacy policy and terms (RA 10173) at `/privacy` and `/terms`. **TODO(lawyer):** review before offering BLS POS to other businesses.
 
 ### 7.15 Security tests
 

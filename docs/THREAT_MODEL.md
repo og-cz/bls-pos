@@ -1,6 +1,6 @@
 # Threat model and review checklist
 
-What bls POS protects, from whom, and how. Updated 2026-10-31 (end of Phase 9). Read with
+What BLS POS protects, from whom, and how. Updated 2026-10-31 (end of Phase 9). Read with
 [SECURITY.md](SECURITY.md) (the §7 checklist) and [LIMITS.md](LIMITS.md).
 
 ## What we protect
@@ -58,7 +58,7 @@ What bls POS protects, from whom, and how. Updated 2026-10-31 (end of Phase 9). 
   shop can exhaust it for others (see `LIMITS.md`).
 - **Secret scanning and push protection** are GitHub settings the owner must turn on.
 - **Legal text** (privacy, terms, receipt wording) needs review by a lawyer and a tax
-  professional before bls POS is offered to other businesses.
+  professional before BLS POS is offered to other businesses.
 
 ## Review checklist (for every change)
 

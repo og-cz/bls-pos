@@ -19,7 +19,7 @@ export const sameOrigin: MiddlewareHandler = async (c, next) => {
       (origin !== undefined && origin !== own) ||
       (origin === undefined && site !== undefined && site !== 'same-origin' && site !== 'none');
     if (crossOrigin) {
-      throw new ApiError(403, 'CROSS_ORIGIN', 'This request must come from the bls POS app.');
+      throw new ApiError(403, 'CROSS_ORIGIN', 'This request must come from the BLS POS app.');
     }
   }
   await next();

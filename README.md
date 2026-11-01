@@ -20,12 +20,12 @@
   Sign up, brand your shop, add products and staff, and start selling from a phone or PC — free.
 </p>
 
-> **Status:** v1.0.0-rc.1, live and in pilot with the first shops. Screenshots show a demo
-> shop with sample data.
-
 <p align="center">
   <img src="docs/assets/screenshots/dashboard.png" alt="BLS POS dashboard" width="960" />
 </p>
+
+> **Status:** v1.0.0-rc.1, live and in pilot with the first shops. Screenshots show a demo
+> shop with sample data.
 
 ## System Features
 

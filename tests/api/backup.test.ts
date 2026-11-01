@@ -60,7 +60,7 @@ describe('backupToImport', () => {
   });
 
   it('refuses files that are not backups, or from a newer version', () => {
-    expect(() => backupToImport({ hello: 1 })).toThrow("isn't a bls POS backup");
+    expect(() => backupToImport({ hello: 1 })).toThrow("isn't a BLS POS backup");
     expect(() => backupToImport({ ...backup, version: 99 })).toThrow('newer version');
   });
 });

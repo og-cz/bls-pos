@@ -8,8 +8,8 @@ import { PAYMENT_LABEL } from '@shared/checkout';
 import { formatCents } from '@shared/money';
 import type { Receipt } from '@shared/schemas/sales';
 
-// Section 7.16: bls POS is not BIR-accredited; every receipt says so.
-// TODO(tax professional): confirm the exact wording before selling bls POS to shops.
+// Section 7.16: BLS POS is not BIR-accredited; every receipt says so.
+// TODO(tax professional): confirm the exact wording before selling BLS POS to shops.
 export const NOT_AN_INVOICE = 'This is not an official receipt or invoice.';
 
 const dateTime = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' });

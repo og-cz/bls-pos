@@ -65,7 +65,7 @@ export function ImportPage() {
     } catch (err) {
       setError(
         err instanceof SyntaxError
-          ? "That file isn't a bls POS backup."
+          ? "That file isn't a BLS POS backup."
           : err instanceof Error
             ? err.message
             : 'Could not read the backup.',

@@ -110,7 +110,7 @@ export function SettingsPage() {
     <>
       <PageHeader
         title="Settings"
-        description="How bls POS looks on this device. Each phone, tablet or PC keeps its own."
+        description="How BLS POS looks on this device. Each phone, tablet or PC keeps its own."
       />
       <div className="max-w-2xl space-y-6">
         <Section title="Appearance">
