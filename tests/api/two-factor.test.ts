@@ -69,7 +69,7 @@ describe('two-step login', () => {
     const owner = await signUp();
     const { uri, res } = await turnOn(owner.cookie);
     expect(res.status).toBe(200);
-    expect(uri).toMatch(/^otpauth:\/\/totp\/bls%20POS%3Ajuan%40/);
+    expect(uri).toMatch(/^otpauth:\/\/totp\/BLS%20POS%3Ajuan%40/);
 
     const noCode = await login(owner);
     expect(noCode.status).toBe(401);
