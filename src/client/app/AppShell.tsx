@@ -89,7 +89,7 @@ function NavLinks({
   pathname: string;
   collapsed?: boolean;
   onNavigate?: () => void;
-  /** Mouse-sized rows for the PC/tablet side menu; the phone drawer keeps finger-sized ones. */
+  /** Mouse-sized rows for the PC/tablet side menu; the phone menu's are a little taller for fingers. */
   compact?: boolean;
 }) {
   // Consecutive items of one group form a section with a small heading (a line when
@@ -114,7 +114,7 @@ function NavLinks({
         title={collapsed ? item.label : undefined}
         className={cn(
           'flex items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
-          compact ? 'h-9' : 'h-11',
+          compact ? 'h-9' : 'h-10',
           collapsed && 'justify-center px-0',
           active
             ? // Name in the normal text color (readable on the tint); the icon carries the brand.
@@ -138,10 +138,7 @@ function NavLinks({
             role={heading ? 'group' : undefined}
             aria-labelledby={heading && !collapsed ? id : undefined}
             aria-label={heading && collapsed ? heading : undefined}
-            className={cn(
-              compact ? 'space-y-0.5' : 'space-y-1',
-              i > 0 && (collapsed ? 'mt-1.5 border-t pt-1.5' : 'mt-3'),
-            )}
+            className={cn('space-y-0.5', i > 0 && (collapsed ? 'mt-1.5 border-t pt-1.5' : 'mt-3'))}
           >
             {heading && !collapsed ? (
               <div
@@ -159,7 +156,10 @@ function NavLinks({
   );
 }
 
-/** Phone menu: slides in from the side chosen in Settings, with every screen and Log out. */
+/**
+ * Phone menu: slides in from the side chosen in Settings, with every screen and Log out.
+ * Same look as the PC side menu (width, header, spacing), so the app feels the same everywhere.
+ */
 function MenuDrawer({
   open,
   onOpenChange,
@@ -173,7 +173,6 @@ function MenuDrawer({
   pathname: string;
   side: 'left' | 'right';
 }) {
-  const { user, shop } = useMe();
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
@@ -181,11 +180,11 @@ function MenuDrawer({
         <DialogPrimitive.Content
           aria-describedby={undefined}
           className={cn(
-            'fixed inset-y-0 z-50 flex w-72 max-w-[85vw] flex-col bg-card text-card-foreground shadow-lg outline-none',
+            'fixed inset-y-0 z-50 flex w-60 max-w-[85vw] flex-col bg-card text-card-foreground shadow-lg outline-none',
             side === 'left' ? 'left-0 border-r' : 'right-0 border-l',
           )}
         >
-          <div className="flex items-center justify-between gap-2 border-b px-4 py-3">
+          <div className="flex h-16 shrink-0 items-center justify-between gap-2 pr-2 pl-5">
             <div className="flex min-w-0 items-center gap-2">
               <BrandLogo decorative className="size-7" />
               <DialogPrimitive.Title className="font-semibold tracking-tight">
@@ -199,13 +198,7 @@ function MenuDrawer({
               <X className="size-5" />
             </DialogPrimitive.Close>
           </div>
-          <div className="border-b px-4 py-3 text-sm">
-            <div className="truncate font-medium">{shop.name}</div>
-            <div className="truncate text-muted-foreground">
-              {user.displayName} · {ROLE_LABEL[user.role]}
-            </div>
-          </div>
-          <nav aria-label="Menu" className="flex-1 overflow-y-auto p-3">
+          <nav aria-label="Menu" className="flex-1 overflow-y-auto px-3 pb-3">
             <NavLinks
               items={items.filter((i) => !i.bottom)}
               pathname={pathname}
@@ -214,7 +207,7 @@ function MenuDrawer({
               }}
             />
           </nav>
-          <div className="space-y-1 border-t p-3">
+          <div className="space-y-0.5 border-t px-3 py-3">
             <NavLinks
               items={items.filter((i) => i.bottom)}
               pathname={pathname}
@@ -225,7 +218,7 @@ function MenuDrawer({
             <button
               type="button"
               onClick={() => void logout()}
-              className="flex h-11 w-full items-center gap-3 rounded-md px-3 text-sm font-medium text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              className="flex h-10 w-full items-center gap-3 rounded-md px-3 text-sm font-medium text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
             >
               <LogOut className="size-5" aria-hidden="true" />
               Log out
