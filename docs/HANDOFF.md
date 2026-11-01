@@ -20,7 +20,7 @@ For any AI assistant (or person) picking up **bls POS** (formerly POS Fast / Bil
 - **Security tests:** `tests/api/security.test.ts` lists every API route with its
   minimum role. Add new routes there, or CI fails.
 - **Brand:** name **bls POS** (no tagline, no "(bilis)" — owner's call), accent **Bilis Blue `#1E6FD9`**
-  (owner's pick). Code names: `bls-pos` (package, Worker, D1), cookie `__Host-bls_session`.
+  (owner's pick). Code names: `bls-pos` (package, D1), Worker `app`, cookie `__Host-bls_session`.
   The logo is `public/logo.svg` (from the owner's `bilispos-logo.svg`), shown via
   `BrandLogo` in `--brand-mark` blue. The owner will send `bls-logo.svg` (a B with a
   lightning bolt): when it arrives, replace `public/logo.svg` and `public/favicon.svg`.
@@ -31,14 +31,14 @@ For any AI assistant (or person) picking up **bls POS** (formerly POS Fast / Bil
 ## Deployment status (2026-10-31) — read before deploying
 
 - Cloudflare account on this PC: **audioguyyy@gmail.com** (account `6ad4e07f1b89790e5bac7b4f5529f1f6`),
-  confirmed by the owner as the right one. workers.dev subdomain: `blspos.workers.dev`, so
-  the app will be **https://bls-pos.blspos.workers.dev**.
+  confirmed by the owner as the right one. workers.dev subdomain: `blspos.workers.dev`. The Worker is named
+  `app` (owner's pick, 2026-11-01), so the app will be **https://app.blspos.workers.dev**.
 - **Done:** D1 `bls-pos` created (APAC), id in `wrangler.jsonc`, all migrations applied remotely.
 - **Done (2026-11-01):** photos and backups moved from R2 to a second D1 database
   `bls-pos-media` (binding `MEDIA_DB`, id in `wrangler.jsonc`, migration applied remotely).
   100 MB of photos per shop, 1.9 MB per photo, gzipped backups, edge-cached photo reads.
   R2 stays possible: see `src/worker/adapters/storage/index.ts` and `docs/LIMITS.md`.
-- **Owner still has to do:** Turnstile widget for `bls-pos.blspos.workers.dev`; create
+- **Owner still has to do:** Turnstile widget for `app.blspos.workers.dev`; create
   `.env.production.local` with `VITE_TURNSTILE_SITE_KEY=…` in the project folder;
   `pnpm exec wrangler secret put` for `PEPPER`, `TURNSTILE_SECRET`, `TOTP_ENC_KEY`
   (typed by the owner, never in chat). Check with `wrangler secret list` (names only).

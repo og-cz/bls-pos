@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "bls-pos",
+  // The Worker name is the first part of the free address: https://app.blspos.workers.dev
+  "name": "app",
   "main": "src/worker/index.ts",
   "compatibility_date": "2026-10-01",
   "observability": { "enabled": true },
