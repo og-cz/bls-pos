@@ -1,14 +1,14 @@
 <h1 align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.png" />
-    <img src="docs/assets/logo-light.png" alt="bls POS logo" width="64" valign="middle" />
+    <img src="docs/assets/logo-light.png" alt="bls POS" width="64" valign="middle" />
   </picture>
   bls POS
 </h1>
 
 <p align="center">
-  <a href="https://github.com/og-cz/bilis-pos"><img src="https://img.shields.io/github/stars/og-cz/bilis-pos?style=flat&amp;label=%E2%98%85&amp;color=1E6FD9" alt="GitHub stars" /></a>
-  <a href="https://github.com/og-cz/bilis-pos/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/og-cz/bilis-pos/ci.yml?branch=main&amp;style=flat&amp;label=CI" alt="CI status" /></a>
+  <a href="https://github.com/og-cz/bls-pos"><img src="https://img.shields.io/github/stars/og-cz/bls-pos?style=flat&amp;label=%E2%98%85&amp;color=1E6FD9" alt="GitHub stars" /></a>
+  <a href="https://github.com/og-cz/bls-pos/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/og-cz/bls-pos/ci.yml?branch=main&amp;style=flat&amp;label=CI" alt="CI status" /></a>
   <img src="https://img.shields.io/badge/license-MIT-1E6FD9?style=flat" alt="License: MIT" />
   <img src="https://img.shields.io/badge/Cloudflare%20Workers-F38020?logo=cloudflare&amp;logoColor=white" alt="Runs on Cloudflare Workers" />
   <img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&amp;logoColor=white" alt="Written in TypeScript" />
@@ -16,98 +16,132 @@
 </p>
 
 <p align="center">
-  <b>Instant point-of-sale and inventory for any small business.</b><br />
+  <strong>Instant point-of-sale and inventory for any small business.</strong><br/>
   Sign up, brand your shop, add products and staff, and start selling from a phone or PC — free.
 </p>
 
----
-
-bls POS is built for small shops, cafés, food stalls, salons and retail stores that need
-a checkout that is quick to learn, quick to use and costs nothing to run.
-
 <p align="center">
-  <img src="docs/assets/screenshots/dashboard.png" alt="bls POS dashboard: today's sales, sales per day chart, top products and sales by staff" width="900" />
+  <img src="docs/assets/screenshots/dashboard.png" alt="bls POS dashboard" width="960" />
 </p>
+
+bls POS is built for small shops, cafés, food stalls, salons and retail stores that need a
+checkout that is quick to learn, quick to use and costs nothing to run.
 
 > **Status:** v1.0.0-rc.1, live and in pilot with the first shops. Screenshots show a demo
 > shop with sample data.
 
-## How it works
+## System Features
 
-### 1. Create your shop
+<table>
+<tr>
+<td width="50%" valign="middle">
 
-The owner signs up with a shop name and a **shop code** (for example `moto-clue`). Staff
-log in with that shop code plus their own username and password, so every shop is kept
-completely separate. A short setup wizard picks colors, adds the first products and
-invites staff. At signup the owner gets one-time **recovery codes** to get back in if the
-password is ever forgotten.
+### Fast Checkout
 
-### 2. Sell
+Tap products into the cart, search by name or SKU, or scan a barcode, then **Charge**. For
+cash, enter what the customer gave and the change is worked out. Prices always come from
+the server, and stock can never go below zero.
 
-<p align="center">
-  <img src="docs/assets/screenshots/sell.png" alt="Sell screen with product tiles, category filters and a cart" width="900" />
-</p>
+[Full size →](docs/assets/screenshots/sell.png)
 
-Tap products to add them to the cart (or search by name or SKU, or scan a barcode), then
-**Charge**. For cash, enter what the customer gave and the change is worked out for you.
-Prices always come from the server, so a sale can't be tampered with, and stock can never
-go below zero. **No internet?** Keep selling: sales are saved on the device and sync
-automatically when the connection is back, never twice.
+</td>
+<td width="50%">
+  <a href="docs/assets/screenshots/sell.png"><img src="docs/assets/screenshots/sell.png" alt="Fast Checkout" width="100%" /></a>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="middle">
 
-### 3. Products and stock
+### Products and Stock
 
-<p align="center">
-  <img src="docs/assets/screenshots/products.png" alt="Products list with photos, prices, cost and stock" width="900" />
-</p>
+Price, cost, category, SKU and a photo for every product. Admins restock; staff deduct
+stock with a reason (damaged, expired, used, lost). Every change is logged with who, when,
+how many and why, and low stock is flagged.
 
-Add products with a price, optional cost, category, SKU and photo. Stock goes down with
-every sale; admins **restock**, and staff can **deduct** stock with a reason (damaged,
-expired, used, lost). Every change is logged with who, when, how many and why, and
-low-stock items are flagged.
+[Full size →](docs/assets/screenshots/products.png)
 
-Photos are shrunk on the device and saved as **AVIF** (a phone photo of a few MB becomes
-roughly 30–90 KB), so they load fast and a shop can hold thousands of them for free.
+</td>
+<td width="50%">
+  <a href="docs/assets/screenshots/products.png"><img src="docs/assets/screenshots/products.png" alt="Products and Stock" width="100%" /></a>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="middle">
 
-### 4. Dashboard
+### Live Dashboard
 
-The owner and admins see today's sales, number of sales, average sale and gross profit,
-compared with yesterday; sales per day for the last 7 or 30 days; top products; sales by
-each staff member; and what is running low. Everything can be exported to CSV. Staff see
-only their own sales for today.
+Today's sales, transactions, average sale and gross profit against yesterday; sales per
+day for 7 or 30 days; top products; sales by staff; and what is running low. Staff see only
+their own sales for today.
 
-### 5. Branding
+[Full size →](docs/assets/screenshots/dashboard.png)
 
-<p align="center">
-  <img src="docs/assets/screenshots/branding.png" alt="Branding screen with color presets, light or dark mode, fonts and a live preview" width="900" />
-</p>
+</td>
+<td width="50%">
+  <a href="docs/assets/screenshots/phone-dashboard.png"><img src="docs/assets/screenshots/phone-dashboard.png" alt="Live Dashboard on a phone" width="55%" /></a>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="middle">
 
-Each shop looks like its own brand: pick a preset or any color, light or dark mode, font
-and corner style, and add a logo and cover photo. The live preview shows the result right
-away. Colors are checked automatically so text always stays readable. Shops can also turn
-on a public **shop page** with a QR code to share their products.
+### Shop Branding
 
-### 6. Settings
+Each shop looks like its own brand: a preset or any color, light or dark mode, font,
+corner style, logo and cover photo, with a live preview. Colors are checked so text always
+stays readable.
 
-<p align="center">
-  <img src="docs/assets/screenshots/settings.png" alt="Settings screen with theme, text size and layout options" width="900" />
-</p>
+[Full size →](docs/assets/screenshots/branding.png)
 
-Each phone, tablet or PC keeps its own preferences: theme, larger text, how products are
-listed (list, compact list or tiles), and which side the menu opens from. Each person's
-**profile** covers their password, two-step login with an authenticator app, and signing
-out other devices.
+</td>
+<td width="50%">
+  <a href="docs/assets/screenshots/branding.png"><img src="docs/assets/screenshots/branding.png" alt="Shop Branding" width="100%" /></a>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="middle">
 
-### 7. On a phone
+### Settings per Device
 
-<p align="center">
-  <img src="docs/assets/screenshots/phone-sell.png" alt="Sell screen on a phone with a bottom tab bar" width="280" />
-  &nbsp;&nbsp;
-  <img src="docs/assets/screenshots/phone-dashboard.png" alt="Dashboard on a phone" width="280" />
-</p>
+Each phone, tablet or PC keeps its own theme, text size, product layout (list, compact
+list or tiles) and menu side. Each person's profile covers their password, two-step login
+and signing out other devices.
 
-The same app works on any screen. On phones the main screens are in a tab bar at the
-bottom and the full menu slides in from the side. It can be installed like an app
-(Android: Chrome → Install app; iPhone: Safari → Share → Add to Home Screen).
+[Full size →](docs/assets/screenshots/settings.png)
+
+</td>
+<td width="50%">
+  <a href="docs/assets/screenshots/settings.png"><img src="docs/assets/screenshots/settings.png" alt="Settings per Device" width="100%" /></a>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="middle">
+
+### Works on Any Phone
+
+The same app from phone to desktop. On phones the main screens sit in a bottom tab bar and
+the full menu slides in from the side. Install it like an app: Android, Chrome → Install
+app; iPhone, Safari → Share → Add to Home Screen.
+
+[Full size →](docs/assets/screenshots/phone-sell.png)
+
+</td>
+<td width="50%">
+  <a href="docs/assets/screenshots/phone-sell.png"><img src="docs/assets/screenshots/phone-sell.png" alt="Sell screen on a phone" width="55%" /></a>
+</td>
+</tr>
+</table>
+
+**Also in the box:**
+
+- **Offline selling** — Sales are saved on the device without internet and sync when it's back, never twice.
+- **Owner, admin and staff roles** — Every rule is checked on the server, not just hidden on screen.
+- **Public shop page** — An optional page with your products and a QR code to share.
+- **Receipts, voids and CSV export** — Print a receipt; void a sale with a reason; export sales and products.
+- **Small photos** — Saved as AVIF on the device, so a phone photo of a few MB becomes about 30–90 KB.
+- **Recovery codes and two-step login** — Get back in without email; protect owner and admin accounts.
+- **Guided setup and help** — A setup wizard, short tours for owners and staff, and an in-app help center.
+
+---
 
 ## Who can do what
 
@@ -154,4 +188,4 @@ Runs free on Cloudflare (Workers and D1). Step-by-step: [docs/DEPLOY_FREE.md](do
 
 ## License
 
-[MIT](LICENSE)
+bls POS is free and open source under the [MIT License](LICENSE).
