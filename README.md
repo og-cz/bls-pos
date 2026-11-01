@@ -1,9 +1,9 @@
 <h1 align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.png" />
-    <img src="docs/assets/logo-light.png" alt="bls POS" width="64" valign="middle" />
+    <img src="docs/assets/logo-light.png" alt="BLS POS" width="64" valign="middle" />
   </picture>
-  bls POS
+  BLS POS
 </h1>
 
 <p align="center">
@@ -24,7 +24,7 @@
 > shop with sample data.
 
 <p align="center">
-  <img src="docs/assets/screenshots/dashboard.png" alt="bls POS dashboard" width="960" />
+  <img src="docs/assets/screenshots/dashboard.png" alt="BLS POS dashboard" width="960" />
 </p>
 
 ## System Features
@@ -186,4 +186,4 @@ Runs free on Cloudflare (Workers and D1). Step-by-step: [docs/DEPLOY_FREE.md](do
 
 ## License
 
-bls POS is free and open source under the [MIT License](LICENSE).
+BLS POS is free and open source under the [MIT License](LICENSE).
