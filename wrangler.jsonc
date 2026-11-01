@@ -2,6 +2,10 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   // The Worker name is the first part of the free address: https://app.blspos.workers.dev
   "name": "app",
+  // Only the one address above. Per-version preview URLs would serve the app on other
+  // hostnames, where the Turnstile widget (bound to this hostname) would not work.
+  "workers_dev": true,
+  "preview_urls": false,
   "main": "src/worker/index.ts",
   "compatibility_date": "2026-10-01",
   "observability": { "enabled": true },

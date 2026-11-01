@@ -28,7 +28,16 @@ For any AI assistant (or person) picking up **bls POS** (formerly POS Fast / Bil
 - **Before the first deploy:** both D1 databases exist and are migrated; only Turnstile and
   the secrets are left (below).
 
-## Deployment status (2026-10-31) — read before deploying
+## Deployment status (2026-11-01): LIVE at https://app.blspos.workers.dev
+
+- Deployed with `pnpm deploy` (Worker `app`). Secrets `PEPPER`, `TURNSTILE_SECRET`,
+  `TOTP_ENC_KEY` are set (owner keeps a PEPPER backup outside the repo). Turnstile site
+  key is in `.env.production.local` (git-ignored). Preview URLs are off.
+- Next: the owner signs up as the first shop on the live site, then pilot shops use it
+  for a few days, then `fix: address pilot shop feedback` and `chore(release): v1.0.0`.
+- Owner still to do: GitHub secret scanning + push protection (repo setting).
+
+## Earlier deployment notes (2026-10-31)
 
 - Cloudflare account on this PC: **audioguyyy@gmail.com** (account `6ad4e07f1b89790e5bac7b4f5529f1f6`),
   confirmed by the owner as the right one. workers.dev subdomain: `blspos.workers.dev`. The Worker is named
