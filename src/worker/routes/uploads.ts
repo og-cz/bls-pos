@@ -1,11 +1,12 @@
 import { Hono } from 'hono';
 
-import { R2Storage } from '../adapters/storage/r2';
+import { mediaStorage } from '../adapters/storage';
 import { getDb } from '../db/client';
 import type { AuthedEnv } from '../env';
 import { actorOf } from '../lib/actor';
 import { ApiError } from '../lib/errors';
 import { shopPrefix } from '../lib/media';
+import { serveMedia } from '../lib/serve-media';
 import { authed } from '../middleware/tenant';
 import { UPLOAD_KINDS, uploadImage, type UploadKind } from '../services/uploads';
 
@@ -25,7 +26,7 @@ uploadRoutes.post('/:kind', async (c) => {
   const result = await uploadImage(
     getDb(c.env.DB),
     c.var.shopId,
-    new R2Storage(c.env.MEDIA),
+    mediaStorage(c.env),
     await actorOf(c),
     {
       kind: kind as UploadKind,
@@ -44,16 +45,13 @@ mediaRoutes.get('/*', async (c) => {
   if (!key.startsWith(shopPrefix(c.var.shopId)) || key.includes('..')) {
     throw new ApiError(404, 'NOT_FOUND', 'Not found');
   }
-  const obj = await new R2Storage(c.env.MEDIA).get(key);
-  if (!obj) throw new ApiError(404, 'NOT_FOUND', 'Not found');
-  return new Response(obj.body, {
-    headers: {
-      'content-type': obj.contentType,
-      'content-length': String(obj.size),
-      'x-content-type-options': 'nosniff',
-      'content-disposition': 'inline',
-      // Keys are random and never reused, so the bytes behind a key never change.
-      'cache-control': 'private, max-age=31536000, immutable',
-    },
-  });
+  // Keys are random and never reused, so the bytes behind a key never change.
+  const res = await serveMedia(
+    mediaStorage(c.env),
+    key,
+    'private, max-age=31536000, immutable',
+    c.executionCtx,
+  );
+  if (!res) throw new ApiError(404, 'NOT_FOUND', 'Not found');
+  return res;
 });

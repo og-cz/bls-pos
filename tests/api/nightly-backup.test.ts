@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { addDays, localDay } from '../../src/shared/time';
 import { BACKUP_HOUR_SQL, BACKUP_KEEP_DAYS, backupKey, runBackups } from '../../src/worker/backup';
 import { addMember, api, createProductAs, postJson, signUp } from './helpers';
+import { gunzipText, storeText, stored } from './media';
 
 async function hourOf(shopId: string) {
   const row = await env.DB.prepare(`SELECT ${BACKUP_HOUR_SQL} AS h FROM shops WHERE id = ?`)
@@ -43,9 +44,9 @@ describe('nightly backups', () => {
     expect(await runBackups(env, now)).toBeGreaterThanOrEqual(1);
 
     const day = localDay(now, 'Asia/Manila');
-    const obj = await env.MEDIA.get(backupKey(owner.shopId, day));
-    expect(obj?.httpMetadata?.contentType).toBe('application/json');
-    const text = (await obj?.text()) ?? '';
+    const obj = await stored(backupKey(owner.shopId, day));
+    expect(obj?.contentType).toBe('application/gzip');
+    const text = obj ? await gunzipText(obj.bytes) : '';
     const doc = JSON.parse(text) as {
       shop: { slug: string };
       products: { name: string; costCents: number; stock: number }[];
@@ -73,11 +74,11 @@ describe('nightly backups', () => {
     const day = localDay(now, 'Asia/Manila');
     const old = backupKey(owner.shopId, addDays(day, -BACKUP_KEEP_DAYS));
     const recent = backupKey(owner.shopId, addDays(day, -3));
-    await env.MEDIA.put(old, '{}');
-    await env.MEDIA.put(recent, '{}');
+    await storeText(old, '{}');
+    await storeText(recent, '{}');
     await runBackups(env, now);
-    expect(await env.MEDIA.head(old)).toBeNull();
-    expect(await env.MEDIA.head(recent)).not.toBeNull();
+    expect(await stored(old)).toBeNull();
+    expect(await stored(recent)).not.toBeNull();
   });
 
   it('each run only takes its own hour of shops', async () => {
@@ -86,7 +87,7 @@ describe('nightly backups', () => {
     const other = (hour + 1) % 24;
     const now = atHour(other);
     await runBackups(env, now);
-    expect(await env.MEDIA.head(backupKey(owner.shopId, localDay(now, 'Asia/Manila')))).toBeNull();
+    expect(await stored(backupKey(owner.shopId, localDay(now, 'Asia/Manila')))).toBeNull();
     expect(hour).toBeGreaterThanOrEqual(0);
     expect(hour).toBeLessThan(24);
   });

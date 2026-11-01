@@ -5,6 +5,7 @@ import type { StorageAdapter } from '../../src/worker/adapters/types';
 import { getDb } from '../../src/worker/db/client';
 import { uploadImage } from '../../src/worker/services/uploads';
 import { addMember, api, createProductAs, signUp } from './helpers';
+import { stored } from './media';
 
 // Tiny but genuine file headers; the server only looks at the first bytes.
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3, 4]);
@@ -72,7 +73,7 @@ describe('POST /uploads/:kind', () => {
     }
   });
 
-  it('refuses images over 2 MB and empty files', async () => {
+  it('refuses images over 1.9 MB and empty files', async () => {
     const owner = await signUp();
     const big = new Uint8Array(2 * 1024 * 1024 + 1);
     big.set(PNG);
@@ -84,21 +85,22 @@ describe('POST /uploads/:kind', () => {
     const owner = await signUp();
     const first = await (await upload('logo', PNG, 'image/png', owner.cookie)).json<Uploaded>();
     await upload('logo', JPEG, 'image/jpeg', owner.cookie);
-    expect(await env.MEDIA.get(first.key)).toBeNull();
+    expect(await stored(first.key)).toBeNull();
   });
 
   it("enforces the plan's image space", async () => {
     const owner = await signUp();
-    // A storage adapter reporting the shop's 200 MB as fully used.
-    let stored = 0;
+    // A storage adapter reporting the shop's 100 MB as fully used.
+    let puts = 0;
     const full: StorageAdapter = {
       put: () => {
-        stored += 1;
+        puts += 1;
         return Promise.resolve();
       },
       get: () => Promise.resolve(null),
       delete: () => Promise.resolve(),
-      usedBytes: () => Promise.resolve(200 * 1024 * 1024),
+      deletePrefix: () => Promise.resolve(),
+      usedBytes: () => Promise.resolve(100 * 1024 * 1024),
     };
     const attempt = uploadImage(
       getDb(env.DB),
@@ -108,7 +110,7 @@ describe('POST /uploads/:kind', () => {
       { kind: 'logo', data: PNG.slice().buffer, declaredType: 'image/png' },
     );
     await expect(attempt).rejects.toMatchObject({ code: 'STORAGE_LIMIT_REACHED', status: 409 });
-    expect(stored).toBe(0);
+    expect(puts).toBe(0);
   });
 
   it('lets staff set their own avatar but not shop images or product photos', async () => {

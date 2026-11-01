@@ -32,14 +32,14 @@ export const app = new Hono<AppEnv>().basePath(API_BASE);
 app.use(securityHeaders);
 app.use(sameOrigin);
 
-// JSON bodies are capped at 64 KB (Section 5.1); image uploads at 2 MB (Section 7.8).
+// JSON bodies are capped at 64 KB (Section 5.1); image uploads just under 1.9 MB (Section 7.8; D1 row limit).
 const limit = (maxSize: number, message: string) =>
   bodyLimit({
     maxSize,
     onError: (c) => c.json({ error: { code: 'BODY_TOO_LARGE', message } }, 413),
   });
 const jsonLimit = limit(64 * 1024, 'Request body is too large.');
-const uploadLimit = limit(MAX_UPLOAD_BYTES, 'Images must be 2 MB or smaller.');
+const uploadLimit = limit(MAX_UPLOAD_BYTES, 'Images must be 1.9 MB or smaller.');
 app.use((c, next) =>
   c.req.path.startsWith(`${API_BASE}/uploads/`) ? uploadLimit(c, next) : jsonLimit(c, next),
 );

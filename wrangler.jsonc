@@ -18,9 +18,16 @@
       "database_id": "adca64c3-0577-4fde-97a2-ea97509377fe",
       "migrations_dir": "migrations",
     },
+    {
+      // Photos (logos, covers, products, avatars) and nightly backups live in a second D1
+      // database instead of R2, so the free plan needs no card (docs/LIMITS.md).
+      // To use R2 later: see src/worker/adapters/storage/index.ts.
+      "binding": "MEDIA_DB",
+      "database_name": "bls-pos-media",
+      "database_id": "227dcaad-559d-447f-91ef-157fff80eb0f",
+      "migrations_dir": "migrations-media",
+    },
   ],
-  // Images (logos, covers, products, avatars). Create with `wrangler r2 bucket create bls-pos-media`.
-  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "bls-pos-media" }],
   // Set with `wrangler secret put <NAME>` in production, `.dev.vars` locally.
   "secrets": { "required": ["PEPPER", "TURNSTILE_SECRET", "TOTP_ENC_KEY"] },
   // Public shop pages (/api/v1/public/*): at most 120 requests a minute per visitor IP.
@@ -45,8 +52,14 @@
           "database_id": "00000000-0000-0000-0000-000000000001",
           "migrations_dir": "migrations",
         },
+        {
+          "binding": "MEDIA_DB",
+          "database_name": "bls-pos-media-preview",
+          // Replace with the ID printed by `wrangler d1 create bls-pos-media-preview`.
+          "database_id": "00000000-0000-0000-0000-000000000002",
+          "migrations_dir": "migrations-media",
+        },
       ],
-      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "bls-pos-media-preview" }],
       "ratelimits": [
         {
           "name": "PUBLIC_LIMITER",
@@ -54,6 +67,7 @@
           "simple": { "limit": 120, "period": 60 },
         },
       ],
+      "secrets": { "required": ["PEPPER", "TURNSTILE_SECRET", "TOTP_ENC_KEY"] },
       // No scheduled jobs on preview: they would only use the free plan's Cron quota.
       "triggers": { "crons": [] },
     },

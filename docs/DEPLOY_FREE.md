@@ -1,15 +1,14 @@
 # Self-hosting bls POS for free
 
 bls POS runs entirely on Cloudflare's free plan: one Worker (the API and the web app),
-one D1 database and one R2 bucket for photos. No server to look after, nothing that
-sleeps. This guide takes about 20 minutes the first time.
+two D1 databases (one for shop data, one for photos and backups). No card, no server
+to look after, nothing that sleeps. This guide takes about 20 minutes the first time.
 
 The free plan's limits, and how far they stretch, are in [LIMITS.md](LIMITS.md).
 
 ## What you need
 
-- A Cloudflare account (free). R2 asks for a payment method on file even on the free
-  tier; nothing is charged while you stay inside the free limits.
+- A Cloudflare account (free). No payment method needed.
 - [Node.js](https://nodejs.org) 22 or newer and [pnpm](https://pnpm.io).
 - Git, and this repository.
 
@@ -41,10 +40,18 @@ Copy the `database_id` it prints into `wrangler.jsonc`, replacing the zeros in
 pnpm db:migrate:prod
 ```
 
-## 3. Create the photo bucket
+## 3. Create the photo database
+
+Photos and nightly backups go in a second D1 database (R2 would need a card on file):
 
 ```bash
-pnpm exec wrangler r2 bucket create bls-pos-media
+pnpm exec wrangler d1 create bls-pos-media
+```
+
+Paste its id into `wrangler.jsonc` (the `MEDIA_DB` entry), then create its table:
+
+```bash
+pnpm exec wrangler d1 migrations apply MEDIA_DB --remote
 ```
 
 ## 4. Turn on bot protection (Turnstile)
@@ -126,7 +133,8 @@ Turnstile widget too.
   widgets, or your domain is not on the widget.
 - **Error 1027 / "daily limit":** the 100,000 requests a day are used up; they reset at
   00:00 UTC. See [LIMITS.md](LIMITS.md).
-- **Photos don't upload:** check the R2 bucket name matches `wrangler.jsonc`.
+- **Photos don't upload:** check the `MEDIA_DB` id in `wrangler.jsonc` and that its
+  migration ran (`pnpm exec wrangler d1 migrations apply MEDIA_DB --remote`).
 
 ## Automatic deploys from GitHub (optional)
 
@@ -134,7 +142,7 @@ Turnstile widget too.
 can deploy **preview** by hand (Actions → Deploy → Run workflow). It does nothing until
 you add, in GitHub → **Settings → Secrets and variables → Actions**:
 
-- Secrets: `CLOUDFLARE_API_TOKEN` (a token with Workers Scripts, D1 and R2 edit
+- Secrets: `CLOUDFLARE_API_TOKEN` (a token with Workers Scripts and D1 edit
   permissions) and `CLOUDFLARE_ACCOUNT_ID`.
 - Variable: `VITE_TURNSTILE_SITE_KEY` (the public site key).
 
@@ -150,10 +158,10 @@ pnpm exec wrangler d1 create bls-pos-preview
 ```
 
 ```bash
-pnpm exec wrangler r2 bucket create bls-pos-media-preview
+pnpm exec wrangler d1 create bls-pos-media-preview
 ```
 
-Paste the new database id into `wrangler.jsonc` under `env.preview`, set its three
+Paste both new database ids into `wrangler.jsonc` under `env.preview`, set its three
 secrets with `--env preview` (for example `pnpm exec wrangler secret put PEPPER --env
 preview`), then:
 

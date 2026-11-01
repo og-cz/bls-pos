@@ -9,6 +9,8 @@ export interface StorageAdapter {
   delete(key: string): Promise<void>;
   /** Total bytes stored under a prefix, e.g. one shop's images (for maxImagesMB). */
   usedBytes(prefix: string): Promise<number>;
+  /** Removes everything under a prefix, e.g. a deleted shop's photos. */
+  deletePrefix(prefix: string): Promise<void>;
 }
 
 /** 'cash' and 'other_manual' in Free; online methods (GCash, Maya, cards) arrive in Paid. */

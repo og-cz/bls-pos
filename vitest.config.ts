@@ -17,6 +17,9 @@ export default defineConfig({
           TEST_MIGRATIONS: await readD1Migrations(
             fileURLToPath(new URL('./migrations', import.meta.url)),
           ),
+          TEST_MEDIA_MIGRATIONS: await readD1Migrations(
+            fileURLToPath(new URL('./migrations-media', import.meta.url)),
+          ),
         },
       },
     })),

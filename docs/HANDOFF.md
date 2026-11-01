@@ -25,8 +25,8 @@ For any AI assistant (or person) picking up **bls POS** (formerly POS Fast / Bil
   `BrandLogo` in `--brand-mark` blue. The owner will send `bls-logo.svg` (a B with a
   lightning bolt): when it arrives, replace `public/logo.svg` and `public/favicon.svg`.
   The GitHub repo is still `og-cz/bilis-pos` until the owner renames it.
-- **Before the first deploy:** create the R2 bucket (`wrangler r2 bucket create bls-pos-media`)
-  and the D1 database, and paste the D1 id into `wrangler.jsonc`.
+- **Before the first deploy:** both D1 databases exist and are migrated; only Turnstile and
+  the secrets are left (below).
 
 ## Deployment status (2026-10-31) — read before deploying
 
@@ -34,12 +34,10 @@ For any AI assistant (or person) picking up **bls POS** (formerly POS Fast / Bil
   confirmed by the owner as the right one. workers.dev subdomain: `blspos.workers.dev`, so
   the app will be **https://bls-pos.blspos.workers.dev**.
 - **Done:** D1 `bls-pos` created (APAC), id in `wrangler.jsonc`, all migrations applied remotely.
-- **Not done:** R2 is off: Cloudflare requires a card or PayPal and the owner has neither.
-  The owner chose to **store photos and backups in a second D1 database instead of R2**
-  (no card needed; about 500 MB total, so lower the per-shop photo allowance to ~100 MB;
-  D1 caps a row at 2,000,000 bytes, so cap uploads at ~1.9 MB). This was approved but **not
-  started**. It touches the storage adapter, uploads, media and public-page routes,
-  `backup.ts`, `purge.ts`, wrangler bindings and their tests. Keep R2 possible later.
+- **Done (2026-11-01):** photos and backups moved from R2 to a second D1 database
+  `bls-pos-media` (binding `MEDIA_DB`, id in `wrangler.jsonc`, migration applied remotely).
+  100 MB of photos per shop, 1.9 MB per photo, gzipped backups, edge-cached photo reads.
+  R2 stays possible: see `src/worker/adapters/storage/index.ts` and `docs/LIMITS.md`.
 - **Owner still has to do:** Turnstile widget for `bls-pos.blspos.workers.dev`; create
   `.env.production.local` with `VITE_TURNSTILE_SITE_KEY=…` in the project folder;
   `pnpm exec wrangler secret put` for `PEPPER`, `TURNSTILE_SECRET`, `TOTP_ENC_KEY`

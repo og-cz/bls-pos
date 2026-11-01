@@ -1,11 +1,13 @@
 import { addDays, localDay } from '@shared/time';
 
-// Nightly backups (Section 7.14): each shop's data as JSON in a private R2 path,
-// backups/<shopId>/<day>.json, kept 14 days. Never under shops/, so the /media route can
-// never serve them.
+import { mediaStorage } from './adapters/storage';
+
+// Nightly backups (Section 7.14): each shop's data as gzipped JSON in private storage,
+// backups/<shopId>/<day>.json.gz, kept 14 days. Never under shops/, so the /media route
+// can never serve them. Gzip makes them about 10x smaller, which matters on D1 storage.
 //
 // Free-plan limits shape this: a Cron run gets 10 ms of CPU and 50 subrequests. So D1
-// builds the JSON itself (the Worker only passes the text to R2), and shops are spread
+// builds the JSON itself (the Worker only compresses and stores it), and shops are spread
 // over the 24 hours by their id: an hourly run backs up only its hour's shops, three
 // subrequests each.
 
@@ -52,8 +54,13 @@ SELECT json_object(
     FROM daily_closings WHERE shop_id = ?1)
 ) AS doc`;
 
+async function gzip(text: string): Promise<ArrayBuffer> {
+  const stream = new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'));
+  return new Response(stream).arrayBuffer();
+}
+
 export function backupKey(shopId: string, day: string): string {
-  return `backups/${shopId}/${day}.json`;
+  return `backups/${shopId}/${day}.json.gz`;
 }
 
 /**
@@ -70,15 +77,14 @@ export async function runBackups(env: Env, now: number = Date.now()): Promise<nu
     .bind(hour, BACKUPS_PER_RUN)
     .all<{ id: string; timezone: string }>();
 
+  const storage = mediaStorage(env);
   const since = now - 2 * 86_400_000;
   for (const shop of results) {
     const day = localDay(now, shop.timezone);
     const row = await env.DB.prepare(BACKUP_SQL).bind(shop.id, day, since).first<{ doc: string }>();
     if (!row) continue;
-    await env.MEDIA.put(backupKey(shop.id, day), row.doc, {
-      httpMetadata: { contentType: 'application/json' },
-    });
-    await env.MEDIA.delete(backupKey(shop.id, addDays(day, -BACKUP_KEEP_DAYS)));
+    await storage.put(backupKey(shop.id, day), await gzip(row.doc), 'application/gzip');
+    await storage.delete(backupKey(shop.id, addDays(day, -BACKUP_KEEP_DAYS)));
   }
   return results.length;
 }

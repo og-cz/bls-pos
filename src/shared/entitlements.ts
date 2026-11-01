@@ -19,7 +19,7 @@ const FREE: Entitlements = {
   // Raised from 500 on 2026-10-30 (owner's call) so a whole catalog fits on day one.
   maxProducts: 5000,
   maxStaff: 5,
-  maxImagesMB: 200,
+  maxImagesMB: 100,
   paymentMethods: ['cash', 'other_manual'],
   emailReceipts: false,
   multiBranch: false,

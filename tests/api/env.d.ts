@@ -5,6 +5,7 @@ declare global {
     interface Env {
       // Test-only binding injected by vitest.config.ts.
       TEST_MIGRATIONS: D1Migration[];
+      TEST_MEDIA_MIGRATIONS: D1Migration[];
     }
   }
 }

@@ -13,7 +13,7 @@ in brackets). Free tiers change, so re-check this file before each release.
 | Requests           | **100,000 / day**, resets 00:00 UTC (then Error 1027) | Shared by every shop on one deployment. Roughly 30–50 small shops at typical volumes. Static assets do not count (see below). |
 | CPU time           | **10 ms per HTTP request**, 10 ms per Cron Trigger    | The tightest limit. See _Password hashing_ below. Keep handlers lean; no heavy work per request.                              |
 | Memory             | 128 MB per isolate                                    | Fine for JSON APIs. Never buffer large uploads.                                                                               |
-| Subrequests        | 50 per invocation                                     | D1/R2 calls count. Batch D1 queries.                                                                                          |
+| Subrequests        | 50 per invocation                                     | D1 calls count. Batch D1 queries.                                                                                             |
 | Worker size        | 64 MiB uncompressed                                   | No concern.                                                                                                                   |
 | Cron Triggers      | **5 per account**                                     | Nightly backup + daily summary use 2.                                                                                         |
 | Static assets      | 20,000 files / version, 25 MiB per file               | Plenty for the SPA. Requests served purely from assets are free and unlimited.                                                |
@@ -26,12 +26,12 @@ in brackets). Free tiers change, so re-check this file before each release.
 | Rows read                               | **5,000,000 / day**     | Dashboards must use `daily_summaries` and indexes, never full scans of `sales`.                                            |
 | Rows written                            | **100,000 / day**       | One sale ≈ 1 sale + N items + N stock updates + N movements. A 3-item sale ≈ 10 rows → ~10,000 sales/day across all shops. |
 | Storage                                 | 5 GB total per account  |                                                                                                                            |
-| Database size                           | **500 MB** per database | One database for all shops. Product images live in R2, not D1.                                                             |
+| Database size                           | **500 MB** per database | One database for all shops. Photos live in a 2nd D1 database.                                                              |
 | Databases                               | 10 per account          | We use 1 (+1 for preview).                                                                                                 |
 | Queries per Worker invocation           | 50                      | Sale creation must be a single `batch()`.                                                                                  |
 | Bound parameters per query              | 100                     | Chunk large `IN (...)` lists.                                                                                              |
 | SQL statement length                    | 100 KB                  |                                                                                                                            |
-| **Time Travel** (point-in-time restore) | **7 days**              | Our nightly R2 backups (14 days) cover longer windows.                                                                     |
+| **Time Travel** (point-in-time restore) | **7 days**              | Our nightly backups (14 days) cover longer windows.                                                                        |
 
 **Bulk import (Phase 3.5)** is built around these limits: 250 rows per request, each
 list sent as one JSON value read with `json_each`, so a chunk is about 8 queries and never
@@ -43,7 +43,22 @@ update are about half that. Large catalogs are best imported once, not repeatedl
 When daily read/write limits are hit, **D1 rejects queries until 00:00 UTC**. The app
 must show a clear "service busy" error, and offline sales stay queued until then.
 
-## R2 — [pricing, updated 2026-10-26](https://developers.cloudflare.com/r2/pricing/)
+## Photos and backups: a second D1 database instead of R2
+
+R2 needs a card or PayPal on file even on the free plan, so photos and nightly backups
+are stored in a second D1 database (`MEDIA_DB`, table `objects`). Decided 2026-11-01.
+
+- **Space:** 500 MB for that database. Each shop may use **100 MB** of photos
+  (`maxImagesMB`). Photos are shrunk on the phone first (product photo + thumbnail
+  ≈ 170 KB), so 100 MB is about 550 product photos. Most shops have 10–300 products.
+- **One photo:** at most 1.9 MB (a D1 row holds 2,000,000 bytes).
+- **Backups** are gzipped (about 10× smaller) and kept 14 days.
+- **Reads:** D1 returns photo bytes as a list of numbers, which costs some CPU, so every
+  photo is cached at the edge after its first view (keys never change).
+- **Moving to R2 later:** add the `MEDIA` bucket binding and switch
+  `src/worker/adapters/storage/index.ts` to `R2Storage`. Nothing else changes.
+
+## R2 (not used yet) — [pricing, updated 2026-10-26](https://developers.cloudflare.com/r2/pricing/)
 
 | Limit                       | Free (monthly)                    |
 | --------------------------- | --------------------------------- |
@@ -97,5 +112,5 @@ re-hashed at the new count the next time they log in.
 
 One free deployment comfortably serves **a few dozen small shops**. The limits that
 bind first, in order: **Workers requests/day**, then **D1 rows written/day**, then
-**R2 storage** (if shops upload many images). Self-hosting (see `DEPLOY_FREE.md`) gives
+**media database space** (if shops upload many images). Self-hosting (see `DEPLOY_FREE.md`) gives
 each owner their own full free quota.

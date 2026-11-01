@@ -1,7 +1,7 @@
-import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 
 import { addMember, api, createProductAs, signUp } from './helpers';
+import { stored } from './media';
 
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3, 4]);
 const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 16, 0x4a, 0x46, 0x49, 0x46]);
@@ -33,7 +33,7 @@ describe('product photo thumbnails', () => {
     expect(res.status).toBe(201);
     const thumb = await res.json<{ key: string }>();
     expect(thumb.key).toBe(key.replace(/\.png$/, '.thumb.png'));
-    expect(await env.MEDIA.head(thumb.key)).not.toBeNull();
+    expect(await stored(thumb.key)).not.toBeNull();
 
     const product = await getProduct(p.id, owner.cookie);
     expect(product.imageUrl).toBe(`/api/v1/media/${key}`);
@@ -79,8 +79,8 @@ describe('product photo thumbnails', () => {
     ).json<{ key: string }>();
 
     await upload(`product?productId=${p.id}`, PNG, 'image/png', owner.cookie);
-    expect(await env.MEDIA.head(first.key)).toBeNull();
-    expect(await env.MEDIA.head(firstThumb.key)).toBeNull();
+    expect(await stored(first.key)).toBeNull();
+    expect(await stored(firstThumb.key)).toBeNull();
   });
 
   it("is for admins only, and never for another shop's product", async () => {

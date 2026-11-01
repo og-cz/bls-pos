@@ -1,8 +1,8 @@
-import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 
 import type { StaffMember } from '../../src/shared/schemas/staff';
 import { addMember, api, getWithCookie, signUp } from './helpers';
+import { stored } from './media';
 
 // A 1×1 PNG.
 const png = Uint8Array.from(
@@ -56,7 +56,7 @@ describe('profiles', () => {
     expect(del.status).toBe(200);
     expect((await me(staff.cookie)).avatarUrl).toBeNull();
     const key = (mine.avatarUrl ?? '').replace('/api/v1/media/', '');
-    expect(await env.MEDIA.head(key)).toBeNull();
+    expect(await stored(key)).toBeNull();
   });
 
   it('only the name can change, as plain text', async () => {

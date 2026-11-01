@@ -3,7 +3,7 @@ import { Hono } from 'hono';
 import { deleteShopSchema, onboardingSchema, shopSettingsSchema } from '@shared/schemas/shop';
 import { themeSchema } from '@shared/theme';
 
-import { R2Storage } from '../adapters/storage/r2';
+import { mediaStorage } from '../adapters/storage';
 import { getDb } from '../db/client';
 import type { AuthedEnv } from '../env';
 import { actorOf } from '../lib/actor';
@@ -58,12 +58,12 @@ shopRoutes.patch('/theme', requireRole('admin'), async (c) => {
 });
 
 shopRoutes.delete('/logo', requireRole('admin'), async (c) => {
-  await removeShopImage(getDb(c.env.DB), c.var.shopId, new R2Storage(c.env.MEDIA), 'logo');
+  await removeShopImage(getDb(c.env.DB), c.var.shopId, mediaStorage(c.env), 'logo');
   return c.json({ ok: true });
 });
 
 shopRoutes.delete('/cover', requireRole('admin'), async (c) => {
-  await removeShopImage(getDb(c.env.DB), c.var.shopId, new R2Storage(c.env.MEDIA), 'cover');
+  await removeShopImage(getDb(c.env.DB), c.var.shopId, mediaStorage(c.env), 'cover');
   return c.json({ ok: true });
 });
 

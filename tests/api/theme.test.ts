@@ -16,6 +16,7 @@ import {
 } from '../../src/shared/theme';
 import { env } from 'cloudflare:workers';
 import { addMember, api, getWithCookie, signUp } from './helpers';
+import { stored } from './media';
 
 describe('theme schema', () => {
   it('accepts a valid theme and fills defaults', () => {
@@ -223,7 +224,7 @@ describe('logo and cover', () => {
     expect(del.status).toBe(200);
     expect((await me(owner.cookie)).logoUrl).toBeNull();
     const key = (shop.logoUrl ?? '').replace('/api/v1/media/', '');
-    expect(await env.MEDIA.head(key)).toBeNull();
+    expect(await stored(key)).toBeNull();
   });
 
   it('staff cannot change the logo', async () => {

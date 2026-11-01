@@ -1,9 +1,10 @@
 import { Hono } from 'hono';
 
-import { R2Storage } from '../adapters/storage/r2';
+import { mediaStorage } from '../adapters/storage';
 import { getDb } from '../db/client';
 import type { AppEnv } from '../env';
 import { ApiError } from '../lib/errors';
+import { serveMedia } from '../lib/serve-media';
 import { getStorefront, isPublicImage } from '../services/storefront';
 
 export const publicRoutes = new Hono<AppEnv>();
@@ -31,16 +32,9 @@ publicRoutes.get('/s/:slug/media/*', async (c) => {
   const slug = c.req.param('slug');
   const key = c.req.path.replace(/^.*?\/media\//, '');
   if (!(await isPublicImage(getDb(c.env.DB), slug, key))) throw notFound();
-  const obj = await new R2Storage(c.env.MEDIA).get(key);
-  if (!obj) throw notFound();
-  return new Response(obj.body, {
-    headers: {
-      'content-type': obj.contentType,
-      'content-length': String(obj.size),
-      'x-content-type-options': 'nosniff',
-      'content-disposition': 'inline',
-      // Short, so an image taken off the page stops showing soon.
-      'cache-control': 'public, max-age=60',
-    },
-  });
+  // Short for browsers, so an image taken off the page stops showing soon. The check
+  // above runs on every request, so the edge copy never outlives the image being public.
+  const res = await serveMedia(mediaStorage(c.env), key, 'public, max-age=60', c.executionCtx);
+  if (!res) throw notFound();
+  return res;
 });

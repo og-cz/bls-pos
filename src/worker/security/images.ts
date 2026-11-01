@@ -2,7 +2,8 @@
 // scripts. The declared type must match the file's first bytes, so a renamed file or a
 // disguised HTML page is refused.
 
-export const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
+// Under the 2,000,000-byte D1 row limit (photos are stored in D1, see adapters/storage).
+export const MAX_UPLOAD_BYTES = 1_900_000;
 
 export const IMAGE_TYPES = {
   'image/jpeg': 'jpg',

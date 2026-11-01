@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { PURGE_AFTER_MS, purgeDeletedShops } from '../../src/worker/purge';
 import { addMember, api, createProductAs, getWithCookie, postJson, signUp } from './helpers';
+import { stored } from './media';
 
 const png = Uint8Array.from(
   atob(
@@ -95,7 +96,7 @@ describe('deleting a shop', () => {
       .bind(owner.shopId)
       .first();
     expect(shop).toBeNull();
-    expect(await env.MEDIA.head(photo.key)).toBeNull();
+    expect(await stored(photo.key)).toBeNull();
   });
 
   it("other shops are never touched, and a live shop's closings stay locked", async () => {

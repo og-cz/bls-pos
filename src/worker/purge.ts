@@ -1,6 +1,8 @@
 // Erases shops deleted more than 30 days ago (Section 7.14: soft delete, then hard delete
 // after 30 days). Runs with the nightly job; a couple of shops per run keeps it inside
-// the Cron limits (one D1 batch and a few R2 calls each).
+// the Cron limits (one D1 batch and two media-database deletes each).
+
+import { mediaStorage } from './adapters/storage';
 
 export const PURGE_AFTER_MS = 30 * 24 * 60 * 60 * 1000;
 export const PURGES_PER_RUN = 2;
@@ -22,15 +24,6 @@ const DELETES = [
   'DELETE FROM shops WHERE id = ?1 AND deleted_at IS NOT NULL',
 ];
 
-async function deletePrefix(bucket: R2Bucket, prefix: string) {
-  let cursor: string | undefined;
-  do {
-    const page = await bucket.list({ prefix, ...(cursor ? { cursor } : {}) });
-    if (page.objects.length) await bucket.delete(page.objects.map((o) => o.key));
-    cursor = page.truncated ? page.cursor : undefined;
-  } while (cursor);
-}
-
 export async function purgeDeletedShops(env: Env, now: number = Date.now()): Promise<number> {
   const { results } = await env.DB.prepare(
     'SELECT id FROM shops WHERE deleted_at IS NOT NULL AND deleted_at < ?1 LIMIT ?2',
@@ -40,8 +33,9 @@ export async function purgeDeletedShops(env: Env, now: number = Date.now()): Pro
   for (const { id } of results) {
     // Photos and backups first: if this run stops halfway, the rows are still there to
     // find the shop again next night.
-    await deletePrefix(env.MEDIA, `shops/${id}/`);
-    await deletePrefix(env.MEDIA, `backups/${id}/`);
+    const storage = mediaStorage(env);
+    await storage.deletePrefix(`shops/${id}/`);
+    await storage.deletePrefix(`backups/${id}/`);
     await env.DB.batch(DELETES.map((q) => env.DB.prepare(q).bind(id)));
   }
   return results.length;

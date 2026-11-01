@@ -41,7 +41,7 @@ export async function uploadImage(
   const size = input.data.byteLength;
   if (size === 0) throw new ApiError(400, 'EMPTY_FILE', 'The file is empty.');
   if (size > MAX_UPLOAD_BYTES) {
-    throw new ApiError(413, 'FILE_TOO_LARGE', 'Images must be 2 MB or smaller.');
+    throw new ApiError(413, 'FILE_TOO_LARGE', 'Images must be 1.9 MB or smaller.');
   }
   const actual = sniffImageType(input.data);
   if (!actual || actual !== input.declaredType) {

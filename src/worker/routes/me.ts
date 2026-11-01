@@ -6,7 +6,7 @@ import { disableTotpSchema, enableTotpSchema } from '@shared/schemas/auth';
 import { changePasswordSchema, updateProfileSchema } from '@shared/schemas/profile';
 import { parseTheme } from '@shared/theme';
 
-import { R2Storage } from '../adapters/storage/r2';
+import { mediaStorage } from '../adapters/storage';
 import { getDb } from '../db/client';
 import { shops } from '../db/schema';
 import type { AuthedEnv } from '../env';
@@ -87,7 +87,7 @@ meRoutes.patch('/', async (c) => {
 });
 
 meRoutes.delete('/avatar', async (c) => {
-  await removeAvatar(getDb(c.env.DB), c.var.shopId, new R2Storage(c.env.MEDIA), await actorOf(c));
+  await removeAvatar(getDb(c.env.DB), c.var.shopId, mediaStorage(c.env), await actorOf(c));
   return c.json({ ok: true });
 });
 
