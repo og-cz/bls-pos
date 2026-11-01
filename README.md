@@ -20,15 +20,12 @@
   Sign up, brand your shop, add products and staff, and start selling from a phone or PC — free.
 </p>
 
+> **Status:** v1.0.0-rc.1, live and in pilot with the first shops. Screenshots show a demo
+> shop with sample data.
+
 <p align="center">
   <img src="docs/assets/screenshots/dashboard.png" alt="bls POS dashboard" width="960" />
 </p>
-
-bls POS is built for small shops, cafés, food stalls, salons and retail stores that need a
-checkout that is quick to learn, quick to use and costs nothing to run.
-
-> **Status:** v1.0.0-rc.1, live and in pilot with the first shops. Screenshots show a demo
-> shop with sample data.
 
 ## System Features
 
@@ -78,7 +75,7 @@ their own sales for today.
 
 </td>
 <td width="50%">
-  <a href="docs/assets/screenshots/phone-dashboard.png"><img src="docs/assets/screenshots/phone-dashboard.png" alt="Live Dashboard on a phone" width="55%" /></a>
+  <a href="docs/assets/screenshots/dashboard.png"><img src="docs/assets/screenshots/dashboard.png" alt="Live Dashboard" width="100%" /></a>
 </td>
 </tr>
 <tr>
@@ -126,7 +123,8 @@ app; iPhone, Safari → Share → Add to Home Screen.
 
 </td>
 <td width="50%">
-  <a href="docs/assets/screenshots/phone-sell.png"><img src="docs/assets/screenshots/phone-sell.png" alt="Sell screen on a phone" width="55%" /></a>
+  <a href="docs/assets/screenshots/phone-sell.png"><img src="docs/assets/screenshots/phone-sell.png" alt="Sell screen on a phone" width="48%" /></a>
+  <a href="docs/assets/screenshots/phone-dashboard.png"><img src="docs/assets/screenshots/phone-dashboard.png" alt="Dashboard on a phone" width="48%" /></a>
 </td>
 </tr>
 </table>
